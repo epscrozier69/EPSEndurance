@@ -291,7 +291,14 @@ function json_(o) {
    Constantes
    ===================================================================== */
 const DEFAULT_SHEET = 'https://docs.google.com/spreadsheets/d/1TxC2qvopFyqIej-voYN-HquozjlsaNCaDHfSjIOJ_D4/edit?gid=326295564#gid=326295564';
-const DEFAULT_TABS = ['3ème1', '3ème2', '3ème3', '3ème4'];
+const DEFAULT_TABS = [6, 5, 4, 3].flatMap(n => [1, 2, 3, 4].map(i => n + 'ème' + i));
+// URL du script Google (Apps Script) : la renseigner ici évite de la saisir sur chaque appareil
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw9-4SKbr4HdJYdF4JAqsrTOhUvAK_plWzvCruGjs3CdkxWAMmRNILiERsuQSYISIF2_g/exec';
+// Onglet contenant tous les élèves du collège (colonnes Nom, Prénom, Classe, Sexe)
+const MASTER_TAB = 'Liste des élèves du collège';
+// "6EME3" → "6ème3"
+const fmtClass = s => { const t = String(s || '').trim(), m = t.match(/^(\d)\s*[eèé]me\s*(\d+)$/i); return m ? m[1] + 'ème' + m[2] : t; };
+const classOrder = (a, b) => (parseInt(b) || 0) - (parseInt(a) || 0) || a.localeCompare(b, 'fr', { numeric: true });
 const LS_STATE = 'eps_endurance_state_v1';
 const LS_CFG = 'eps_endurance_cfg_v1';
 const DURS = [18, 36, 90, 180];
@@ -383,7 +390,10 @@ function download(name, blob) {
    ===================================================================== */
 const newState = () => ({ v: 1, updatedAt: 0, classOrder: [], classes: {} });
 let state = loadJSON(LS_STATE) || newState();
-let cfg = Object.assign({ sheetUrl: DEFAULT_SHEET, scriptUrl: '', tabs: DEFAULT_TABS.slice() }, loadJSON(LS_CFG) || {});
+let cfg = Object.assign({ sheetUrl: DEFAULT_SHEET, scriptUrl: SCRIPT_URL, tabs: [] }, loadJSON(LS_CFG) || {});
+if (SCRIPT_URL || !cfg.scriptUrl) cfg.scriptUrl = SCRIPT_URL;
+cfg.sheetUrl = DEFAULT_SHEET;
+cfg.tabs = DEFAULT_TABS.slice();
 const saveCfg = () => saveJSON(LS_CFG, cfg);
 
 const ui = { tab: 'general', cls: {}, avail: null, picked: new Set(), sort: {}, busy: false };
@@ -500,7 +510,7 @@ function parseStudents(rows, tab) {
     let name = map.full != null ? r[map.full] : [r[map.nom], map.prenom != null ? r[map.prenom] : ''].filter(Boolean).join(' ');
     name = (name || '').replace(/\s+/g, ' ').trim();
     if (!name) return null;
-    return { name, classe: (map.classe != null && r[map.classe]) || tab, sexe: map.sexe != null ? normSexe(r[map.sexe]) : '' };
+    return { name, classe: fmtClass((map.classe != null && r[map.classe]) || tab), sexe: map.sexe != null ? normSexe(r[map.sexe]) : '' };
   }).filter(Boolean);
 }
 async function fetchTab(name) {
@@ -516,12 +526,28 @@ async function fetchTab(name) {
   if (!res.ok || /^\s*</.test(txt)) throw new Error('Google Sheet inaccessible : partagez-le en « Tous les utilisateurs disposant du lien » ou installez le script de synchronisation.');
   return parseCSV(txt);
 }
+// Liste générale du collège : élèves de toutes les classes
+let masterCache = null, sheetTabs = [];
+async function loadMaster() {
+  const j = await getJSON(cfg.scriptUrl + '?action=classes&t=' + Date.now());
+  if (!j.ok) throw new Error(j.error || 'Lecture impossible');
+  sheetTabs = j.classes;
+  masterCache = sheetTabs.includes(MASTER_TAB) ? parseStudents(await fetchTab(MASTER_TAB), '') : [];
+  return masterCache;
+}
+// Élèves d'une classe : onglet dédié s'il existe (ex. « 3ème1 »), sinon la liste générale du collège
+async function classStudents(name) {
+  if (!cfg.scriptUrl) return parseStudents(await fetchTab(name), name);
+  if (!masterCache) await loadMaster();
+  if (sheetTabs.includes(name)) return parseStudents(await fetchTab(name), name);
+  return masterCache.filter(s => s.classe === name);
+}
 function mergeClass(name, studs) {
   let C = state.classes[name], added = 0;
   if (!C) {
     C = state.classes[name] = { name, students: [], sessions: [] };
     state.classOrder.push(name);
-    state.classOrder.sort((a, b) => a.localeCompare(b, 'fr', { numeric: true }));
+    state.classOrder.sort(classOrder);
   }
   const idx = new Map(C.students.map(s => [norm(s.name), s]));
   studs.forEach(s => {
@@ -787,24 +813,18 @@ function viewGeneral() {
   const tabs = ui.avail || cfg.tabs;
   const code = $('#gs-code').textContent;
   return `
-  <section class="card hero">
-    <h2>👋 Bienvenue</h2>
-    <p><b>1.</b> Cochez les classes à importer depuis le Google Sheet. <b>2.</b> Chaque classe devient un onglet. <b>3.</b> Dans l'onglet d'une classe, créez une séance : <b>Test VMA</b> ou <b>Séance fractionnée</b>.</p>
-    <p>Chaque saisie est enregistrée automatiquement sur l'appareil et, si le script est installé, dans le Google Sheet (la version la plus récente, PC ou iPad, est récupérée à l'ouverture).</p>
-  </section>
-
   <section class="card">
     <h2>📥 Classes à importer</h2>
-    <label class="lbl">Google Sheet des élèves</label>
-    <div class="row"><input class="grow" type="url" value="${esc(cfg.sheetUrl)}" data-chg="sheetUrl"><button class="btn" data-act="loadTabs">🔄 Afficher les classes du fichier</button></div>
-    <p class="hint">${cfg.scriptUrl ? 'La liste des onglets est lue directement dans le fichier grâce au script.' : 'Sans script de synchronisation, la liste des onglets ne peut pas être lue automatiquement : ajoutez un nom d\'onglet si besoin. Le fichier doit être partagé « Tous les utilisateurs disposant du lien ».'}</p>
-    <div class="picklist">${tabs.map(n => {
-      const C = state.classes[n];
-      return `<label class="pick ${C ? 'imported' : ''}"><input type="checkbox" data-chg="pickTab" data-name="${esc(n)}" ${ui.picked.has(n) ? 'checked' : ''}><span>${esc(n)}</span><small>${C ? 'importée · ' + C.students.length + ' élèves' : 'non importée'}</small></label>`;
-    }).join('')}</div>
-    <div class="row"><input id="newTab" placeholder="Autre nom d'onglet…" style="flex:0 1 220px"><button class="btn" data-act="addTab">＋ Ajouter</button></div>
-    <div class="row"><button class="btn" data-act="pickAll">Tout cocher</button><button class="btn pri" id="importBtn" data-act="importPicked" ${ui.busy ? 'disabled' : ''}>⬇ Importer la sélection (${ui.picked.size})</button></div>
-    <p class="hint">Colonnes reconnues : « Nom Prénom » (ou « Nom » + « Prénom »), « Classe », « Sexe ». Réimporter une classe ajoute les nouveaux élèves sans effacer les résultats.</p>
+    ${cfg.scriptUrl ? '' : '<p class="hint">⚠ Installez le script Google (section « Synchronisation » plus bas) pour que les classes du fichier s\'affichent et s\'importent automatiquement.</p>'}
+    ${ui.avail ? '' : `<p class="hint">${cfg.scriptUrl ? '⟳ Chargement des classes…' : ''}</p>`}
+    ${[...new Set(tabs.map(n => parseInt(n) || 0))].map(lv => `
+      <label class="lbl">${lv ? lv + 'ème' : 'Autres'}</label>
+      <div class="picklist" style="margin-top:4px">${tabs.filter(n => (parseInt(n) || 0) === lv).map(n => {
+        const C = state.classes[n], nb = masterCache ? masterCache.filter(s => s.classe === n).length : 0;
+        return `<label class="pick ${C ? 'imported' : ''}"><input type="checkbox" data-chg="pickTab" data-name="${esc(n)}" ${ui.picked.has(n) ? 'checked' : ''}><span>${esc(n)}</span><small>${C ? 'importée · ' + C.students.length + ' élèves' : (nb ? nb + ' élèves' : 'non importée')}</small></label>`;
+      }).join('')}</div>`).join('')}
+    <div class="row"><button class="btn pri" id="importBtn" data-act="importPicked" ${ui.busy ? 'disabled' : ''}>⬇ Importer la sélection (${ui.picked.size})</button></div>
+    <p class="hint">Réimporter une classe ajoute les nouveaux élèves sans effacer les résultats.</p>
   </section>
 
   <section class="card">
@@ -817,7 +837,7 @@ function viewGeneral() {
     }).join('')}</div>` : '<div class="empty">Aucune classe importée pour l\'instant.</div>'}
   </section>
 
-  <section class="card">
+  ${SCRIPT_URL ? '' : `<section class="card">
     <h2>☁️ Synchronisation Google Sheet (PC ⇄ iPad)</h2>
     <label class="lbl">URL du script (application Web, se termine par /exec)</label>
     <div class="row"><input class="grow" type="url" placeholder="https://script.google.com/macros/s/…/exec" value="${esc(cfg.scriptUrl)}" data-chg="scriptUrl">
@@ -834,7 +854,7 @@ function viewGeneral() {
       <div class="row"><button class="btn" data-act="copyCode">📋 Copier le code</button></div>
       <pre class="code">${esc(code)}</pre>
     </details>
-  </section>
+  </section>`}
 
   <section class="card">
     <h2>💾 Sauvegardes & exports</h2>
@@ -1294,15 +1314,15 @@ const ACT = {
     pullRemote();
   },
   /* --- Général --- */
-  async loadTabs() {
-    if (!cfg.scriptUrl) { ui.avail = cfg.tabs; render(); toast('Liste par défaut (installez le script pour lire les onglets du fichier)'); return; }
+  async loadTabs(el, silent) {
+    if (!cfg.scriptUrl) { ui.avail = cfg.tabs; render(); return; }
     try {
-      toast('Lecture des onglets…');
-      const j = await getJSON(cfg.scriptUrl + '?action=classes&t=' + Date.now());
-      if (!j.ok) throw new Error(j.error);
-      ui.avail = cfg.tabs = j.classes; saveCfg(); render();
-      toast(j.classes.length + ' onglet(s) trouvé(s)');
-    } catch (e) { toast('⚠ ' + e.message, 5000); }
+      const all = await loadMaster();
+      const list = [...new Set(all.map(s => s.classe).filter(Boolean))];
+      ui.avail = list.length ? list.sort(classOrder) : DEFAULT_TABS.slice();
+      if (ui.tab === 'general') render();
+      if (!silent) toast(ui.avail.length + ' classe(s) trouvée(s)');
+    } catch (e) { ui.avail = DEFAULT_TABS.slice(); if (ui.tab === 'general') render(); toast('⚠ Lecture des classes impossible : ' + e.message, 5000); }
   },
   addTab() {
     const v = ($('#newTab').value || '').trim(); if (!v) return;
@@ -1317,7 +1337,7 @@ const ACT = {
     const msgs = [];
     for (const name of [...ui.picked]) {
       try {
-        const studs = parseStudents(await fetchTab(name), name);
+        const studs = await classStudents(name);
         if (!studs.length) { msgs.push(name + ' : aucun élève trouvé'); continue; }
         const r = mergeClass(name, studs);
         msgs.push(`${name} : ${r.total} élèves${r.added !== r.total ? ' (+' + r.added + ')' : ''}`);
@@ -1515,7 +1535,7 @@ const ACT = {
 
 const CHG = {
   sheetUrl(el) { cfg.sheetUrl = el.value.trim() || DEFAULT_SHEET; saveCfg(); },
-  scriptUrl(el) { cfg.scriptUrl = el.value.trim(); saveCfg(); if (cfg.scriptUrl) pullRemote(); else setSync('local'); render(); },
+  scriptUrl(el) { cfg.scriptUrl = el.value.trim() || SCRIPT_URL; saveCfg(); if (cfg.scriptUrl) { pullRemote(); ACT.loadTabs(null, true); } else setSync('local'); render(); },
   pickTab(el) {
     const n = el.dataset.name; el.checked ? ui.picked.add(n) : ui.picked.delete(n);
     const b = $('#importBtn'); if (b) b.textContent = '⬇ Importer la sélection (' + ui.picked.size + ')';
@@ -1573,7 +1593,7 @@ setInterval(() => { if (!live && document.visibilityState === 'visible') pullRem
 
 /* Démarrage : affichage de la version locale puis récupération de la version la plus récente */
 render();
-if (cfg.scriptUrl) pullRemote(); else setSync('local');
+if (cfg.scriptUrl) { pullRemote(); ACT.loadTabs(null, true); } else setSync('local');
 </script>
 </body>
 </html>
