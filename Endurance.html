@@ -174,7 +174,11 @@ ol.steps li{margin:4px 0}
 @media (max-width:600px){.groups{gap:6px}.gcol ul{padding:2px}.gcol .gn{font-size:13px}.gcol .gv{display:none}.mv{padding:3px 5px}}
 /* ---- Binômes coureur / observateur ---- */
 .pairs{border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-top:8px}
-.phead,.prow{display:grid;grid-template-columns:28px minmax(0,1fr) 34px minmax(0,1fr);align-items:center;gap:6px;padding:3px 8px}
+.phead,.prow{display:grid;grid-template-columns:28px minmax(0,1fr) minmax(0,1fr);align-items:center;gap:10px;padding:3px 8px}
+.pc .seg.ab{padding:2px;flex:0 0 auto}
+.pc .seg.ab button{min-width:30px;min-height:28px;padding:2px 8px}
+.stsel{flex:0 0 auto;min-height:32px!important;padding:2px 4px!important;border-radius:8px!important;font-weight:800;font-size:12px;width:62px}
+.stsel.on{background:#fee2e2;color:#be123c;border-color:#fecdd3}
 .phead{background:#f8f9fb;padding:8px}
 .phead .gh{color:#fff;font-weight:900;border-radius:10px;padding:7px 10px;display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:14px}
 .phead .gh small{background:rgba(255,255,255,.25);border-radius:999px;padding:1px 9px;font-size:13px}
@@ -195,7 +199,7 @@ ol.steps li{margin:4px 0}
 .stlist{margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:14px}
 .stchip{display:inline-flex;align-items:center;gap:6px;background:#f2f4f7;border-radius:999px;padding:3px 4px 3px 12px;font-weight:700;font-size:13px}
 .stchip select{min-height:30px;padding:2px 6px;border-radius:999px;font-weight:800}
-@media (max-width:600px){.phead,.prow{grid-template-columns:18px minmax(0,1fr) 28px minmax(0,1fr);gap:4px;padding:2px 4px}.pc{padding:2px 3px}.pc .gn{font-size:13px}.pc .gv{display:none}.sx{width:18px;height:18px}}
+@media (max-width:600px){.phead,.prow{grid-template-columns:18px minmax(0,1fr) minmax(0,1fr);gap:4px;padding:2px 4px}.pc .seg.ab button{min-width:24px;padding:2px 4px}.stsel{width:50px}.pc{padding:2px 3px}.pc .gn{font-size:13px}.pc .gv{display:none}.sx{width:18px;height:18px}}
 .stepper{display:inline-flex;align-items:center;gap:6px}
 .stepper b{min-width:34px;text-align:center;font-size:20px}
 #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:#111827;color:#fff;padding:11px 18px;border-radius:12px;font-weight:600;opacity:0;pointer-events:none;transition:.25s;z-index:99;max-width:calc(100% - 32px);text-align:center}
@@ -1022,6 +1026,9 @@ function syncOrder(C, s) {
   sortedStudents(C).forEach(st => {
     if (!placed.has(st.id) && !s.status[st.id]) (s.order.A.length <= s.order.B.length ? s.order.A : s.order.B).push(st.id);
   });
+  // chaque groupe reste trié par ordre alphabétique : le n-ième de B observe le n-ième de A
+  const rank = new Map(sortedStudents(C).map((st, i) => [st.id, i]));
+  ['A', 'B'].forEach(g => s.order[g].sort((a, b) => rank.get(a) - rank.get(b)));
   const pair = {}, n = Math.min(s.order.A.length, s.order.B.length);
   for (let i = 0; i < n; i++) { pair[s.order.A[i]] = s.order.B[i]; pair[s.order.B[i]] = s.order.A[i]; }
   if (s.type === 'vma') {
@@ -1034,26 +1041,23 @@ const pairOf = (s, id) => (s.type === 'vma' ? s.pair : s.partner)[id];
 function pairsHTML(C, s, lab) {
   const byId = new Map(C.students.map(st => [st.id, st]));
   const n = Math.max(s.order.A.length, s.order.B.length);
-  const item = id => {
+  const statusSel = id => `<select class="stsel ${s.status[id] ? 'on' : ''}" data-chg="setStatus" data-id="${id}" title="Absent / dispensé">
+    <option value="">—</option>${Object.keys(STATUS).map(k => `<option value="${k}" ${s.status[id] === k ? 'selected' : ''}>${k}</option>`).join('')}</select>`;
+  const item = (id, g) => {
     if (!id) return `<div class="pc empty">— sans binôme —</div>`;
     const st = byId.get(id);
     const v = s.type === 'vma' ? (s.results[id] ? perfAt(s.results[id].t).vma : null) : fracVMA(C, s, id);
-    return `<button class="pc ${ui.sel === id ? 'sel' : ''}" data-act="pairSel" data-id="${id}"><span class="sx ${st.sexe}">${esc(st.sexe || '?')}</span><span class="gn">${esc(st.name)}</span>${v != null ? `<span class="gv">${fmtVMA(v)}</span>` : ''}</button>`;
+    return `<div class="pc"><span class="sx ${st.sexe}">${esc(st.sexe || '?')}</span><span class="gn">${esc(st.name)}</span>${v != null ? `<span class="gv">${fmtVMA(v)}</span>` : ''}
+      <div class="seg ab">${['A', 'B'].map(x => `<button class="${g === x ? 'on ' + x : ''}" data-act="setAB" data-id="${id}" data-v="${x}">${x}</button>`).join('')}</div>${statusSel(id)}</div>`;
   };
-  const rows = Array.from({ length: n }, (_, i) => `<div class="prow"><span class="pn">${i + 1}</span>${item(s.order.A[i])}<button class="pswap" data-act="pairFlip" data-i="${i}" title="Inverser coureur / observateur">⇄</button>${item(s.order.B[i])}</div>`).join('');
-  const sel = ui.sel && byId.get(ui.sel) && !s.status[ui.sel] ? byId.get(ui.sel) : null;
+  const rows = Array.from({ length: n }, (_, i) => `<div class="prow"><span class="pn">${i + 1}</span>${item(s.order.A[i], 'A')}${item(s.order.B[i], 'B')}</div>`).join('');
   const statused = sortedStudents(C).filter(st => s.status[st.id]);
   return `
   <div class="pairs">
-    <div class="phead"><span></span><div class="gh A">${lab.A}<small>${s.order.A.length}</small></div><span></span><div class="gh B">${lab.B}<small>${s.order.B.length}</small></div></div>
+    <div class="phead"><span></span><div class="gh A">${lab.A}<small>${s.order.A.length}</small></div><div class="gh B">${lab.B}<small>${s.order.B.length}</small></div></div>
     ${rows || '<div class="empty">Aucun élève présent</div>'}
   </div>
-  <div class="selbar ${sel ? 'on' : ''}">${sel
-    ? `<b>${esc(sel.name)}</b><span>→ touchez un autre élève pour les échanger, ou :</span>
-       <button class="btn sm" data-act="pairMove">Changer de colonne</button>
-       ${Object.keys(STATUS).map(k => `<button class="btn sm" data-act="setStatus" data-id="${sel.id}" data-v="${k}" title="${STATUS[k]}">${k}</button>`).join('')}
-       <button class="btn sm ghost" style="color:#fff" data-act="pairSel" data-id="${sel.id}">Annuler</button>`
-    : `<span class="hint" style="margin:0">Touchez un élève pour l'échanger avec un autre, le changer de colonne ou le noter ABS (absent), DP (dispensé ponctuel), DISP (dispensé).</span>`}</div>
+  <p class="hint">Boutons A / B : choisir le groupe de l'élève. Menu « — » : noter ABS (absent), DP (dispensé ponctuel) ou DISP (dispensé).</p>
   ${statused.length ? `<div class="stlist"><b>Absents / dispensés (${statused.length}) :</b>${statused.map(st => `<span class="stchip"><span>${esc(st.name)}</span><select data-chg="setStatus" data-id="${st.id}">${Object.keys(STATUS).map(k => `<option value="${k}" ${s.status[st.id] === k ? 'selected' : ''}>${k}</option>`).join('')}<option value="">✓ Présent</option></select></span>`).join('')}</div>` : ''}`;
 }
 function viewVMA(C, s) {
@@ -1072,7 +1076,7 @@ function viewVMA(C, s) {
       cell(p ? p.p : null, p ? String(p.p) : '—'), cell(p ? p.v : null, p ? p.v + ' km/h' : '—'),
       cell(p ? p.t : null, p ? fmtT(p.t) : '—'), cell(p ? p.d : null, p ? p.d + ' m' : '—'),
       cell(p ? p.vma : null, p ? `<b>${fmtVMA(p.vma)} km/h</b>` : '—'), cell(obs),
-      cell('', `<button class="btn sm" data-act="vmaEdit" data-id="${st.id}">✎</button>`)
+      cell('', `<button class="btn sm" data-act="vmaEdit" data-id="${st.id}" title="Corriger le temps">✎</button>${r ? ` <button class="btn sm danger" data-act="clearOne" data-id="${st.id}" title="Effacer le résultat de cet élève">🗑</button>` : ''}`)
     ] };
   });
 
@@ -1129,8 +1133,9 @@ function viewVMA(C, s) {
   </section>
 
   <section class="card">
-    <div class="row sp"><h3 style="margin:0"><span class="step">5</span>Résultats de la séance</h3><button class="btn pri" data-act="exportSession">📊 Export Excel</button></div>
-    <p class="hint">✎ pour corriger ou saisir un temps à la main. Tri possible sur chaque colonne.</p>
+    <div class="row sp"><h3 style="margin:0"><span class="step">5</span>Résultats de la séance</h3>
+      <div class="row" style="margin:0"><button class="btn danger" data-act="clearAll" ${Object.keys(s.results).length ? '' : 'disabled'}>🗑 Effacer tous les résultats</button><button class="btn pri" data-act="exportSession">📊 Export Excel</button></div></div>
+    <p class="hint">✎ pour corriger ou saisir un temps à la main, 🗑 pour effacer le résultat d'un élève. Tri possible sur chaque colonne.</p>
     ${sortTable('res-' + s.id, ['Nom Prénom', 'Sexe', 'Groupe', 'Palier', 'Vitesse palier', 'Temps', 'Distance', 'VMA', 'Observations', { t: '', nosort: true }], resRows)}
   </section>`;
 }
@@ -1145,6 +1150,7 @@ function viewVMALive(C, s) {
     <div class="livetop">
       <div class="stat"><span class="l">Palier</span><b id="lv-pal">1 / ${PALIERS.length}</b></div>
       <div class="stat"><span class="l">Vitesse</span><b id="lv-v">${PALIERS[0]} km/h</b></div>
+      <div class="stat"><span class="l">Temps au 50 m</span><b id="lv-50">${fmtNum(180 / PALIERS[0], 1)} s</b></div>
       <div class="stat"><span class="l">Prochain sifflet</span><b id="lv-next">—</b></div>
       <div class="stat"><span class="l">Distance</span><b id="lv-dist">0 m</b></div>
       <div class="stat"><span class="l">En course</span><b id="lv-left">${left}</b></div>
@@ -1176,6 +1182,7 @@ function vmaTick(e) {
   g('lv-time').textContent = fmtT(Math.floor(t));
   g('lv-pal').textContent = (i + 1) + ' / ' + PALIERS.length;
   g('lv-v').textContent = PALIERS[i] + ' km/h';
+  g('lv-50').textContent = fmtNum(180 / PALIERS[i], 1) + ' s';
   const nw = WHISTLES.find(w => w.t > t + 0.001);
   g('lv-next').textContent = nw ? fmtNum(nw.t - t, 1) + ' s · ' + nw.d + ' m' : '—';
   g('lv-dist').textContent = Math.round(distAt(t)) + ' m';
@@ -1281,7 +1288,8 @@ function viewFrac(C, s) {
         const x = vals[i];
         return cell(x == null ? null : x, `<button class="vb ${x === 1 ? 'y' : x === 0 ? 'n' : ''}" data-act="fracVal" data-id="${st.id}" data-i="${i}">${x === 1 ? '✓' : x === 0 ? '✗' : '·'}</button>`, 'c');
       }),
-      cell(done ? ok / done : null, done ? `<b>${ok}/${done}</b>` : '—', 'c')
+      cell(done ? ok / done : null, done ? `<b>${ok}/${done}</b>` : '—', 'c'),
+      cell('', done ? `<button class="btn sm danger" data-act="clearOne" data-id="${st.id}" title="Effacer les validations de cet élève">🗑</button>` : '', 'c')
     ] };
   });
 
@@ -1308,7 +1316,7 @@ function viewFrac(C, s) {
     <div class="row sp" style="margin-top:0"><h3 style="margin:0"><span class="step">2</span>Coureurs, observateurs et binômes</h3>
       <div class="row" style="margin:0"><button class="btn sm" data-act="fracSwap">⇄ Inverser les rôles</button><button class="btn sm" data-act="resetPairs">↺ Répartition par défaut</button></div></div>
     <p class="hint">Par défaut : 1re moitié de la classe (ordre alphabétique) court, 2e moitié observe. Le 1er observateur observe le 1er coureur, et ainsi de suite.</p>
-    ${pairsHTML(C, s, { A: 'Coureurs', B: 'Observateurs' })}
+    ${pairsHTML(C, s, { A: 'Groupe A · coureurs', B: 'Groupe B · observateurs' })}
     <label class="lbl" style="margin-top:16px">VMA et distances à parcourir (${s.pct} % VMA)</label>
     <p class="hint" style="margin-top:0">VMA du dernier test (grisée) ; saisissez une valeur pour la remplacer dans cette séance.</p>
     ${present.length ? sortTable('dist-' + s.id, ['Nom Prénom', 'Rôle', 'VMA', ...DURS.map(fmtDur)], distRows) : ''}
@@ -1323,9 +1331,10 @@ function viewFrac(C, s) {
   </section>
 
   <section class="card">
-    <div class="row sp"><h3 style="margin:0"><span class="step">4</span>Validation des objectifs</h3><button class="btn pri" data-act="exportSession">📊 Export Excel</button></div>
+    <div class="row sp"><h3 style="margin:0"><span class="step">4</span>Validation des objectifs</h3>
+      <div class="row" style="margin:0"><button class="btn danger" data-act="clearAll">🗑 Effacer toutes les validations</button><button class="btn pri" data-act="exportSession">📊 Export Excel</button></div></div>
     <p class="hint">Après chaque course, touchez la case : · → ✓ objectif atteint → ✗ non atteint → ·</p>
-    ${present.length ? sortTable('val-' + s.id, ['Nom Prénom', 'Rôle', 'Binôme', 'Objectif', ...Array.from({ length: s.reps }, (_, i) => ({ t: 'R' + (i + 1), cls: 'c' })), { t: 'Réussite', cls: 'c' }], valRows)
+    ${present.length ? sortTable('val-' + s.id, ['Nom Prénom', 'Rôle', 'Binôme', 'Objectif', ...Array.from({ length: s.reps }, (_, i) => ({ t: 'R' + (i + 1), cls: 'c' })), { t: 'Réussite', cls: 'c' }, { t: '', nosort: true }], valRows)
       : '<div class="empty">Choisissez d\'abord les coureurs et observateurs.</div>'}
   </section>`;
 }
@@ -1462,29 +1471,27 @@ const ACT = {
   },
   openSession(el) { clsUI(ui.tab).sid = el.dataset.id; ui.sel = null; render(); window.scrollTo(0, 0); },
   /* --- Coureurs / observateurs (binômes) --- */
-  pairSel(el) {
-    const id = el.dataset.id, s = curSession();
-    if (!ui.sel || !s.order) { ui.sel = id; render(); return; }
-    if (ui.sel === id) { ui.sel = null; render(); return; }
-    const pos = x => { for (const g of ['A', 'B']) { const i = s.order[g].indexOf(x); if (i >= 0) return [g, i]; } return null; };
-    const first = ui.sel, a = pos(first), b = pos(id);
-    ui.sel = null;
-    if (!a || !b) { render(); return; }
-    s.order[a[0]][a[1]] = id; s.order[b[0]][b[1]] = first;
+  clearOne(el) {
+    const C = curClass(), s = curSession(), st = C.students.find(x => x.id === el.dataset.id);
+    if (live && live.sid === s.id && live.tl) { toast('Utilisez « ↺ Annuler » sur la carte de l\'élève pendant le test'); return; }
+    if (!confirm(`Effacer ${s.type === 'vma' ? 'le résultat' : 'les validations'} de ${st.name} ?`)) return;
+    if (s.type === 'vma') delete s.results[st.id]; else delete s.valid[st.id];
+    commit();
+  },
+  clearAll() {
+    const s = curSession();
+    if (live && live.sid === s.id) { toast('Arrêtez d\'abord le chrono'); return; }
+    if (!confirm(s.type === 'vma' ? 'Effacer TOUS les résultats de ce test VMA ?' : 'Effacer TOUTES les validations de cette séance ?')) return;
+    if (s.type === 'vma') { s.results = {}; s.runs = {}; } else s.valid = {};
+    commit(); toast('Résultats effacés');
+  },
+  setAB(el) {
+    const s = curSession(), id = el.dataset.id, g = el.dataset.v;
+    if (s.order[g].includes(id)) return;
+    const o = g === 'A' ? 'B' : 'A';
+    s.order[o] = s.order[o].filter(x => x !== id);
+    s.order[g].push(id);
     syncOrder(curClass(), s); commit();
-  },
-  pairFlip(el) {
-    const s = curSession(), i = +el.dataset.i, a = s.order.A[i], b = s.order.B[i];
-    if (a && b) { s.order.A[i] = b; s.order.B[i] = a; }
-    else if (a) { s.order.A.splice(i, 1); s.order.B.push(a); }
-    else if (b) { s.order.B.splice(i, 1); s.order.A.push(b); }
-    ui.sel = null; syncOrder(curClass(), s); commit();
-  },
-  pairMove() {
-    const s = curSession(), id = ui.sel; if (!id) return;
-    const g = s.order.A.includes(id) ? 'A' : 'B', o = g === 'A' ? 'B' : 'A';
-    s.order[g] = s.order[g].filter(x => x !== id); s.order[o].push(id);
-    ui.sel = null; syncOrder(curClass(), s); commit();
   },
   setStatus(el) {
     const s = curSession(); s.status[el.dataset.id] = el.dataset.v;
