@@ -1,0 +1,1579 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Endurance">
+<meta name="theme-color" content="#4338ca">
+<title>EPS Joliot Curie - Endurance</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
+<style>
+:root{
+  --bg:#f3f5fb; --card:#ffffff; --ink:#1d2433; --muted:#667085; --line:#e4e7ef;
+  --pri:#4f46e5; --pri-d:#4338ca; --pink:#db2777; --orange:#f97316; --danger:#e11d48;
+  --A:#2563eb; --B:#db2777;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.45}
+button,input,select{font:inherit;color:inherit}
+header.top{background:linear-gradient(120deg,#4338ca,#7c3aed 55%,#db2777);color:#fff;padding:12px 16px 0;padding-top:max(12px,env(safe-area-inset-top));position:sticky;top:0;z-index:30;box-shadow:0 4px 18px rgba(67,56,202,.25)}
+.brand{display:flex;align-items:center;justify-content:space-between;gap:10px;max-width:1200px;margin:0 auto}
+.brand h1{margin:0;font-size:clamp(18px,3.6vw,25px);font-weight:800;letter-spacing:-.01em;display:flex;align-items:center;gap:10px}
+.logo{width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.2);display:grid;place-items:center;font-size:19px;flex:0 0 auto}
+.sync{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:999px;padding:5px 12px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.sync.err{background:#fff;color:var(--danger)}
+nav.tabs{display:flex;gap:6px;overflow-x:auto;max-width:1200px;margin:12px auto 0;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:0}
+nav.tabs::-webkit-scrollbar{display:none}
+nav.tabs button{flex:0 0 auto;border:0;background:rgba(255,255,255,.14);color:#fff;font-weight:700;padding:10px 16px;border-radius:12px 12px 0 0;cursor:pointer;min-height:42px}
+nav.tabs button.on{background:var(--bg);color:var(--pri-d)}
+nav.tabs button .n{font-size:11px;opacity:.75;margin-left:6px;font-weight:600}
+main{max-width:1200px;margin:0 auto;padding:16px 16px 70px}
+.card{background:var(--card);border-radius:16px;padding:18px;margin-bottom:16px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(16,24,40,.05),0 6px 18px rgba(16,24,40,.04)}
+.card h2,.card h3{margin:0 0 12px;font-size:18px;font-weight:800;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.card h3 .step{background:linear-gradient(135deg,#4f46e5,#db2777);color:#fff;width:26px;height:26px;border-radius:8px;display:inline-grid;place-items:center;font-size:14px}
+.hero{background:linear-gradient(135deg,#eef2ff,#fdf2f8);border-color:#e0e7ff}
+.hero p{margin:4px 0;color:#475467}
+.hint{color:var(--muted);font-size:13px;margin:6px 0}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+.row.sp{justify-content:space-between}
+.grow{flex:1 1 220px;min-width:0}
+input[type=text],input[type=url],input[type=date],input[type=number],select,input:not([type]){border:1px solid #d0d5dd;border-radius:10px;padding:9px 11px;background:#fff;min-height:40px;max-width:100%}
+input:focus,select:focus{outline:3px solid #c7d2fe;border-color:var(--pri)}
+label.lbl{font-weight:700;font-size:13px;color:#475467;display:block;margin:10px 0 4px}
+.btn{appearance:none;-webkit-appearance:none;border:1px solid #d0d5dd;background:#fff;border-radius:10px;padding:8px 14px;font-weight:700;cursor:pointer;min-height:40px;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;color:var(--ink)}
+.btn:hover{background:#f9fafb}
+.btn.pri{background:var(--pri);border-color:var(--pri);color:#fff}
+.btn.pri:hover{background:var(--pri-d)}
+.btn.go{background:linear-gradient(135deg,#f97316,#db2777);border:0;color:#fff}
+.btn.danger{color:var(--danger);border-color:#fecdd3}
+.btn.ghost{border-color:transparent;background:transparent}
+.btn.big{font-size:19px;padding:14px 26px;min-height:58px;border-radius:14px}
+.btn.sm{min-height:32px;padding:4px 10px;font-size:13px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.seg{display:inline-flex;background:#eef0f6;border-radius:10px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;padding:5px 12px;border-radius:8px;font-weight:800;color:#475467;cursor:pointer;min-width:40px;min-height:34px}
+.seg button.on{background:#fff;color:var(--pri);box-shadow:0 1px 3px rgba(0,0,0,.14)}
+.seg button.on.A{background:var(--A);color:#fff}
+.seg button.on.B{background:var(--B);color:#fff}
+.seg button.on.X{background:#98a2b3;color:#fff}
+.seg button.on.C{background:var(--orange);color:#fff}
+.seg button.on.O{background:#7c3aed;color:#fff}
+.seg.lg button{padding:9px 18px;font-size:16px}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;font-weight:800;font-size:14px}
+.pill.A{background:#dbeafe;color:#1d4ed8}.pill.B{background:#fce7f3;color:#be185d}.pill.X{background:#f2f4f7;color:#475467}
+.pill.C{background:#ffedd5;color:#c2410c}.pill.O{background:#ede9fe;color:#6d28d9}
+.pill b{font-size:18px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:2px solid var(--line);background:#fff;border-radius:999px;padding:6px 16px;font-weight:800;cursor:pointer;min-height:40px}
+.chip.on{border-color:var(--pri);background:var(--pri);color:#fff}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+/* ---- Tableaux à colonnes colorées (sans vert ni marron) ---- */
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:12px;border:1px solid var(--line);margin-top:8px}
+table.ct{border-collapse:collapse;width:100%;font-size:14px}
+.ct th,.ct td{padding:8px 10px;text-align:left;white-space:nowrap;border-bottom:1px solid rgba(15,23,42,.06)}
+.ct th{color:#fff;font-weight:800;font-size:13px;background:var(--c);position:relative}
+.ct td{background:var(--t)}
+.ct tr>:nth-child(8n+1){--c:#2563eb;--t:#f0f5ff}
+.ct tr>:nth-child(8n+2){--c:#7c3aed;--t:#f5f0ff}
+.ct tr>:nth-child(8n+3){--c:#db2777;--t:#fdf0f7}
+.ct tr>:nth-child(8n+4){--c:#eab308;--t:#fefce8}
+.ct tr>:nth-child(8n+5){--c:#f97316;--t:#fff4ea}
+.ct tr>:nth-child(8n+6){--c:#4f46e5;--t:#eff0ff}
+.ct tr>:nth-child(8n+7){--c:#0891b2;--t:#ecfbfe}
+.ct tr>:nth-child(8n+8){--c:#e11d48;--t:#fff0f3}
+.ct th:nth-child(8n+4){color:#3b2a00}
+.ct tbody tr:hover td{filter:brightness(.96)}
+.ct th.s{cursor:pointer;user-select:none}
+.ct th .arr{font-size:10px;opacity:.75;margin-left:5px}
+.ct td.hl{font-weight:800;box-shadow:inset 0 0 0 2px var(--c)}
+.ct td.c,.ct th.c{text-align:center}
+.vin{width:78px;min-height:34px!important;padding:5px 8px!important}
+.ct select{min-height:34px;padding:4px 8px}
+/* ---- Listes ---- */
+.picklist{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;margin:10px 0}
+.pick{display:flex;flex-direction:column;gap:2px;border:2px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer;background:#fff;position:relative}
+.pick input{position:absolute;right:10px;top:12px;width:20px;height:20px;accent-color:var(--pri)}
+.pick span{font-weight:800;font-size:16px}
+.pick small{color:var(--muted)}
+.pick.imported{background:#f5f3ff;border-color:#ddd6fe}
+.classes{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.clsbox{border:1px solid var(--line);border-radius:14px;padding:14px;background:linear-gradient(135deg,#fff,#f8f7ff)}
+.clsbox b{font-size:18px}
+.sessions{display:grid;gap:10px}
+.sess{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:#fff;flex-wrap:wrap}
+.sess .ic{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:22px;flex:0 0 auto}
+.sess .ic.vma{background:#dbeafe}.sess .ic.frac{background:#ffedd5}
+.sess .info{flex:1 1 200px}
+.sess .info b{font-size:16px}
+.newsess{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:10px}
+.bigchoice{border:2px solid var(--line);border-radius:16px;padding:18px;background:#fff;cursor:pointer;text-align:left}
+.bigchoice:hover{border-color:var(--pri)}
+.bigchoice .e{font-size:30px}.bigchoice b{display:block;font-size:18px;margin:6px 0 2px}
+.subnav{display:flex;gap:6px;margin:0 0 14px;flex-wrap:wrap}
+.subnav button{border:0;background:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 16px;font-weight:800;cursor:pointer;min-height:40px}
+.subnav button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.clshead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.clshead h2{margin:0;font-size:24px}
+.sesshead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.sesshead h2{margin:0;font-size:21px;flex:1 1 auto}
+.note{background:linear-gradient(135deg,#eef2ff,#fdf2f8);border:1px solid #e0e7ff;border-radius:14px;padding:14px 16px}
+.note p{margin:4px 0}
+.note ul{margin:6px 0;padding-left:18px}
+.note li{margin:3px 0}
+details summary{cursor:pointer;font-weight:700;color:var(--pri-d);margin:6px 0}
+pre.code{background:#0f172a;color:#e2e8f0;padding:14px;border-radius:12px;overflow:auto;font-size:12px;max-height:360px}
+ol.steps li{margin:4px 0}
+/* ---- Live ---- */
+.live{background:#0f172a;color:#fff;border-radius:18px;padding:16px;transition:background .3s}
+.live.work{background:linear-gradient(135deg,#c2410c,#db2777)}
+.live.rest{background:linear-gradient(135deg,#1e3a8a,#6d28d9)}
+.livetop{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px}
+.stat{background:rgba(255,255,255,.09);border-radius:12px;padding:10px 12px}
+.stat .l{display:block;font-size:11px;opacity:.72;text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+.stat b{font-size:22px;font-variant-numeric:tabular-nums}
+.bigtime{font-size:clamp(44px,10vw,80px);font-weight:900;font-variant-numeric:tabular-nums;line-height:1;margin:6px 0 10px;letter-spacing:-.02em}
+.phase{font-size:clamp(20px,4vw,30px);font-weight:900;letter-spacing:.08em}
+.bar{height:9px;background:rgba(255,255,255,.18);border-radius:99px;overflow:hidden;margin:12px 0}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#fbbf24,#f472b6)}
+.liveact{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.live .hint{color:rgba(255,255,255,.75)}
+.runners{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;margin-top:12px}
+.runner{background:#fff;color:var(--ink);border-radius:14px;padding:12px;min-height:100px;cursor:pointer;user-select:none;-webkit-user-select:none;border:3px solid transparent;display:flex;flex-direction:column;gap:6px;transition:transform .08s}
+.runner:active{transform:scale(.97)}
+.runner .nm{font-weight:900;font-size:16px;line-height:1.2}
+.runner .tap{font-size:12px;color:var(--muted)}
+.runner.r1{border-color:#f59e0b;background:#fffbeb}
+.runner.done{background:#1e293b;color:#cbd5e1;cursor:default;border-color:#334155}
+.runner.done .perf{color:#fff;font-weight:800;font-size:14px}
+.runner .acts{display:flex;gap:6px;margin-top:auto;flex-wrap:wrap}
+.runner .acts .btn{min-height:32px;padding:3px 9px;font-size:12px}
+.vb{width:42px;height:38px;border-radius:10px;border:2px solid #cbd5e1;background:#fff;font-weight:900;font-size:18px;cursor:pointer;color:#98a2b3}
+.vb.y{background:#2563eb;border-color:#2563eb;color:#fff}
+.vb.n{background:#e11d48;border-color:#e11d48;color:#fff}
+.stepper{display:inline-flex;align-items:center;gap:6px}
+.stepper b{min-width:34px;text-align:center;font-size:20px}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:#111827;color:#fff;padding:11px 18px;border-radius:12px;font-weight:600;opacity:0;pointer-events:none;transition:.25s;z-index:99;max-width:calc(100% - 32px);text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.empty{padding:26px;text-align:center;color:var(--muted);border:2px dashed var(--line);border-radius:14px}
+@media (max-width:600px){
+  main{padding:12px 16px 70px}
+  .card{padding:14px;border-radius:14px}
+  .ct th,.ct td{padding:7px 8px;font-size:13px}
+  .runners{grid-template-columns:repeat(auto-fill,minmax(135px,1fr))}
+}
+/* ---- Impression : fiche observateur ---- */
+@media screen{#print-root{display:none}}
+@media print{
+  @page{size:A4 landscape;margin:6mm}
+  html,body{background:#fff}
+  body>*:not(#print-root){display:none!important}
+  #print-root{display:block}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+.fiche{page-break-after:always;break-after:page;color:#000;font-size:9.5pt;font-family:Arial,Helvetica,sans-serif}
+.fiche:last-child{page-break-after:auto;break-after:auto}
+.fiche .fh{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin-bottom:3mm}
+.fiche .fh h1{font-size:14pt;margin:0}
+.fiche .fh .who{font-size:11pt;display:flex;gap:10mm}
+.fiche .fh .who span{white-space:nowrap}
+.fiche .cons{font-size:8.5pt;margin:0 0 2mm}
+.fiche table.ct{table-layout:fixed;width:100%;font-size:9pt}
+.fiche .ct th,.fiche .ct td{border:1px solid #8b93a7;padding:1px 2px;text-align:center;white-space:normal;height:11.3mm}
+.fiche .ct thead th{height:6mm}
+.fiche .ct td .tt{display:block;font-weight:800;font-size:10.5pt;line-height:1.1}
+.fiche .ct td .dd{display:block;font-size:6.5pt;color:#333;line-height:1.1}
+.fiche .ct td .bx{display:inline-block;width:3.2mm;height:3.2mm;border:1.4px solid #000;border-radius:1px;background:#fff;margin-top:.5mm}
+.fiche .ct td.lap{box-shadow:inset 0 0 0 2.2px #111}
+.fiche .ct td.vide{background:#fff}
+.fiche .ff{display:flex;gap:8mm;margin-top:2.5mm;font-size:10pt;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <h1><span class="logo">🏃</span>EPS Joliot Curie - Endurance</h1>
+    <button class="sync" id="sync" data-act="syncNow" title="Synchroniser">💾 Local</button>
+  </div>
+  <nav class="tabs" id="tabs"></nav>
+</header>
+<main id="app"></main>
+<div id="print-root"></div>
+<div id="toast"></div>
+<noscript><p style="padding:20px">JavaScript doit être activé pour utiliser l'application.</p></noscript>
+
+<!-- Code Google Apps Script à installer dans le Google Sheet (affiché dans l'onglet Général) -->
+<script type="text/plain" id="gs-code">// ===== EPS Joliot Curie - Endurance : script de synchronisation =====
+// À coller dans : Google Sheet des élèves > Extensions > Apps Script
+const SAVE_SHEET = '_sauvegarde_app';
+const RESERVED = [SAVE_SHEET, 'Résultats VMA', 'Résultats Fractionné', 'Synthèse classes'];
+
+function doGet(e) {
+  const p = (e && e.parameter) || {};
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let out;
+  if (p.action === 'classes') {
+    out = { ok: true, classes: ss.getSheets().map(function (s) { return s.getName(); })
+      .filter(function (n) { return RESERVED.indexOf(n) < 0; }) };
+  } else if (p.action === 'read') {
+    const sh = ss.getSheetByName(p.sheet);
+    out = sh ? { ok: true, rows: sh.getDataRange().getDisplayValues() }
+             : { ok: false, error: 'Onglet introuvable : ' + p.sheet };
+  } else {
+    out = { ok: true, state: loadState_() };
+  }
+  return json_(out);
+}
+
+function doPost(e) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    const data = JSON.parse(e.postData.contents);
+    const current = loadState_();
+    if (current && data.state && current.updatedAt > data.state.updatedAt) {
+      return json_({ ok: false, conflict: true, state: current });
+    }
+    saveState_(data.state);
+    if (data.tables) writeTables_(data.tables);
+    return json_({ ok: true, updatedAt: data.state.updatedAt });
+  } catch (err) {
+    return json_({ ok: false, error: String(err) });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function loadState_() {
+  const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SAVE_SHEET);
+  if (!sh || sh.getLastRow() === 0) return null;
+  const txt = sh.getRange(1, 1, sh.getLastRow(), 1).getValues()
+    .map(function (r) { return String(r[0]).substring(1); }).join('');
+  try { return JSON.parse(txt); } catch (err) { return null; }
+}
+
+function saveState_(state) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(SAVE_SHEET);
+  if (!sh) { sh = ss.insertSheet(SAVE_SHEET); sh.hideSheet(); }
+  const txt = JSON.stringify(state);
+  const rows = [];
+  for (let i = 0; i < txt.length; i += 40000) rows.push(['~' + txt.substring(i, i + 40000)]);
+  sh.clearContents();
+  sh.getRange(1, 1, rows.length, 1).setValues(rows);
+}
+
+function writeTables_(tables) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  Object.keys(tables).forEach(function (name) {
+    const rows = tables[name];
+    const sh = ss.getSheetByName(name) || ss.insertSheet(name);
+    sh.clearContents();
+    if (!rows || !rows.length) return;
+    const w = Math.max.apply(null, rows.map(function (r) { return r.length; }));
+    const data = rows.map(function (r) { const x = r.slice(); while (x.length < w) x.push(''); return x; });
+    sh.getRange(1, 1, data.length, w).setValues(data);
+    sh.getRange(1, 1, 1, w).setFontWeight('bold').setBackground('#4f46e5').setFontColor('#ffffff');
+    sh.setFrozenRows(1);
+  });
+}
+
+function json_(o) {
+  return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
+}
+</script>
+
+<script>
+'use strict';
+/* =====================================================================
+   Constantes
+   ===================================================================== */
+const DEFAULT_SHEET = 'https://docs.google.com/spreadsheets/d/1TxC2qvopFyqIej-voYN-HquozjlsaNCaDHfSjIOJ_D4/edit?gid=326295564#gid=326295564';
+const DEFAULT_TABS = ['3ème1', '3ème2', '3ème3', '3ème4'];
+const LS_STATE = 'eps_endurance_state_v1';
+const LS_CFG = 'eps_endurance_cfg_v1';
+const DURS = [18, 36, 90, 180];
+
+// Test VMA (Léger-Boucher) : départ 7 km/h, +1 km/h toutes les 2 min, dernier palier 18 km/h, plots tous les 50 m
+const V_START = 7, V_STEP = 1, V_LAST = 18, PAL_DUR = 120, PLOT = 50;
+const PALIERS = [];
+for (let v = V_START; v <= V_LAST + 1e-9; v += V_STEP) PALIERS.push(v);
+const TOTAL_T = PALIERS.length * PAL_DUR;
+const PAL_DIST = PALIERS.map(v => v / 3.6 * PAL_DUR);
+const CUM_D = PAL_DIST.reduce((a, d, i) => (a.push((a[i - 1] || 0) + d), a), []);
+const TOTAL_D = CUM_D[CUM_D.length - 1];
+
+function distAt(t) {
+  t = Math.max(0, Math.min(t, TOTAL_T));
+  let d = 0;
+  for (let i = 0; i < PALIERS.length; i++) {
+    const st = i * PAL_DUR;
+    if (t >= st + PAL_DUR) d += PAL_DIST[i];
+    else { d += (t - st) * PALIERS[i] / 3.6; break; }
+  }
+  return d;
+}
+function timeAtDist(D) {
+  let d = 0;
+  for (let i = 0; i < PALIERS.length; i++) {
+    if (D <= d + PAL_DIST[i] + 1e-7) return i * PAL_DUR + (D - d) / (PALIERS[i] / 3.6);
+    d += PAL_DIST[i];
+  }
+  return TOTAL_T;
+}
+// Coups de sifflet : un à chaque plot (tous les 50 m), le palier est celui dans lequel tombe le sifflet
+const WHISTLES = [];
+for (let k = 1; k * PLOT <= TOTAL_D + 1e-6; k++) {
+  const t = timeAtDist(k * PLOT);
+  let p = 0;
+  while (p < PALIERS.length - 1 && t > (p + 1) * PAL_DUR + 1e-6) p++;
+  WHISTLES.push({ k, d: k * PLOT, t, p });
+}
+// Performance à partir du temps de course
+function perfAt(t) {
+  t = Math.max(0, Math.min(t, TOTAL_T));
+  if (t >= TOTAL_T - 1e-6) {
+    const n = PALIERS.length;
+    return { p: n, v: PALIERS[n - 1], vma: PALIERS[n - 1], t, d: Math.round(TOTAL_D) };
+  }
+  const i = Math.floor(t / PAL_DUR);
+  const within = t - i * PAL_DUR;
+  const v = PALIERS[i];
+  // Palier validé si l'élève a couru plus de la moitié du palier, sinon VMA ajustée à 0,5 km/h près
+  const vma = within > PAL_DUR / 2 ? v : v - V_STEP / 2;
+  return { p: i + 1, v, vma, t, d: Math.round(distAt(t)) };
+}
+
+/* =====================================================================
+   Utilitaires
+   ===================================================================== */
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const pad = n => String(n).padStart(2, '0');
+const todayISO = () => { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
+const fmtDate = iso => iso ? iso.split('-').reverse().join('/') : '';
+const fmtT = t => { t = Math.max(0, Math.round(t)); return Math.floor(t / 60) + ':' + pad(t % 60); };
+const fmtNum = (x, d = 1) => (x == null || isNaN(x)) ? '—' : (Number.isInteger(x) ? String(x) : x.toFixed(d).replace('.', ','));
+const fmtVMA = x => fmtNum(x, 1);
+const fmtDur = s => s < 60 ? s + '"' : (s % 60 ? Math.floor(s / 60) + "'" + pad(s % 60) : s / 60 + "'");
+const durSay = s => s < 60 ? s + ' secondes' : (s % 60 ? Math.floor(s / 60) + ' minute ' + (s % 60) : (s / 60) + (s === 60 ? ' minute' : ' minutes'));
+const parseNum = v => { const n = parseFloat(String(v).replace(',', '.')); return isNaN(n) ? null : n; };
+const norm = s => String(s == null ? '' : s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim();
+const byName = (a, b) => a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' });
+const fracDist = (vma, sec, pct) => vma ? Math.round(vma / 3.6 * sec * pct / 100) : null;
+const plotsTxt = d => d == null ? '' : (Math.floor(d / PLOT) + ' plot' + (Math.floor(d / PLOT) > 1 ? 's' : '') + (d % PLOT ? ' + ' + (d % PLOT) + ' m' : ''));
+function loadJSON(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
+function saveJSON(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
+let toastTimer;
+function toast(msg, ms = 2800) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), ms);
+}
+function download(name, blob) {
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+}
+
+/* =====================================================================
+   État & sauvegarde
+   ===================================================================== */
+const newState = () => ({ v: 1, updatedAt: 0, classOrder: [], classes: {} });
+let state = loadJSON(LS_STATE) || newState();
+let cfg = Object.assign({ sheetUrl: DEFAULT_SHEET, scriptUrl: '', tabs: DEFAULT_TABS.slice() }, loadJSON(LS_CFG) || {});
+const saveCfg = () => saveJSON(LS_CFG, cfg);
+
+const ui = { tab: 'general', cls: {}, avail: null, picked: new Set(), sort: {}, busy: false };
+const clsUI = c => ui.cls[c] || (ui.cls[c] = { sub: 'seances', sid: null, newOpen: false });
+let live = null; // chrono en cours (non sauvegardé)
+
+function commit(opts = {}) {
+  state.updatedAt = Date.now();
+  if (!saveJSON(LS_STATE, state)) toast('⚠ Sauvegarde locale impossible (stockage plein ou bloqué)');
+  if (cfg.scriptUrl) schedulePush(); else setSync('local');
+  if (opts.render !== false) render();
+}
+
+/* ---------- Synchronisation Google Sheet (Apps Script) ---------- */
+let pushTimer = null, pushing = false, pendingPush = false, lastSync = null;
+function setSync(st, msg) {
+  const b = $('#sync'); if (!b) return;
+  b.classList.toggle('err', st === 'err');
+  b.title = msg || '';
+  b.textContent = st === 'busy' ? '⟳ Synchronisation…'
+    : st === 'ok' ? '☁ Synchronisé ' + (lastSync ? new Date(lastSync).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '')
+    : st === 'err' ? '⚠ Non synchronisé'
+    : st === 'pending' ? '💾 Enregistré · envoi…'
+    : '💾 Enregistré (appareil)';
+}
+function schedulePush() {
+  setSync('pending');
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(pushRemote, 1500);
+}
+async function getJSON(url) {
+  const r = await fetch(url, { cache: 'no-store' });
+  const txt = await r.text();
+  try { return JSON.parse(txt); } catch (e) { throw new Error('Réponse invalide du script (vérifiez l\'URL et l\'accès « Tout le monde »)'); }
+}
+async function pushRemote() {
+  if (!cfg.scriptUrl) return;
+  if (pushing) { pendingPush = true; return; }
+  pushing = true; setSync('busy');
+  try {
+    const res = await fetch(cfg.scriptUrl, { method: 'POST', body: JSON.stringify({ action: 'save', state, tables: buildSheetTables() }) });
+    const j = JSON.parse(await res.text());
+    if (j.conflict && j.state) adoptRemote(j.state, 'Une version plus récente (autre appareil) a été récupérée.');
+    else if (j.ok) { lastSync = Date.now(); setSync('ok'); }
+    else throw new Error(j.error || 'Erreur du script');
+  } catch (e) { setSync('err', e.message); }
+  finally {
+    pushing = false;
+    if (pendingPush) { pendingPush = false; pushRemote(); }
+  }
+}
+async function pullRemote() {
+  if (!cfg.scriptUrl || pushing) return;
+  setSync('busy');
+  try {
+    const j = await getJSON(cfg.scriptUrl + '?action=load&t=' + Date.now());
+    if (!j.ok) throw new Error(j.error || 'Erreur du script');
+    const r = j.state;
+    if (r && r.updatedAt > state.updatedAt) adoptRemote(r, 'Dernière version récupérée depuis Google Sheet.');
+    else if (!r || r.updatedAt < state.updatedAt) { pushing = false; await pushRemote(); }
+    else { lastSync = Date.now(); setSync('ok'); }
+  } catch (e) { setSync('err', e.message); }
+}
+function adoptRemote(r, msg) {
+  if (live) { toast('Version distante ignorée pendant un chrono en cours'); schedulePush(); return; }
+  state = r;
+  saveJSON(LS_STATE, state);
+  lastSync = Date.now(); setSync('ok');
+  render(); toast(msg);
+}
+
+/* =====================================================================
+   Import des élèves (Google Sheet)
+   ===================================================================== */
+const sheetId = u => { const m = String(u || '').match(/\/d\/([a-zA-Z0-9-_]+)/); return m ? m[1] : (/^[a-zA-Z0-9-_]{25,}$/.test(u) ? u : null); };
+function parseCSV(txt) {
+  const rows = []; let row = [], f = '', q = false;
+  for (let i = 0; i < txt.length; i++) {
+    const c = txt[i];
+    if (q) { if (c === '"') { if (txt[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += c; }
+    else if (c === '"') q = true;
+    else if (c === ',') { row.push(f); f = ''; }
+    else if (c === '\n') { row.push(f); rows.push(row); row = []; f = ''; }
+    else if (c !== '\r') f += c;
+  }
+  if (f !== '' || row.length) { row.push(f); rows.push(row); }
+  return rows;
+}
+function normSexe(v) {
+  const n = norm(v); if (!n) return '';
+  if (/^(f|fille|feminin|femme|w)/.test(n)) return 'F';
+  if (/^(g|m|garcon|masculin|homme|h)/.test(n)) return 'G';
+  return String(v).trim().toUpperCase().slice(0, 1);
+}
+function detectHeader(r) {
+  const m = {};
+  r.forEach((c, i) => {
+    const n = norm(c); if (!n) return;
+    if (/(nom.*prenom|prenom.*nom|eleve|identite|nom complet)/.test(n)) { if (m.full == null) m.full = i; }
+    else if (/^prenom/.test(n)) { if (m.prenom == null) m.prenom = i; }
+    else if (/^nom/.test(n)) { if (m.nom == null) m.nom = i; }
+    else if (/^(classe|division)/.test(n)) { if (m.classe == null) m.classe = i; }
+    else if (/^(sexe|genre|s|f\/g|g\/f|m\/f|f\/m)$/.test(n)) { if (m.sexe == null) m.sexe = i; }
+  });
+  return (m.full != null || m.nom != null) ? m : null;
+}
+function parseStudents(rows, tab) {
+  rows = (rows || []).map(r => r.map(c => String(c == null ? '' : c).trim())).filter(r => r.some(c => c));
+  if (!rows.length) return [];
+  let map = null, start = 0;
+  for (let i = 0; i < Math.min(5, rows.length); i++) { const m = detectHeader(rows[i]); if (m) { map = m; start = i + 1; break; } }
+  if (!map) map = { full: 0, classe: 1, sexe: 2 };
+  return rows.slice(start).map(r => {
+    let name = map.full != null ? r[map.full] : [r[map.nom], map.prenom != null ? r[map.prenom] : ''].filter(Boolean).join(' ');
+    name = (name || '').replace(/\s+/g, ' ').trim();
+    if (!name) return null;
+    return { name, classe: (map.classe != null && r[map.classe]) || tab, sexe: map.sexe != null ? normSexe(r[map.sexe]) : '' };
+  }).filter(Boolean);
+}
+async function fetchTab(name) {
+  if (cfg.scriptUrl) {
+    const j = await getJSON(cfg.scriptUrl + '?action=read&sheet=' + encodeURIComponent(name) + '&t=' + Date.now());
+    if (!j.ok) throw new Error(j.error || 'Lecture impossible');
+    return j.rows;
+  }
+  const id = sheetId(cfg.sheetUrl);
+  if (!id) throw new Error('Adresse du Google Sheet invalide');
+  const res = await fetch('https://docs.google.com/spreadsheets/d/' + id + '/gviz/tq?tqx=out:csv&headers=1&sheet=' + encodeURIComponent(name), { cache: 'no-store' });
+  const txt = await res.text();
+  if (!res.ok || /^\s*</.test(txt)) throw new Error('Google Sheet inaccessible : partagez-le en « Tous les utilisateurs disposant du lien » ou installez le script de synchronisation.');
+  return parseCSV(txt);
+}
+function mergeClass(name, studs) {
+  let C = state.classes[name], added = 0;
+  if (!C) {
+    C = state.classes[name] = { name, students: [], sessions: [] };
+    state.classOrder.push(name);
+    state.classOrder.sort((a, b) => a.localeCompare(b, 'fr', { numeric: true }));
+  }
+  const idx = new Map(C.students.map(s => [norm(s.name), s]));
+  studs.forEach(s => {
+    const ex = idx.get(norm(s.name));
+    if (ex) { ex.classe = s.classe || ex.classe; if (s.sexe) ex.sexe = s.sexe; }
+    else { C.students.push(Object.assign({ id: uid() }, s)); added++; }
+  });
+  return { added, total: C.students.length };
+}
+
+/* =====================================================================
+   Audio : sifflet synthétisé (fort, strident) + voix
+   ===================================================================== */
+const Snd = {
+  ctx: null, master: null,
+  init() {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) { toast('Audio non disponible sur ce navigateur'); return; }
+    if (!this.ctx) {
+      this.ctx = new AC();
+      const comp = this.ctx.createDynamicsCompressor();
+      comp.threshold.value = -10; comp.knee.value = 6; comp.ratio.value = 10; comp.attack.value = 0.002; comp.release.value = 0.12;
+      this.master = this.ctx.createGain(); this.master.gain.value = 1;
+      this.master.connect(comp); comp.connect(this.ctx.destination);
+    }
+    if (this.ctx.state !== 'running') this.ctx.resume();
+    try { // déverrouillage iOS
+      const b = this.ctx.createBuffer(1, 1, 22050), s = this.ctx.createBufferSource();
+      s.buffer = b; s.connect(this.ctx.destination); s.start(0);
+    } catch (e) {}
+  },
+  bus() { const g = this.ctx.createGain(); g.connect(this.master); return g; },
+  play(kind, bus, t) {
+    switch (kind) {
+      case 'whistle': this.whistle(bus, t, 0.38); break;
+      case 'long': this.whistle(bus, t, 0.95); break;
+      case 'double': this.whistle(bus, t, 0.22); this.whistle(bus, t + 0.32, 0.22); break;
+      case 'end': this.whistle(bus, t, 0.28); this.whistle(bus, t + 0.42, 0.28); this.whistle(bus, t + 0.84, 1.1); break;
+      case 'beep': this.beep(bus, t, 880, 0.15); break;
+      case 'palier': this.beep(bus, t, 1047, 0.12); this.beep(bus, t + 0.17, 1397, 0.2); break;
+    }
+  },
+  whistle(bus, t, dur) {
+    const c = this.ctx;
+    const env = c.createGain();
+    env.gain.setValueAtTime(0.0001, t);
+    env.gain.exponentialRampToValueAtTime(0.95, t + 0.012);
+    env.gain.setValueAtTime(0.95, t + dur - 0.03);
+    env.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    env.connect(bus);
+    const am = c.createGain(); am.gain.value = 0.7; am.connect(env);
+    const lfo = c.createOscillator(); lfo.frequency.value = 31;             // roulement de la bille
+    const lfoA = c.createGain(); lfoA.gain.value = 0.3; lfo.connect(lfoA); lfoA.connect(am.gain);
+    const lfoF = c.createGain(); lfoF.gain.value = 170; lfo.connect(lfoF);
+    const o1 = c.createOscillator(); o1.type = 'sine'; o1.frequency.value = 3150;
+    const o2 = c.createOscillator(); o2.type = 'square'; o2.frequency.value = 3150;
+    const g2 = c.createGain(); g2.gain.value = 0.16;
+    const o3 = c.createOscillator(); o3.type = 'sine'; o3.frequency.value = 2480;
+    const g3 = c.createGain(); g3.gain.value = 0.35;
+    lfoF.connect(o1.frequency); lfoF.connect(o2.frequency); lfoF.connect(o3.frequency);
+    o1.connect(am); o2.connect(g2); g2.connect(am); o3.connect(g3); g3.connect(am);
+    [lfo, o1, o2, o3].forEach(o => { o.start(t); o.stop(t + dur + 0.05); });
+  },
+  beep(bus, t, f, dur) {
+    const c = this.ctx, o = c.createOscillator(), g = c.createGain();
+    o.type = 'triangle'; o.frequency.value = f;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.9, t + 0.01);
+    g.gain.setValueAtTime(0.9, t + dur - 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(bus); o.start(t); o.stop(t + dur + 0.03);
+  }
+};
+let frVoice = null;
+function pickVoice() {
+  if (!('speechSynthesis' in window)) return;
+  const vs = speechSynthesis.getVoices();
+  frVoice = vs.find(v => /^fr[-_]FR/i.test(v.lang) && /(Thomas|Am[eé]lie|Audrey|Google|Marie|Denise|Henri)/i.test(v.name))
+    || vs.find(v => /^fr[-_]FR/i.test(v.lang)) || vs.find(v => /^fr/i.test(v.lang)) || null;
+}
+if ('speechSynthesis' in window) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+function speak(txt) {
+  if (!('speechSynthesis' in window)) return;
+  try {
+    const u = new SpeechSynthesisUtterance(txt);
+    u.lang = 'fr-FR'; if (frVoice) u.voice = frVoice; u.rate = 1.02; u.volume = 1;
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+function unlockSpeech() { try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u); } catch (e) {} }
+let wakeLock = null;
+async function keepAwake(on) {
+  try {
+    if (on && 'wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen');
+    else if (!on && wakeLock) { await wakeLock.release(); wakeLock = null; }
+  } catch (e) {}
+}
+
+/* Chronologie d'événements sonores (planification précise sur l'horloge audio) */
+class Timeline {
+  constructor(events, o) {
+    this.events = events.slice().sort((a, b) => a.t - b.t);
+    this.lead = o.lead || 5; this.end = o.end; this.onTick = o.onTick; this.onEnd = o.onEnd;
+    this.paused = false; this.done = false; this.gen = 0;
+  }
+  start() {
+    Snd.init(); if (!Snd.ctx) return;
+    this.base = Snd.ctx.currentTime + this.lead;
+    this.bus = Snd.bus();
+    this.timer = setInterval(() => this.loop(), 80);
+    this.loop();
+  }
+  elapsed() { return this.paused ? this.pausedAt : Snd.ctx.currentTime - this.base; }
+  loop() {
+    const e = this.elapsed();
+    if (!this.paused && !this.done) {
+      for (const ev of this.events) {
+        if (ev._s) continue;
+        if (ev.t > e + 2.5) break;
+        ev._s = true;
+        if (ev.t < e - 0.3) continue; // événement manqué (appli en arrière-plan)
+        if (ev.snd) Snd.play(ev.snd, this.bus, Math.max(Snd.ctx.currentTime, this.base + ev.t));
+        if (ev.say) {
+          const g = this.gen;
+          setTimeout(() => { if (g === this.gen && !this.done) speak(ev.say); }, Math.max(0, (ev.t - e) * 1000));
+        }
+      }
+    }
+    if (this.onTick) this.onTick(e);
+    if (!this.done && this.end != null && e >= this.end) { this.stop(false); if (this.onEnd) this.onEnd(); }
+  }
+  pause() {
+    if (this.paused || this.done) return;
+    this.pausedAt = this.elapsed(); this.paused = true; this.gen++;
+    try { this.bus.disconnect(); } catch (e) {}
+    if ('speechSynthesis' in window) speechSynthesis.cancel();
+    this.events.forEach(ev => { if (ev.t > this.pausedAt) ev._s = false; });
+  }
+  resume() {
+    if (!this.paused) return;
+    Snd.init();
+    this.base = Snd.ctx.currentTime - this.pausedAt;
+    this.bus = Snd.bus(); this.paused = false;
+  }
+  stop(cancelSpeech = true) {
+    this.done = true; this.gen++;
+    clearInterval(this.timer);
+    try { this.bus.disconnect(); } catch (e) {}
+    if (cancelSpeech && 'speechSynthesis' in window) speechSynthesis.cancel();
+  }
+}
+
+/* =====================================================================
+   Données dérivées
+   ===================================================================== */
+const sortedStudents = C => C.students.slice().sort(byName);
+const findSession = (C, id) => C.sessions.find(s => s.id === id);
+function latestVMA(C, sid) {
+  const ss = C.sessions.filter(s => s.type === 'vma' && s.results && s.results[sid])
+    .sort((a, b) => (b.date || '').localeCompare(a.date || '') || b.createdAt - a.createdAt);
+  if (!ss.length) return null;
+  return Object.assign(perfAt(ss[0].results[sid].t), { date: ss[0].date, r: ss[0].results[sid] });
+}
+function vmaHistory(C, sid) {
+  return C.sessions.filter(s => s.type === 'vma' && s.results && s.results[sid])
+    .sort((a, b) => (a.date || '').localeCompare(b.date || '') || a.createdAt - b.createdAt)
+    .map(s => perfAt(s.results[sid].t).vma);
+}
+function fracStats(C, sid) {
+  let y = 0, n = 0;
+  C.sessions.filter(s => s.type === 'frac').forEach(s => (s.valid[sid] || []).slice(0, s.reps).forEach(v => { if (v === 1) y++; else if (v === 0) n++; }));
+  return { y, n, pct: y + n ? Math.round(y / (y + n) * 100) : null };
+}
+function fracVMA(C, s, sid) {
+  if (s.vmaOv[sid] != null) return s.vmaOv[sid];
+  const L = latestVMA(C, sid); return L ? L.vma : null;
+}
+function recapRows(C) {
+  return sortedStudents(C).map(st => {
+    const L = latestVMA(C, st.id), F = fracStats(C, st.id);
+    return { st, L, F, hist: vmaHistory(C, st.id) };
+  });
+}
+function buildSheetTables() {
+  const vma = [['Classe', 'Nom Prénom', 'Sexe', 'Date', 'Groupe', 'Piste (m)', 'Palier', 'Vitesse palier (km/h)', 'Temps (s)', 'Temps', 'Distance (m)', 'VMA (km/h)', 'Retards', 'Éliminé']];
+  const frac = [['Classe', 'Nom Prénom', 'Date', 'Rôle', 'Binôme', 'Travail (s)', 'Récup (s)', 'Répétitions', '% VMA', 'VMA (km/h)', 'Objectif (m)', 'Réussites', 'Échecs', 'Détail']];
+  const syn = [['Classe', 'Nom Prénom', 'Sexe', 'VMA (km/h)', 'Date du test', 'Palier', 'Vitesse palier (km/h)', 'Temps', 'Distance (m)', 'Historique VMA', 'Réussite fractionné (%)']];
+  state.classOrder.forEach(cn => {
+    const C = state.classes[cn]; if (!C) return;
+    const byId = new Map(C.students.map(s => [s.id, s]));
+    C.sessions.slice().sort((a, b) => (a.date || '').localeCompare(b.date || '')).forEach(s => {
+      if (s.type === 'vma') {
+        sortedStudents(C).forEach(st => {
+          const r = s.results[st.id]; if (!r) return;
+          const p = perfAt(r.t);
+          vma.push([cn, st.name, st.sexe, fmtDate(s.date), r.g || s.groups[st.id] || '', s.track, p.p, p.v, Math.round(r.t * 10) / 10, fmtT(r.t), p.d, p.vma, r.ret || 0, r.elim ? 'oui' : '']);
+        });
+      } else {
+        sortedStudents(C).forEach(st => {
+          const role = s.roles[st.id]; if (role !== 'C' && role !== 'O') return;
+          const vals = (s.valid[st.id] || []).slice(0, s.reps);
+          const v = fracVMA(C, s, st.id), pa = byId.get(s.partner[st.id]);
+          frac.push([cn, st.name, fmtDate(s.date), role === 'C' ? 'Coureur (1er)' : 'Observateur (1er)', pa ? pa.name : '', s.work, s.rest, s.reps, s.pct, v == null ? '' : v,
+            fracDist(v, s.work, s.pct) == null ? '' : fracDist(v, s.work, s.pct), vals.filter(x => x === 1).length, vals.filter(x => x === 0).length,
+            vals.map(x => x === 1 ? '✓' : x === 0 ? '✗' : '·').join(' ')]);
+        });
+      }
+    });
+    recapRows(C).forEach(({ st, L, F, hist }) => syn.push([cn, st.name, st.sexe, L ? L.vma : '', L ? fmtDate(L.date) : '', L ? L.p : '', L ? L.v : '', L ? fmtT(L.t) : '', L ? L.d : '', hist.map(fmtVMA).join(' → '), F.pct == null ? '' : F.pct]));
+  });
+  return { 'Résultats VMA': vma, 'Résultats Fractionné': frac, 'Synthèse classes': syn };
+}
+function exportXLSX(filename, sheets) {
+  if (window.XLSX) {
+    const wb = XLSX.utils.book_new();
+    sheets.forEach(sh => {
+      const ws = XLSX.utils.aoa_to_sheet(sh.rows);
+      ws['!cols'] = (sh.rows[0] || []).map((_, i) => ({ wch: Math.min(40, Math.max(6, ...sh.rows.map(r => String(r[i] == null ? '' : r[i]).length)) + 2) }));
+      XLSX.utils.book_append_sheet(wb, ws, sh.name.replace(/[\\\/\?\*\[\]:]/g, '-').slice(0, 31));
+    });
+    XLSX.writeFile(wb, filename + '.xlsx');
+  } else {
+    const rows = sheets[0].rows;
+    const csv = rows.map(r => r.map(c => { const s = String(c == null ? '' : c); return /[;"\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }).join(';')).join('\r\n');
+    download(filename + '.csv', new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' }));
+    toast('Bibliothèque Excel indisponible (hors ligne) : export CSV compatible Excel');
+  }
+}
+
+/* =====================================================================
+   Tableaux triables
+   ===================================================================== */
+const cell = (s, h, cls) => ({ s, h, cls });
+function sortTable(key, heads, rows, def = { col: 0, dir: 1 }) {
+  const st = ui.sort[key] || def;
+  const cmpCell = (a, b) => {
+    const x = a.cells[st.col] && a.cells[st.col].s, y = b.cells[st.col] && b.cells[st.col].s;
+    const ex = x == null || x === '', ey = y == null || y === '';
+    if (ex && ey) return 0; if (ex) return 1; if (ey) return -1;
+    if (typeof x === 'number' && typeof y === 'number') return (x - y) * st.dir;
+    return String(x).localeCompare(String(y), 'fr', { numeric: true, sensitivity: 'base' }) * st.dir;
+  };
+  const sorted = rows.slice().sort((a, b) => cmpCell(a, b) || String(a.cells[0].s).localeCompare(String(b.cells[0].s), 'fr'));
+  return `<div class="tw"><table class="ct"><thead><tr>${heads.map((h, i) => {
+    const hh = typeof h === 'string' ? { t: h } : h;
+    if (hh.nosort) return `<th class="${hh.cls || ''}">${hh.t}</th>`;
+    return `<th class="s ${hh.cls || ''}" data-act="sort" data-key="${esc(key)}" data-col="${i}">${hh.t}<span class="arr">${st.col === i ? (st.dir > 0 ? '▲' : '▼') : '↕'}</span></th>`;
+  }).join('')}</tr></thead><tbody>${sorted.length ? sorted.map(r => `<tr>${r.cells.map(c => `<td class="${c.cls || ''}">${c.h != null ? c.h : esc(c.s == null ? '' : c.s)}</td>`).join('')}</tr>`).join('')
+    : `<tr><td colspan="${heads.length}" style="text-align:center;color:#667085;padding:18px">Aucune donnée</td></tr>`}</tbody></table></div>`;
+}
+
+/* =====================================================================
+   Rendu
+   ===================================================================== */
+function render() {
+  if (ui.tab !== 'general' && !state.classes[ui.tab]) ui.tab = 'general';
+  $('#tabs').innerHTML = `<button class="${ui.tab === 'general' ? 'on' : ''}" data-act="tab" data-id="general">⚙️ Général</button>` +
+    state.classOrder.filter(c => state.classes[c]).map(c => `<button class="${ui.tab === c ? 'on' : ''}" data-act="tab" data-id="${esc(c)}">${esc(c)}<span class="n">${state.classes[c].students.length}</span></button>`).join('');
+  $('#app').innerHTML = ui.tab === 'general' ? viewGeneral() : viewClass(state.classes[ui.tab]);
+  if (live && live.tl) live.tl.onTick(live.tl.elapsed());
+}
+
+/* ---------- Onglet Général ---------- */
+function viewGeneral() {
+  const tabs = ui.avail || cfg.tabs;
+  const code = $('#gs-code').textContent;
+  return `
+  <section class="card hero">
+    <h2>👋 Bienvenue</h2>
+    <p><b>1.</b> Cochez les classes à importer depuis le Google Sheet. <b>2.</b> Chaque classe devient un onglet. <b>3.</b> Dans l'onglet d'une classe, créez une séance : <b>Test VMA</b> ou <b>Séance fractionnée</b>.</p>
+    <p>Chaque saisie est enregistrée automatiquement sur l'appareil et, si le script est installé, dans le Google Sheet (la version la plus récente, PC ou iPad, est récupérée à l'ouverture).</p>
+  </section>
+
+  <section class="card">
+    <h2>📥 Classes à importer</h2>
+    <label class="lbl">Google Sheet des élèves</label>
+    <div class="row"><input class="grow" type="url" value="${esc(cfg.sheetUrl)}" data-chg="sheetUrl"><button class="btn" data-act="loadTabs">🔄 Afficher les classes du fichier</button></div>
+    <p class="hint">${cfg.scriptUrl ? 'La liste des onglets est lue directement dans le fichier grâce au script.' : 'Sans script de synchronisation, la liste des onglets ne peut pas être lue automatiquement : ajoutez un nom d\'onglet si besoin. Le fichier doit être partagé « Tous les utilisateurs disposant du lien ».'}</p>
+    <div class="picklist">${tabs.map(n => {
+      const C = state.classes[n];
+      return `<label class="pick ${C ? 'imported' : ''}"><input type="checkbox" data-chg="pickTab" data-name="${esc(n)}" ${ui.picked.has(n) ? 'checked' : ''}><span>${esc(n)}</span><small>${C ? 'importée · ' + C.students.length + ' élèves' : 'non importée'}</small></label>`;
+    }).join('')}</div>
+    <div class="row"><input id="newTab" placeholder="Autre nom d'onglet…" style="flex:0 1 220px"><button class="btn" data-act="addTab">＋ Ajouter</button></div>
+    <div class="row"><button class="btn" data-act="pickAll">Tout cocher</button><button class="btn pri" id="importBtn" data-act="importPicked" ${ui.busy ? 'disabled' : ''}>⬇ Importer la sélection (${ui.picked.size})</button></div>
+    <p class="hint">Colonnes reconnues : « Nom Prénom » (ou « Nom » + « Prénom »), « Classe », « Sexe ». Réimporter une classe ajoute les nouveaux élèves sans effacer les résultats.</p>
+  </section>
+
+  <section class="card">
+    <h2>📚 Classes importées</h2>
+    ${state.classOrder.length ? `<div class="classes">${state.classOrder.map(c => {
+      const C = state.classes[c]; if (!C) return '';
+      const f = C.students.filter(s => s.sexe === 'F').length, g = C.students.filter(s => s.sexe === 'G').length;
+      return `<div class="clsbox"><b>${esc(c)}</b><div class="hint">${C.students.length} élèves · ${f} F / ${g} G · ${C.sessions.length} séance(s)</div>
+        <div class="row"><button class="btn pri sm" data-act="tab" data-id="${esc(c)}">Ouvrir</button><button class="btn danger sm" data-act="delClass" data-id="${esc(c)}">Supprimer</button></div></div>`;
+    }).join('')}</div>` : '<div class="empty">Aucune classe importée pour l\'instant.</div>'}
+  </section>
+
+  <section class="card">
+    <h2>☁️ Synchronisation Google Sheet (PC ⇄ iPad)</h2>
+    <label class="lbl">URL du script (application Web, se termine par /exec)</label>
+    <div class="row"><input class="grow" type="url" placeholder="https://script.google.com/macros/s/…/exec" value="${esc(cfg.scriptUrl)}" data-chg="scriptUrl">
+      <button class="btn" data-act="testScript">Tester</button><button class="btn pri" data-act="syncNow">Synchroniser</button></div>
+    <p class="hint">À renseigner une fois sur chaque appareil (PC et iPad). Les résultats sont alors écrits dans les onglets « Résultats VMA », « Résultats Fractionné » et « Synthèse classes » du Google Sheet. Gardez cette URL privée.</p>
+    <details><summary>Comment installer le script (5 minutes)</summary>
+      <ol class="steps">
+        <li>Ouvrez le Google Sheet des élèves → menu <b>Extensions › Apps Script</b>.</li>
+        <li>Effacez le contenu, collez le code ci-dessous, puis <b>Enregistrer</b>.</li>
+        <li><b>Déployer › Nouveau déploiement</b> → type <b>Application Web</b> ; Exécuter en tant que : <b>Moi</b> ; Qui a accès : <b>Tout le monde</b>.</li>
+        <li>Autorisez l'accès (Paramètres avancés › Accéder au projet).</li>
+        <li>Copiez l'URL de l'application Web et collez-la ci-dessus, sur le PC et sur l'iPad.</li>
+      </ol>
+      <div class="row"><button class="btn" data-act="copyCode">📋 Copier le code</button></div>
+      <pre class="code">${esc(code)}</pre>
+    </details>
+  </section>
+
+  <section class="card">
+    <h2>💾 Sauvegardes & exports</h2>
+    <div class="row">
+      <button class="btn pri" data-act="exportAll">📊 Exporter tous les résultats (Excel)</button>
+      <button class="btn" data-act="backup">⬇ Télécharger une sauvegarde (.json)</button>
+      <label class="btn">⬆ Restaurer une sauvegarde<input type="file" accept=".json,application/json" data-chg="restore" hidden></label>
+    </div>
+    <p class="hint">Dernière modification : ${state.updatedAt ? new Date(state.updatedAt).toLocaleString('fr-FR') : '—'}</p>
+  </section>`;
+}
+
+/* ---------- Onglet Classe ---------- */
+function viewClass(C) {
+  const u = clsUI(C.name);
+  if (u.sid) {
+    const s = findSession(C, u.sid);
+    if (s) return s.type === 'vma' ? viewVMA(C, s) : viewFrac(C, s);
+    u.sid = null;
+  }
+  const f = C.students.filter(s => s.sexe === 'F').length, g = C.students.filter(s => s.sexe === 'G').length;
+  return `
+  <div class="clshead"><h2>${esc(C.name)}</h2><span class="hint">${C.students.length} élèves · ${f} filles · ${g} garçons</span></div>
+  <div class="subnav">
+    ${[['seances', '🗓 Séances'], ['resultats', '🏆 Résultats'], ['eleves', '👥 Élèves']].map(([k, t]) => `<button class="${u.sub === k ? 'on' : ''}" data-act="sub" data-v="${k}">${t}</button>`).join('')}
+  </div>
+  ${u.sub === 'resultats' ? viewRecap(C) : u.sub === 'eleves' ? viewStudents(C) : viewSessions(C, u)}`;
+}
+
+function viewSessions(C, u) {
+  const list = C.sessions.slice().sort((a, b) => (b.date || '').localeCompare(a.date || '') || b.createdAt - a.createdAt);
+  const hasVMA = C.sessions.some(s => s.type === 'vma' && Object.keys(s.results).length);
+  return `
+  <section class="card">
+    <div class="row sp"><h3 style="margin:0">Séances</h3><button class="btn pri" data-act="toggleNew">${u.newOpen ? '✕ Fermer' : '＋ Nouvelle séance'}</button></div>
+    ${u.newOpen ? `<div class="note" style="margin-top:12px">
+      <label class="lbl" style="margin-top:0">Date de la séance</label><input type="date" id="newDate" value="${todayISO()}">
+      <div class="newsess">
+        <button class="bigchoice" data-act="createSession" data-v="vma"><span class="e">⏱️</span><b>Test VMA</b><span class="hint">Léger-Boucher : bande son, groupes A/B, fiches observateurs, résultats.</span></button>
+        <button class="bigchoice" data-act="createSession" data-v="frac"><span class="e">🔁</span><b>Séance fractionnée</b><span class="hint">Travail / récupération / répétitions, binômes, validation des objectifs.${hasVMA ? '' : ' <br>⚠ Aucun test VMA encore : VMA à saisir.'}</span></button>
+      </div></div>` : ''}
+    <div class="sessions" style="margin-top:14px">
+      ${list.length ? list.map(s => {
+        const isV = s.type === 'vma';
+        const sum = isV ? `${Object.keys(s.results).length} résultat(s) · piste ${s.track} m`
+          : `${s.reps} × ${fmtDur(s.work)} / ${fmtDur(s.rest)} · ${s.pct} % VMA · ${Object.values(s.roles).filter(r => r === 'C' || r === 'O').length} élèves`;
+        return `<div class="sess"><div class="ic ${s.type}">${isV ? '⏱️' : '🔁'}</div>
+          <div class="info"><b>${isV ? 'Test VMA' : 'Séance fractionnée'}</b> — ${fmtDate(s.date)}<div class="hint">${sum}</div></div>
+          <button class="btn pri" data-act="openSession" data-id="${s.id}">Ouvrir</button>
+          <button class="btn danger" data-act="delSession" data-id="${s.id}">🗑</button></div>`;
+      }).join('') : '<div class="empty">Aucune séance. Cliquez sur « Nouvelle séance ».</div>'}
+    </div>
+  </section>`;
+}
+
+function viewRecap(C) {
+  const rows = recapRows(C).map(({ st, L, F, hist }) => ({
+    cells: [
+      cell(st.name, `<b>${esc(st.name)}</b>`), cell(st.sexe),
+      cell(L ? L.vma : null, L ? `<b>${fmtVMA(L.vma)}</b>` : '—'),
+      cell(L ? L.p : null, L ? String(L.p) : '—'), cell(L ? L.v : null, L ? L.v + ' km/h' : '—'),
+      cell(L ? L.t : null, L ? fmtT(L.t) : '—'), cell(L ? L.d : null, L ? L.d + ' m' : '—'),
+      cell(L ? L.date : null, L ? fmtDate(L.date) : '—'),
+      cell(hist.length ? hist[hist.length - 1] : null, hist.length ? hist.map(fmtVMA).join(' → ') : '—'),
+      cell(F.pct, F.pct == null ? '—' : `${F.pct} % <span class="hint">(${F.y}/${F.y + F.n})</span>`)
+    ]
+  }));
+  return `<section class="card">
+    <div class="row sp"><h3 style="margin:0">🏆 Récapitulatif de la classe</h3><button class="btn pri" data-act="exportClass">📊 Export Excel</button></div>
+    <p class="hint">VMA du dernier test. Cliquez sur un titre de colonne pour trier.</p>
+    ${sortTable('recap-' + C.name, ['Nom Prénom', 'Sexe', 'VMA (km/h)', 'Palier', 'Vitesse palier', 'Temps', 'Distance', 'Date du test', 'Historique VMA', 'Fractionné réussi'], rows)}
+  </section>`;
+}
+
+function viewStudents(C) {
+  const rows = sortedStudents(C).map(st => {
+    const L = latestVMA(C, st.id);
+    return { cells: [
+      cell(st.name, `<b>${esc(st.name)}</b>`), cell(st.classe),
+      cell(st.sexe, `<div class="seg">${['F', 'G'].map(v => `<button class="${st.sexe === v ? 'on' : ''}" data-act="stSexe" data-id="${st.id}" data-v="${v}">${v}</button>`).join('')}</div>`),
+      cell(L ? L.vma : null, L ? fmtVMA(L.vma) + ' km/h' : '—'),
+      cell('', `<button class="btn danger sm" data-act="delStudent" data-id="${st.id}">Retirer</button>`)
+    ] };
+  });
+  return `<section class="card">
+    <h3>👥 Élèves (${C.students.length})</h3>
+    <div class="row"><input id="newStName" placeholder="Nom Prénom" style="flex:1 1 200px"><div class="seg" id="newStSexe"><button class="on" data-act="newSexe" data-v="F">F</button><button data-act="newSexe" data-v="G">G</button></div><button class="btn pri" data-act="addStudent">＋ Ajouter un élève</button></div>
+    ${sortTable('eleves-' + C.name, ['Nom Prénom', 'Classe', 'Sexe', 'VMA', { t: '', nosort: true }], rows)}
+  </section>`;
+}
+
+/* ---------- Séance : Test VMA ---------- */
+function viewVMA(C, s) {
+  const studs = sortedStudents(C);
+  const cnt = { A: 0, B: 0, X: 0 };
+  studs.forEach(st => { const g = s.groups[st.id]; cnt[g === 'A' || g === 'B' ? g : 'X']++; });
+  const doneIn = g => studs.filter(st => s.groups[st.id] === g && s.results[st.id]).length;
+
+  const groupRows = studs.map(st => {
+    const g = s.groups[st.id] || 'X', r = s.results[st.id], p = r ? perfAt(r.t) : null;
+    return { cells: [
+      cell(st.name, `<b>${esc(st.name)}</b>`), cell(st.classe), cell(st.sexe),
+      cell(g === 'X' ? 'Z' : g, `<div class="seg">${['A', 'B', 'X'].map(v => `<button class="${g === v ? 'on ' + v : ''}" data-act="setGroup" data-id="${st.id}" data-v="${v}" title="${v === 'X' ? 'Absent / non affecté' : 'Groupe ' + v}">${v === 'X' ? '—' : v}</button>`).join('')}</div>`),
+      cell(p ? p.vma : null, p ? `<b>${fmtVMA(p.vma)}</b> km/h` : '—')
+    ] };
+  });
+
+  const resStuds = studs.filter(st => s.results[st.id] || s.groups[st.id] === 'A' || s.groups[st.id] === 'B');
+  const resRows = resStuds.map(st => {
+    const r = s.results[st.id], p = r ? perfAt(r.t) : null;
+    const obs = r ? [r.elim ? 'Éliminé (2 retards)' : (r.ret ? r.ret + ' retard' : ''), r.manual ? 'saisie manuelle' : '', r.t >= TOTAL_T ? 'test terminé' : ''].filter(Boolean).join(' · ') : '';
+    return { cells: [
+      cell(st.name, `<b>${esc(st.name)}</b>`), cell(st.sexe), cell((r && r.g) || s.groups[st.id] || ''),
+      cell(p ? p.p : null, p ? String(p.p) : '—'), cell(p ? p.v : null, p ? p.v + ' km/h' : '—'),
+      cell(p ? p.t : null, p ? fmtT(p.t) : '—'), cell(p ? p.d : null, p ? p.d + ' m' : '—'),
+      cell(p ? p.vma : null, p ? `<b>${fmtVMA(p.vma)} km/h</b>` : '—'), cell(obs),
+      cell('', `<button class="btn sm" data-act="vmaEdit" data-id="${st.id}">✎</button>`)
+    ] };
+  });
+
+  const palRows = PALIERS.map((v, i) => ({ cells: [
+    cell(i + 1), cell(v, v + ' km/h'), cell(180 / v, fmtNum(180 / v, 1) + ' s'),
+    cell(i * PAL_DUR, fmtT(i * PAL_DUR) + ' → ' + fmtT((i + 1) * PAL_DUR)), cell(CUM_D[i], Math.round(CUM_D[i]) + ' m'),
+    cell(WHISTLES.filter(w => w.p === i).length)
+  ] }));
+
+  return `
+  <div class="sesshead"><button class="btn" data-act="back">← Séances</button><h2>⏱️ Test VMA — ${fmtDate(s.date)}</h2><button class="btn danger" data-act="delSession" data-id="${s.id}">Supprimer</button></div>
+
+  <section class="card">
+    <h3><span class="step">1</span>Paramètres</h3>
+    <div class="grid2">
+      <div><label class="lbl">Date</label><input type="date" value="${esc(s.date)}" data-chg="sessDate">
+        <label class="lbl">Longueur de la piste</label>
+        <div class="seg lg">${[100, 150].map(v => `<button class="${s.track === v ? 'on' : ''}" data-act="setTrack" data-v="${v}">${v} m</button>`).join('')}</div>
+      </div>
+      <div class="note">
+        <p>🚦 Départ à <b>${V_START} km/h</b>, <b>+${V_STEP} km/h toutes les 2 min</b>, dernier palier <b>${V_LAST} km/h</b>.</p>
+        <p>📍 Plots tous les 50 m · un coup de sifflet à chaque plot · la vitesse est annoncée au début de chaque palier.</p>
+        <p>⚠️ 2 retards consécutifs au plot = élève arrêté.</p>
+        <p>🎯 VMA = vitesse du palier si plus de la moitié du palier est courue, sinon vitesse − 0,5 km/h.</p>
+        <div class="row"><button class="btn" data-act="testSound">🔊 Tester le son</button></div>
+      </div>
+    </div>
+    <details><summary>Tableau des paliers</summary>${sortTable('pal', ['Palier', 'Vitesse', '50 m en', 'Période', 'Distance cumulée', 'Sifflets'], palRows)}</details>
+  </section>
+
+  <section class="card">
+    <h3><span class="step">2</span>Groupes</h3>
+    <div class="row"><span class="pill A">Groupe A <b>${cnt.A}</b></span><span class="pill B">Groupe B <b>${cnt.B}</b></span><span class="pill X">Absents / non affectés <b>${cnt.X}</b></span></div>
+    <div class="row"><button class="btn sm" data-act="groupsAlt">Répartir A / B en alternance</button><button class="btn sm" data-act="groupsAll" data-v="A">Tous en A</button><button class="btn sm" data-act="groupsAll" data-v="B">Tous en B</button><button class="btn sm" data-act="groupsAll" data-v="X">Tout effacer</button></div>
+    <p class="hint">Le groupe qui ne court pas observe avec la fiche des temps de passage.</p>
+    ${sortTable('grp-' + s.id, ['Nom Prénom', 'Classe', 'Sexe', 'Groupe', 'VMA'], groupRows)}
+  </section>
+
+  <section class="card">
+    <h3><span class="step">3</span>Fiches observateurs (temps de passage)</h3>
+    <p class="hint">Une fiche par coureur, sur une seule page (A4 paysage). Piste de ${s.track} m : les cases encadrées indiquent le passage sur la ligne de départ (fin de tour).</p>
+    <div class="row">
+      <button class="btn" data-act="printFiches" data-v="A" ${cnt.A ? '' : 'disabled'}>🖨 Fiches coureurs groupe A (${cnt.A})</button>
+      <button class="btn" data-act="printFiches" data-v="B" ${cnt.B ? '' : 'disabled'}>🖨 Fiches coureurs groupe B (${cnt.B})</button>
+      <button class="btn" data-act="printFiches" data-v="">🖨 Fiche vierge</button>
+    </div>
+  </section>
+
+  <section class="card" id="livecard">
+    <h3><span class="step">4</span>Test</h3>
+    ${live && live.kind === 'vma' && live.sid === s.id ? viewVMALive(C, s) : `
+      <label class="lbl" style="margin-top:0">Groupe qui commence</label>
+      <div class="seg lg">${['A', 'B'].map(v => `<button class="${s.startGroup === v ? 'on ' + v : ''}" data-act="setStartGroup" data-v="${v}">Groupe ${v}</button>`).join('')}</div>
+      <div class="row" style="margin-top:14px">${[s.startGroup, s.startGroup === 'A' ? 'B' : 'A'].map((g, i) => `<button class="btn ${i === 0 ? 'go big' : 'big'}" data-act="prepareVMA" data-v="${g}" ${live ? 'disabled' : ''}>▶ Préparer le départ du groupe ${g} <small style="opacity:.8;font-weight:600">&nbsp;${doneIn(g)}/${cnt[g]} terminés</small></button>`).join('')}</div>
+      ${live ? '<p class="hint">Un chrono est déjà en cours dans une autre séance.</p>' : ''}`}
+  </section>
+
+  <section class="card">
+    <div class="row sp"><h3 style="margin:0"><span class="step">5</span>Résultats de la séance</h3><button class="btn pri" data-act="exportSession">📊 Export Excel</button></div>
+    <p class="hint">✎ pour corriger ou saisir un temps à la main. Tri possible sur chaque colonne.</p>
+    ${sortTable('res-' + s.id, ['Nom Prénom', 'Sexe', 'Groupe', 'Palier', 'Vitesse palier', 'Temps', 'Distance', 'VMA', 'Observations', { t: '', nosort: true }], resRows)}
+  </section>`;
+}
+
+function viewVMALive(C, s) {
+  const byId = new Map(C.students.map(st => [st.id, st]));
+  const runners = live.runners.map(id => byId.get(id)).filter(Boolean).sort(byName);
+  const left = runners.filter(st => !s.results[st.id]).length;
+  return `<div class="live" id="live">
+    <div class="row sp" style="margin:0"><span class="pill ${live.group}">Groupe ${live.group} · ${runners.length} coureurs</span><span class="hint" id="lv-state">${live.tl ? '' : 'Prêt'}</span></div>
+    <div class="bigtime" id="lv-time">0:00</div>
+    <div class="livetop">
+      <div class="stat"><span class="l">Palier</span><b id="lv-pal">1 / ${PALIERS.length}</b></div>
+      <div class="stat"><span class="l">Vitesse</span><b id="lv-v">${PALIERS[0]} km/h</b></div>
+      <div class="stat"><span class="l">Prochain sifflet</span><b id="lv-next">—</b></div>
+      <div class="stat"><span class="l">Distance</span><b id="lv-dist">0 m</b></div>
+      <div class="stat"><span class="l">En course</span><b id="lv-left">${left}</b></div>
+    </div>
+    <div class="bar"><i id="lv-bar"></i></div>
+    <div class="liveact">${live.tl
+      ? `<button class="btn danger" data-act="vmaAbort">■ Arrêter le test</button>`
+      : `<button class="btn go big" data-act="vmaGo">▶ DÉPART groupe ${live.group}</button><button class="btn" data-act="liveCancel">Annuler</button>`}</div>
+    <p class="hint">${live.tl ? 'Touchez un élève pour arrêter son test et enregistrer sa performance. « Retard » deux fois de suite = élève arrêté.' : 'Au clic sur Départ : annonce vocale, décompte de 3 secondes puis coup de sifflet de départ.'}</p>
+    <div class="runners">${runners.map(st => {
+      const r = s.results[st.id];
+      if (r) {
+        const p = perfAt(r.t);
+        return `<div class="runner done"><div class="nm">${esc(st.name)}</div><div class="perf">VMA ${fmtVMA(p.vma)} km/h</div><div>Palier ${p.p} · ${fmtT(p.t)} · ${p.d} m${r.elim ? ' · éliminé' : ''}</div>
+          <div class="acts">${live.tl ? `<button class="btn" data-act="vmaUndo" data-id="${st.id}">↺ Annuler</button>` : ''}</div></div>`;
+      }
+      const ret = live.retards[st.id] || 0;
+      return `<div class="runner ${ret ? 'r1' : ''}" data-act="vmaStop" data-id="${st.id}"><div class="nm">${esc(st.name)}</div><div class="tap">${ret ? '⚠ 1 retard' : 'Toucher pour arrêter'}</div>
+        <div class="acts"><button class="btn" data-act="vmaRetard" data-id="${st.id}">⚠ Retard</button>${ret ? `<button class="btn" data-act="vmaOk" data-id="${st.id}">✓ À l'heure</button>` : ''}</div></div>`;
+    }).join('')}</div>
+  </div>`;
+}
+
+function vmaTick(e) {
+  const g = id => document.getElementById(id);
+  if (!g('lv-time')) return;
+  if (e < 0) { g('lv-time').textContent = e > -3.5 ? 'Départ dans ' + Math.ceil(-e) : 'Attention…'; return; }
+  const t = Math.min(e, TOTAL_T), i = Math.min(Math.floor(t / PAL_DUR), PALIERS.length - 1);
+  g('lv-time').textContent = fmtT(Math.floor(t));
+  g('lv-pal').textContent = (i + 1) + ' / ' + PALIERS.length;
+  g('lv-v').textContent = PALIERS[i] + ' km/h';
+  const nw = WHISTLES.find(w => w.t > t + 0.001);
+  g('lv-next').textContent = nw ? fmtNum(nw.t - t, 1) + ' s · ' + nw.d + ' m' : '—';
+  g('lv-dist').textContent = Math.round(distAt(t)) + ' m';
+  g('lv-bar').style.width = Math.min(100, (t - i * PAL_DUR) / PAL_DUR * 100) + '%';
+}
+function vmaEvents() {
+  const ev = [{ t: -5.8, say: `Palier 1, ${PALIERS[0]} kilomètres heure. Attention au départ.` },
+    { t: -3, snd: 'beep' }, { t: -2, snd: 'beep' }, { t: -1, snd: 'beep' }, { t: 0, snd: 'long' }];
+  WHISTLES.forEach(w => { if (w.t < TOTAL_T - 0.05) ev.push({ t: w.t, snd: 'whistle' }); });
+  for (let i = 1; i < PALIERS.length; i++) {
+    const B = i * PAL_DUR;
+    ev.push({ t: B + 0.45, snd: 'palier' }, { t: B + 0.95, say: `Palier ${i + 1}, ${PALIERS[i]} kilomètres heure` });
+  }
+  ev.push({ t: TOTAL_T, snd: 'end' }, { t: TOTAL_T + 1.8, say: 'Fin du test' });
+  return ev;
+}
+function currentVMASession() {
+  const C = live && state.classes[live.cls];
+  return C ? { C, s: findSession(C, live.sid) } : {};
+}
+function finishVMARun(msg) {
+  const { s } = currentVMASession();
+  if (live.tl) live.tl.stop(false);
+  if (s) s.runs[live.group] = true;
+  live = null; keepAwake(false);
+  commit(); toast(msg, 4000);
+}
+function vmaStopRunner(id, elim) {
+  const { s } = currentVMASession(); if (!s || !live.tl) return;
+  const t = live.tl.elapsed(); if (t < 0) { toast('Le test n\'a pas encore commencé'); return; }
+  s.results[id] = { t: Math.round(Math.min(t, TOTAL_T) * 10) / 10, g: live.group, ret: live.retards[id] || 0, elim: !!elim };
+  if (live.runners.every(r => s.results[r])) { finishVMARun('✅ Tous les élèves du groupe ' + live.group + ' ont terminé. Bande son arrêtée.'); return; }
+  commit();
+}
+
+/* ---------- Fiche observateur (impression) ---------- */
+function ficheHTML(runner, C, s) {
+  const maxCells = Math.max(...PALIERS.map((_, i) => WHISTLES.filter(w => w.p === i).length));
+  const head = `<tr><th>Palier</th><th>Vitesse</th><th>50 m en</th>${'<th></th>'.repeat(maxCells)}</tr>`;
+  const body = PALIERS.map((v, i) => {
+    const ws = WHISTLES.filter(w => w.p === i);
+    const cells = ws.map(w => {
+      const lap = w.d % s.track === 0;
+      return `<td class="${lap ? 'lap' : ''}"><span class="tt">${fmtT(w.t)}</span><span class="dd">${w.d} m${lap ? ' · tour ' + (w.d / s.track) : ''}</span><span class="bx"></span></td>`;
+    }).join('') + '<td class="vide"></td>'.repeat(maxCells - ws.length);
+    return `<tr><th>${i + 1}</th><td><b>${v} km/h</b></td><td>${fmtNum(180 / v, 1)} s</td>${cells}</tr>`;
+  }).join('');
+  return `<div class="fiche">
+    <div class="fh"><h1>Test VMA – Fiche observateur</h1><div class="who"><span>Classe : <b>${esc(C.name)}</b></span><span>Date : <b>${fmtDate(s.date)}</b></span><span>Piste : <b>${s.track} m</b> (plots tous les 50 m)</span></div></div>
+    <div class="fh" style="justify-content:flex-start;gap:14mm"><div class="who"><span>Coureur : <b>${runner ? esc(runner.name) : '______________________________'}</b></span><span>Observateur : ______________________________</span></div></div>
+    <p class="cons">À chaque coup de sifflet, coche la case si ton coureur est au plot. S'il est en retard, entoure la case. <b>2 retards consécutifs = arrêt du test.</b> Case encadrée = passage sur la ligne de départ.</p>
+    <table class="ct"><colgroup><col style="width:13mm"><col style="width:19mm"><col style="width:15mm"></colgroup><thead>${head}</thead><tbody>${body}</tbody></table>
+    <div class="ff"><span>Palier atteint : ______</span><span>Vitesse : ______ km/h</span><span>Temps : ______</span><span>Distance : ______ m</span><span>VMA : ______ km/h</span></div>
+  </div>`;
+}
+function printFiches(C, s, group) {
+  const runners = group ? sortedStudents(C).filter(st => s.groups[st.id] === group) : [null];
+  $('#print-root').innerHTML = runners.map(r => ficheHTML(r, C, s)).join('');
+  setTimeout(() => window.print(), 80);
+}
+
+/* ---------- Séance fractionnée ---------- */
+function viewFrac(C, s) {
+  const studs = sortedStudents(C);
+  const byId = new Map(C.students.map(st => [st.id, st]));
+  const present = studs.filter(st => s.roles[st.id] === 'C' || s.roles[st.id] === 'O');
+  const cnt = { C: 0, O: 0, X: 0 };
+  studs.forEach(st => { const r = s.roles[st.id]; cnt[r === 'C' || r === 'O' ? r : 'X']++; });
+  const vOf = st => fracVMA(C, s, st.id);
+  const total = s.reps * s.work + (s.reps - 1) * s.rest;
+
+  // Petit texte récapitulatif
+  const pool = present.length ? present : studs;
+  const byV = new Map();
+  pool.forEach(st => { const v = vOf(st); if (v != null) { if (!byV.has(v)) byV.set(v, []); byV.get(v).push(st.name.split(' ')[0]); } });
+  const noV = pool.filter(st => vOf(st) == null).length;
+  const recap = `<div class="note">
+    <p>📋 <b>${s.reps} × ${fmtDur(s.work)}</b> de course, <b>${fmtDur(s.rest)}</b> de récupération, à <b>${s.pct} % de la VMA</b> — durée ≈ ${fmtT(total)}.</p>
+    <p>Distance à parcourir en ${fmtDur(s.work)} selon la VMA :</p>
+    <ul>${[...byV.keys()].sort((a, b) => a - b).map(v => `<li><b>VMA ${fmtVMA(v)} km/h → ${fracDist(v, s.work, s.pct)} m</b> <span class="hint">(${plotsTxt(fracDist(v, s.work, s.pct))}) — ${byV.get(v).map(esc).join(', ')}</span></li>`).join('') || '<li>Aucune VMA connue : faites un test VMA ou saisissez les VMA ci-dessous.</li>'}</ul>
+    ${noV ? `<p class="hint">⚠ ${noV} élève(s) sans VMA.</p>` : ''}
+    <p class="hint">Calcul : distance = VMA (km/h) ÷ 3,6 × durée (s) × ${s.pct} %. Ex. : VMA 12 en 36" → 12 ÷ 3,6 × 36 = 120 m.</p>
+  </div>`;
+
+  const studRows = studs.map(st => {
+    const role = s.roles[st.id] || 'X', v = vOf(st), L = latestVMA(C, st.id), d = fracDist(v, s.work, s.pct);
+    const opts = present.filter(o => o.id !== st.id).map(o => `<option value="${o.id}" ${s.partner[st.id] === o.id ? 'selected' : ''}>${esc(o.name)}</option>`).join('');
+    return { cells: [
+      cell(st.name, `<b>${esc(st.name)}</b>`), cell(st.sexe),
+      cell(v, `<input class="vin" inputmode="decimal" data-chg="fracVma" data-id="${st.id}" value="${s.vmaOv[st.id] != null ? fmtVMA(s.vmaOv[st.id]) : ''}" placeholder="${L ? fmtVMA(L.vma) : '?'}">`),
+      cell(role === 'X' ? 'Z' : role, `<div class="seg">${[['C', 'Coureur'], ['O', 'Observateur'], ['X', '—']].map(([k, t]) => `<button class="${role === k ? 'on ' + k : ''}" data-act="fracRole" data-id="${st.id}" data-v="${k}">${t}</button>`).join('')}</div>`),
+      cell(s.partner[st.id] && byId.get(s.partner[st.id]) ? byId.get(s.partner[st.id]).name : null, role === 'X' ? '—' : `<select data-chg="fracPartner" data-id="${st.id}"><option value="">—</option>${opts}</select>`),
+      cell(d, d != null ? `<b>${d} m</b>` : '—')
+    ] };
+  });
+
+  const distRows = pool.map(st => {
+    const v = vOf(st);
+    return { cells: [cell(st.name, `<b>${esc(st.name)}</b>`), cell(v, v != null ? fmtVMA(v) : '—'),
+      ...DURS.map(dd => { const d = fracDist(v, dd, s.pct); return cell(d, d != null ? d + ' m' : '—', dd === s.work ? 'hl' : ''); })] };
+  });
+
+  const valRows = present.map(st => {
+    const vals = (s.valid[st.id] || []), v = vOf(st), d = fracDist(v, s.work, s.pct);
+    const ok = vals.slice(0, s.reps).filter(x => x === 1).length, done = vals.slice(0, s.reps).filter(x => x === 1 || x === 0).length;
+    const pa = byId.get(s.partner[st.id]);
+    return { cells: [
+      cell(st.name, `<b>${esc(st.name)}</b>`),
+      cell(s.roles[st.id], `<span class="pill ${s.roles[st.id]}" style="font-size:12px;padding:3px 9px">${s.roles[st.id] === 'C' ? 'Coureur' : 'Observateur'}</span>`),
+      cell(pa ? pa.name : null, pa ? esc(pa.name) : '—'),
+      cell(d, d != null ? d + ' m' : '—'),
+      ...Array.from({ length: s.reps }, (_, i) => {
+        const x = vals[i];
+        return cell(x == null ? null : x, `<button class="vb ${x === 1 ? 'y' : x === 0 ? 'n' : ''}" data-act="fracVal" data-id="${st.id}" data-i="${i}">${x === 1 ? '✓' : x === 0 ? '✗' : '·'}</button>`, 'c');
+      }),
+      cell(done ? ok / done : null, done ? `<b>${ok}/${done}</b>` : '—', 'c')
+    ] };
+  });
+
+  return `
+  <div class="sesshead"><button class="btn" data-act="back">← Séances</button><h2>🔁 Séance fractionnée — ${fmtDate(s.date)}</h2><button class="btn danger" data-act="delSession" data-id="${s.id}">Supprimer</button></div>
+
+  <section class="card">
+    <h3><span class="step">1</span>Paramètres de la séance</h3>
+    <div class="grid2">
+      <div>
+        <label class="lbl" style="margin-top:0">Date</label><input type="date" value="${esc(s.date)}" data-chg="sessDate">
+        <label class="lbl">Temps de travail</label><div class="chips">${DURS.map(d => `<button class="chip ${s.work === d ? 'on' : ''}" data-act="fracSet" data-k="work" data-v="${d}">${fmtDur(d)}</button>`).join('')}</div>
+        <label class="lbl">Temps de récupération</label><div class="chips">${DURS.map(d => `<button class="chip ${s.rest === d ? 'on' : ''}" data-act="fracSet" data-k="rest" data-v="${d}">${fmtDur(d)}</button>`).join('')}</div>
+        <div class="row" style="gap:24px">
+          <div><label class="lbl">Répétitions</label><div class="stepper"><button class="btn" data-act="fracReps" data-v="-1">−</button><b>${s.reps}</b><button class="btn" data-act="fracReps" data-v="1">＋</button></div></div>
+          <div><label class="lbl">Intensité</label><select data-chg="fracPct">${[70, 75, 80, 85, 90, 95, 100, 105, 110, 115, 120].map(p => `<option value="${p}" ${s.pct === p ? 'selected' : ''}>${p} % VMA</option>`).join('')}</select></div>
+        </div>
+      </div>
+      ${recap}
+    </div>
+    <details><summary>Distances pour chaque durée (18", 36", 1'30, 3')</summary>
+      ${sortTable('dist-' + s.id, ['Nom Prénom', 'VMA', ...DURS.map(fmtDur)], distRows)}</details>
+  </section>
+
+  <section class="card">
+    <h3><span class="step">2</span>Élèves, rôles et binômes</h3>
+    <div class="row"><span class="pill C">Coureurs <b>${cnt.C}</b></span><span class="pill O">Observateurs <b>${cnt.O}</b></span><span class="pill X">Absents <b>${cnt.X}</b></span></div>
+    <div class="row">
+      <button class="btn sm" data-act="fracAlt">Répartir coureurs / observateurs</button>
+      <button class="btn sm" data-act="fracPairs">🤝 Former les binômes automatiquement</button>
+      <button class="btn sm" data-act="fracSwap">⇄ Inverser les rôles</button>
+      <button class="btn sm" data-act="fracAllRole" data-v="X">Tout effacer</button>
+    </div>
+    <p class="hint">VMA issue du dernier test (grisée) ; saisissez une valeur pour la remplacer dans cette séance. Binôme : l'observateur valide la distance de son coureur.</p>
+    ${sortTable('fst-' + s.id, ['Nom Prénom', 'Sexe', 'VMA', 'Rôle', 'Binôme', 'Objectif / course'], studRows)}
+  </section>
+
+  <section class="card" id="livecard">
+    <h3><span class="step">3</span>Chrono & signaux sonores</h3>
+    ${live && live.kind === 'frac' && live.sid === s.id ? viewFracLive(s) : `
+      <p class="hint">Coup de sifflet long = départ de la course · double sifflet = fin du temps de travail · 3 bips = reprise imminente.</p>
+      <div class="row"><button class="btn go big" data-act="fracGo" ${live ? 'disabled' : ''}>▶ Lancer la série (${s.reps} × ${fmtDur(s.work)} / ${fmtDur(s.rest)})</button><button class="btn" data-act="testSound">🔊 Tester le son</button></div>
+      ${live ? '<p class="hint">Un chrono est déjà en cours dans une autre séance.</p>' : ''}`}
+  </section>
+
+  <section class="card">
+    <div class="row sp"><h3 style="margin:0"><span class="step">4</span>Validation des objectifs</h3><button class="btn pri" data-act="exportSession">📊 Export Excel</button></div>
+    <p class="hint">Après chaque course, touchez la case : · → ✓ objectif atteint → ✗ non atteint → ·</p>
+    ${present.length ? sortTable('val-' + s.id, ['Nom Prénom', 'Rôle', 'Binôme', 'Objectif', ...Array.from({ length: s.reps }, (_, i) => ({ t: 'R' + (i + 1), cls: 'c' })), { t: 'Réussite', cls: 'c' }], valRows)
+      : '<div class="empty">Choisissez d\'abord les coureurs et observateurs.</div>'}
+  </section>`;
+}
+function viewFracLive(s) {
+  return `<div class="live" id="live">
+    <div class="row sp" style="margin:0"><span class="phase" id="lv-phase">PRÊTS</span><b id="lv-rep">Répétition 1 / ${s.reps}</b></div>
+    <div class="bigtime" id="lv-time">—</div>
+    <div class="bar"><i id="lv-bar"></i></div>
+    <div class="liveact">
+      <button class="btn" data-act="fracPause" id="lv-pause">⏸ Pause</button>
+      <button class="btn danger" data-act="fracStop">■ Arrêter</button>
+    </div>
+    <p class="hint">Temps total écoulé : <span id="lv-tot">0:00</span></p>
+  </div>`;
+}
+function fracEvents(s) {
+  const W = s.work, R = s.rest, N = s.reps, ev = [];
+  ev.push({ t: -5.8, say: `${N} fois ${durSay(W)}. Attention.` }, { t: -3, snd: 'beep' }, { t: -2, snd: 'beep' }, { t: -1, snd: 'beep' });
+  for (let i = 0; i < N; i++) {
+    const st = i * (W + R);
+    ev.push({ t: st, snd: 'long' });
+    if (i > 0) {
+      ev.push({ t: st - 3, snd: 'beep' }, { t: st - 2, snd: 'beep' }, { t: st - 1, snd: 'beep' });
+      if (R >= 10) ev.push({ t: st - 6, say: `Répétition ${i + 1}` });
+    }
+    const en = st + W;
+    if (i < N - 1) { ev.push({ t: en, snd: 'double' }); if (R >= 10) ev.push({ t: en + 1.2, say: 'Récupération' }); }
+    else ev.push({ t: en, snd: 'end' }, { t: en + 2, say: 'Fin de la série' });
+  }
+  return ev;
+}
+function fracTick(e) {
+  const g = id => document.getElementById(id);
+  if (!g('lv-time') || !live || live.kind !== 'frac') return;
+  const { s } = currentVMASession(); if (!s) return;
+  const W = s.work, R = s.rest, N = s.reps, cyc = W + R, box = g('live');
+  if (live.tl.paused) g('lv-phase').textContent = 'PAUSE';
+  if (e < 0) {
+    g('lv-time').textContent = e > -3.5 ? String(Math.ceil(-e)) : 'Prêts…';
+    if (!live.tl.paused) g('lv-phase').textContent = 'PRÊTS';
+    box.className = 'live'; return;
+  }
+  let i = Math.floor(e / cyc), within = e - i * cyc;
+  if (i >= N || (i === N - 1 && within >= W)) { g('lv-time').textContent = '0'; g('lv-phase').textContent = 'TERMINÉ'; box.className = 'live'; g('lv-bar').style.width = '100%'; return; }
+  const work = within < W, rem = work ? W - within : cyc - within;
+  if (!live.tl.paused) g('lv-phase').textContent = work ? '🏃 COURSE' : '😮‍💨 RÉCUPÉRATION';
+  g('lv-rep').textContent = 'Répétition ' + (work ? i + 1 : i + 2) + ' / ' + N;
+  g('lv-time').textContent = rem >= 60 ? fmtT(Math.ceil(rem)) : String(Math.ceil(rem));
+  g('lv-bar').style.width = ((work ? within / W : (within - W) / R) * 100) + '%';
+  g('lv-tot').textContent = fmtT(e);
+  box.className = 'live ' + (work ? 'work' : 'rest');
+}
+
+/* =====================================================================
+   Actions
+   ===================================================================== */
+const curClass = () => state.classes[ui.tab];
+const curSession = () => { const C = curClass(); if (!C) return null; const u = clsUI(C.name); return u.sid ? findSession(C, u.sid) : null; };
+
+const ACT = {
+  tab(el) { ui.tab = el.dataset.id; render(); window.scrollTo(0, 0); },
+  sub(el) { clsUI(ui.tab).sub = el.dataset.v; render(); },
+  sort(el) {
+    const k = el.dataset.key, c = +el.dataset.col, st = ui.sort[k] || { col: 0, dir: 1 };
+    ui.sort[k] = st.col === c ? { col: c, dir: -st.dir } : { col: c, dir: 1 };
+    render();
+  },
+  syncNow() {
+    if (!cfg.scriptUrl) { toast('Renseignez d\'abord l\'URL du script dans l\'onglet Général'); ui.tab = 'general'; render(); return; }
+    pullRemote();
+  },
+  /* --- Général --- */
+  async loadTabs() {
+    if (!cfg.scriptUrl) { ui.avail = cfg.tabs; render(); toast('Liste par défaut (installez le script pour lire les onglets du fichier)'); return; }
+    try {
+      toast('Lecture des onglets…');
+      const j = await getJSON(cfg.scriptUrl + '?action=classes&t=' + Date.now());
+      if (!j.ok) throw new Error(j.error);
+      ui.avail = cfg.tabs = j.classes; saveCfg(); render();
+      toast(j.classes.length + ' onglet(s) trouvé(s)');
+    } catch (e) { toast('⚠ ' + e.message, 5000); }
+  },
+  addTab() {
+    const v = ($('#newTab').value || '').trim(); if (!v) return;
+    if (!cfg.tabs.includes(v)) cfg.tabs.push(v);
+    if (ui.avail && !ui.avail.includes(v)) ui.avail.push(v);
+    saveCfg(); ui.picked.add(v); render();
+  },
+  pickAll() { (ui.avail || cfg.tabs).forEach(n => ui.picked.add(n)); render(); },
+  async importPicked() {
+    if (!ui.picked.size) { toast('Cochez au moins une classe'); return; }
+    ui.busy = true; render();
+    const msgs = [];
+    for (const name of [...ui.picked]) {
+      try {
+        const studs = parseStudents(await fetchTab(name), name);
+        if (!studs.length) { msgs.push(name + ' : aucun élève trouvé'); continue; }
+        const r = mergeClass(name, studs);
+        msgs.push(`${name} : ${r.total} élèves${r.added !== r.total ? ' (+' + r.added + ')' : ''}`);
+      } catch (e) { msgs.push(name + ' : ' + e.message); }
+    }
+    ui.busy = false; ui.picked.clear();
+    commit(); toast(msgs.join(' · '), 6000);
+  },
+  delClass(el) {
+    const c = el.dataset.id;
+    if (live && live.cls === c) { toast('Chrono en cours dans cette classe'); return; }
+    if (!confirm(`Supprimer la classe ${c} et toutes ses séances ?`)) return;
+    delete state.classes[c]; state.classOrder = state.classOrder.filter(x => x !== c);
+    commit();
+  },
+  async testScript() {
+    if (!cfg.scriptUrl) { toast('Collez l\'URL du script'); return; }
+    try {
+      const j = await getJSON(cfg.scriptUrl + '?action=classes&t=' + Date.now());
+      if (!j.ok) throw new Error(j.error);
+      toast('✅ Connexion OK — ' + j.classes.length + ' onglet(s) : ' + j.classes.join(', '), 5000);
+    } catch (e) { toast('⚠ ' + e.message, 6000); }
+  },
+  copyCode() {
+    const code = $('#gs-code').textContent;
+    (navigator.clipboard ? navigator.clipboard.writeText(code) : Promise.reject()).then(() => toast('Code copié ✔'), () => toast('Sélectionnez le code et copiez-le manuellement'));
+  },
+  exportAll() {
+    const t = buildSheetTables();
+    exportXLSX('Endurance_resultats_' + todayISO(), Object.keys(t).map(k => ({ name: k, rows: t[k] })));
+  },
+  backup() { download('Endurance_sauvegarde_' + todayISO() + '.json', new Blob([JSON.stringify(state, null, 1)], { type: 'application/json' })); },
+  /* --- Classe --- */
+  toggleNew() { const u = clsUI(ui.tab); u.newOpen = !u.newOpen; render(); },
+  createSession(el) {
+    const C = curClass(), u = clsUI(C.name), date = ($('#newDate') && $('#newDate').value) || todayISO();
+    const base = { id: uid(), date, createdAt: Date.now() };
+    const s = el.dataset.v === 'vma'
+      ? Object.assign(base, { type: 'vma', track: 150, groups: {}, startGroup: 'A', results: {}, runs: {} })
+      : Object.assign(base, { type: 'frac', work: 36, rest: 36, reps: 6, pct: 100, roles: {}, partner: {}, vmaOv: {}, valid: {} });
+    C.sessions.push(s); u.sid = s.id; u.newOpen = false;
+    commit(); window.scrollTo(0, 0);
+  },
+  openSession(el) { clsUI(ui.tab).sid = el.dataset.id; render(); window.scrollTo(0, 0); },
+  back() { clsUI(ui.tab).sid = null; render(); },
+  delSession(el) {
+    const C = curClass(), id = el.dataset.id;
+    if (live && live.sid === id) { toast('Arrêtez d\'abord le chrono'); return; }
+    if (!confirm('Supprimer cette séance et ses résultats ?')) return;
+    C.sessions = C.sessions.filter(s => s.id !== id);
+    clsUI(C.name).sid = null; commit();
+  },
+  stSexe(el) { const st = curClass().students.find(x => x.id === el.dataset.id); st.sexe = el.dataset.v; commit(); },
+  newSexe(el) { document.querySelectorAll('#newStSexe button').forEach(b => b.classList.toggle('on', b === el)); },
+  addStudent() {
+    const name = ($('#newStName').value || '').trim(); if (!name) { toast('Saisissez le nom'); return; }
+    const sx = document.querySelector('#newStSexe button.on');
+    curClass().students.push({ id: uid(), name, classe: ui.tab, sexe: sx ? sx.dataset.v : '' });
+    commit();
+  },
+  delStudent(el) {
+    const C = curClass(), st = C.students.find(x => x.id === el.dataset.id);
+    if (!confirm(`Retirer ${st.name} de la classe ? (ses résultats seront masqués)`)) return;
+    C.students = C.students.filter(x => x.id !== st.id); commit();
+  },
+  testSound() {
+    Snd.init(); unlockSpeech(); if (!Snd.ctx) return;
+    const b = Snd.bus(), t = Snd.ctx.currentTime + 0.1;
+    Snd.play('whistle', b, t); Snd.play('palier', b, t + 0.7);
+    setTimeout(() => speak(`Palier 1, ${PALIERS[0]} kilomètres heure`), 1300);
+  },
+  /* --- VMA --- */
+  setTrack(el) { curSession().track = +el.dataset.v; commit(); },
+  setGroup(el) { const s = curSession(); if (el.dataset.v === 'X') delete s.groups[el.dataset.id]; else s.groups[el.dataset.id] = el.dataset.v; commit(); },
+  groupsAlt() { const s = curSession(); sortedStudents(curClass()).forEach((st, i) => s.groups[st.id] = i % 2 ? 'B' : 'A'); commit(); },
+  groupsAll(el) { const s = curSession(), v = el.dataset.v; curClass().students.forEach(st => { if (v === 'X') delete s.groups[st.id]; else s.groups[st.id] = v; }); commit(); },
+  setStartGroup(el) { curSession().startGroup = el.dataset.v; commit(); },
+  printFiches(el) { printFiches(curClass(), curSession(), el.dataset.v); },
+  prepareVMA(el) {
+    if (live) { toast('Un chrono est déjà en cours'); return; }
+    const C = curClass(), s = curSession(), g = el.dataset.v;
+    const members = sortedStudents(C).filter(st => s.groups[st.id] === g);
+    if (!members.length) { toast('Aucun élève dans le groupe ' + g); return; }
+    let runners = members.filter(st => !s.results[st.id]);
+    if (!runners.length) {
+      if (!confirm(`Tous les élèves du groupe ${g} ont déjà un résultat. Effacer leurs résultats et recommencer ?`)) return;
+      members.forEach(st => delete s.results[st.id]); runners = members; commit({ render: false });
+    }
+    live = { kind: 'vma', cls: C.name, sid: s.id, group: g, runners: runners.map(st => st.id), retards: {}, tl: null };
+    render();
+    const lc = $('#livecard'); if (lc) lc.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  },
+  liveCancel() { live = null; render(); },
+  vmaGo() {
+    unlockSpeech();
+    live.tl = new Timeline(vmaEvents(), { lead: 6, end: TOTAL_T + 0.3, onTick: vmaTick, onEnd: () => {
+      const { s } = currentVMASession();
+      if (s) live.runners.forEach(id => { if (!s.results[id]) s.results[id] = { t: TOTAL_T, g: live.group, ret: live.retards[id] || 0, elim: false }; });
+      finishVMARun('🏁 Fin du test : dernier palier terminé.');
+    } });
+    live.tl.start(); keepAwake(true); render();
+  },
+  vmaStop(el) { vmaStopRunner(el.dataset.id, false); },
+  vmaRetard(el) {
+    const id = el.dataset.id;
+    if (!live.tl) { toast('Le test n\'a pas commencé'); return; }
+    live.retards[id] = (live.retards[id] || 0) + 1;
+    if (live.retards[id] >= 2) { vmaStopRunner(id, true); toast('2 retards consécutifs : élève arrêté'); }
+    else render();
+  },
+  vmaOk(el) { live.retards[el.dataset.id] = 0; render(); },
+  vmaUndo(el) { const { s } = currentVMASession(); delete s.results[el.dataset.id]; live.retards[el.dataset.id] = 0; commit(); },
+  vmaAbort() {
+    if (!confirm('Arrêter le test maintenant ?')) return;
+    const { s } = currentVMASession(), t = live.tl.elapsed();
+    if (t > 0 && confirm('Enregistrer la performance des élèves encore en course (temps actuel : ' + fmtT(t) + ') ?'))
+      live.runners.forEach(id => { if (!s.results[id]) s.results[id] = { t: Math.round(Math.min(t, TOTAL_T) * 10) / 10, g: live.group, ret: live.retards[id] || 0, elim: false }; });
+    live.tl.stop(); finishVMARun('Test arrêté.');
+  },
+  vmaEdit(el) {
+    const C = curClass(), s = curSession(), st = C.students.find(x => x.id === el.dataset.id), r = s.results[st.id];
+    const v = prompt(`Temps de course de ${st.name} (min:s, ex. 9:35). Laisser vide pour effacer.`, r ? fmtT(r.t) : '');
+    if (v === null) return;
+    if (!v.trim()) { delete s.results[st.id]; commit(); return; }
+    const m = v.trim().match(/^(\d+)(?:[:'h ,.](\d{1,2}))?$/);
+    if (!m) { toast('Format attendu : min:s'); return; }
+    const t = m[2] != null ? +m[1] * 60 + +m[2] : +m[1];
+    s.results[st.id] = Object.assign({}, r || {}, { t: Math.min(t, TOTAL_T), g: (r && r.g) || s.groups[st.id] || '', manual: true });
+    commit();
+  },
+  exportSession() {
+    const C = curClass(), s = curSession(), T = buildSheetTables();
+    const key = s.type === 'vma' ? 'Résultats VMA' : 'Résultats Fractionné';
+    const rows = [T[key][0]].concat(T[key].slice(1).filter(r => r[0] === C.name && r[s.type === 'vma' ? 3 : 2] === fmtDate(s.date)));
+    // tri alphabétique
+    rows.splice(1, rows.length, ...rows.slice(1).sort((a, b) => String(a[1]).localeCompare(String(b[1]), 'fr')));
+    exportXLSX(`${s.type === 'vma' ? 'TestVMA' : 'Fractionne'}_${C.name}_${s.date}`, [{ name: s.type === 'vma' ? 'Test VMA' : 'Fractionné', rows }]);
+  },
+  exportClass() {
+    const C = curClass(), T = buildSheetTables();
+    exportXLSX('Endurance_' + C.name + '_' + todayISO(), Object.keys(T).map(k => ({ name: k, rows: [T[k][0]].concat(T[k].slice(1).filter(r => r[0] === C.name)) })));
+  },
+  /* --- Fractionné --- */
+  fracSet(el) { curSession()[el.dataset.k] = +el.dataset.v; commit(); },
+  fracReps(el) { const s = curSession(); s.reps = Math.max(1, Math.min(30, s.reps + +el.dataset.v)); commit(); },
+  fracRole(el) {
+    const s = curSession(), id = el.dataset.id, v = el.dataset.v;
+    if (v === 'X') { delete s.roles[id]; const p = s.partner[id]; if (p) delete s.partner[p]; delete s.partner[id]; }
+    else s.roles[id] = v;
+    commit();
+  },
+  fracAllRole(el) { const s = curSession(); s.roles = {}; s.partner = {}; commit(); },
+  fracAlt() { const s = curSession(); sortedStudents(curClass()).forEach((st, i) => s.roles[st.id] = i % 2 ? 'O' : 'C'); commit(); },
+  fracSwap() {
+    const s = curSession();
+    Object.keys(s.roles).forEach(id => { s.roles[id] = s.roles[id] === 'C' ? 'O' : s.roles[id] === 'O' ? 'C' : s.roles[id]; });
+    commit(); toast('Rôles inversés : les observateurs deviennent coureurs');
+  },
+  fracPairs() {
+    const C = curClass(), s = curSession();
+    const v = st => fracVMA(C, s, st.id) || 0;
+    const R = sortedStudents(C).filter(st => s.roles[st.id] === 'C').sort((a, b) => v(b) - v(a));
+    const O = sortedStudents(C).filter(st => s.roles[st.id] === 'O').sort((a, b) => v(b) - v(a));
+    s.partner = {};
+    for (let i = 0; i < Math.min(R.length, O.length); i++) { s.partner[R[i].id] = O[i].id; s.partner[O[i].id] = R[i].id; }
+    commit();
+    toast(R.length === O.length ? 'Binômes formés (VMA proches)' : `Binômes formés — ${Math.abs(R.length - O.length)} élève(s) sans binôme`);
+  },
+  fracVal(el) {
+    const s = curSession(), id = el.dataset.id, i = +el.dataset.i;
+    const arr = s.valid[id] || (s.valid[id] = []);
+    while (arr.length <= i) arr.push(null);
+    arr[i] = arr[i] == null ? 1 : arr[i] === 1 ? 0 : null;
+    commit();
+  },
+  fracGo() {
+    if (live) { toast('Un chrono est déjà en cours'); return; }
+    const C = curClass(), s = curSession();
+    unlockSpeech();
+    live = { kind: 'frac', cls: C.name, sid: s.id, tl: null };
+    const end = (s.reps - 1) * (s.work + s.rest) + s.work + 3;
+    live.tl = new Timeline(fracEvents(s), { lead: 6, end, onTick: fracTick, onEnd: () => { live = null; keepAwake(false); render(); toast('🏁 Série terminée'); } });
+    live.tl.start(); keepAwake(true); render();
+  },
+  fracPause() {
+    if (!live || !live.tl) return;
+    if (live.tl.paused) { live.tl.resume(); $('#lv-pause').textContent = '⏸ Pause'; }
+    else { live.tl.pause(); $('#lv-pause').textContent = '▶ Reprendre'; }
+  },
+  fracStop() {
+    if (!confirm('Arrêter le chrono ?')) return;
+    live.tl.stop(); live = null; keepAwake(false); render();
+  }
+};
+
+const CHG = {
+  sheetUrl(el) { cfg.sheetUrl = el.value.trim() || DEFAULT_SHEET; saveCfg(); },
+  scriptUrl(el) { cfg.scriptUrl = el.value.trim(); saveCfg(); if (cfg.scriptUrl) pullRemote(); else setSync('local'); render(); },
+  pickTab(el) {
+    const n = el.dataset.name; el.checked ? ui.picked.add(n) : ui.picked.delete(n);
+    const b = $('#importBtn'); if (b) b.textContent = '⬇ Importer la sélection (' + ui.picked.size + ')';
+  },
+  restore(el) {
+    const f = el.files[0]; if (!f) return;
+    const rd = new FileReader();
+    rd.onload = () => {
+      try {
+        const o = JSON.parse(rd.result);
+        if (!o || !o.classes) throw new Error();
+        if (!confirm('Remplacer toutes les données actuelles par cette sauvegarde ?')) return;
+        state = o; commit(); toast('Sauvegarde restaurée');
+      } catch (e) { toast('Fichier de sauvegarde invalide'); }
+    };
+    rd.readAsText(f);
+  },
+  sessDate(el) { curSession().date = el.value || todayISO(); commit(); },
+  fracPct(el) { curSession().pct = +el.value; commit(); },
+  fracVma(el) {
+    const s = curSession(), v = parseNum(el.value);
+    if (v == null) delete s.vmaOv[el.dataset.id]; else s.vmaOv[el.dataset.id] = v;
+    commit();
+  },
+  fracPartner(el) {
+    const s = curSession(), a = el.dataset.id, b = el.value;
+    const unlink = x => { const p = s.partner[x]; if (p) delete s.partner[p]; delete s.partner[x]; };
+    unlink(a); if (b) { unlink(b); s.partner[a] = b; s.partner[b] = a; }
+    commit();
+  }
+};
+
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]');
+  if (!el || el.disabled) return;
+  const fn = ACT[el.dataset.act];
+  if (fn) { e.preventDefault(); fn(el, e); }
+});
+document.addEventListener('change', e => {
+  const el = e.target.closest('[data-chg]');
+  if (el && CHG[el.dataset.chg]) CHG[el.dataset.chg](el, e);
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.id === 'newTab') ACT.addTab();
+  if (e.key === 'Enter' && e.target.id === 'newStName') ACT.addStudent();
+});
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible') return;
+  if (live && live.tl) { keepAwake(true); if (Snd.ctx && Snd.ctx.state !== 'running') Snd.ctx.resume(); }
+  else pullRemote();
+});
+window.addEventListener('afterprint', () => { $('#print-root').innerHTML = ''; });
+window.addEventListener('beforeunload', e => { if (live && live.tl) { e.preventDefault(); e.returnValue = ''; } });
+setInterval(() => { if (!live && document.visibilityState === 'visible') pullRemote(); }, 120000);
+
+/* Démarrage : affichage de la version locale puis récupération de la version la plus récente */
+render();
+if (cfg.scriptUrl) pullRemote(); else setSync('local');
+</script>
+</body>
+</html>
