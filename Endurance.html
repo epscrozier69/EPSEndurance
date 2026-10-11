@@ -206,7 +206,7 @@ ol.steps li{margin:4px 0}
 .nsel{flex:0 0 auto;min-height:32px!important;padding:2px 4px!important;border-radius:8px!important;font-weight:800;font-size:12px;width:58px}
 table.ct.fit{table-layout:fixed}
 .ct.fit th,.ct.fit td{white-space:normal;padding:4px 6px}
-.ct.fit col.cv{width:78px}.ct.fit col.cd{width:70px}
+.ct.fit col.cv{width:118px}.ct.fit col.cd{width:70px}
 .ct.fit .dl{display:flex;align-items:center;gap:6px;min-height:40px;min-width:0}
 .ct.fit .dl.c{justify-content:center}
 .ct.fit .gn{flex:1;min-width:0;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -270,7 +270,8 @@ table.ct.fit{table-layout:fixed}
 input.vin[class*="vc"]{font-weight:900}
 input.vin[class*="vc"]::placeholder{color:inherit;opacity:.9}
 .pc .gv{font-size:14px;font-weight:900}
-.vtr{font-size:10px;font-weight:700;color:#667085;white-space:nowrap;margin-left:3px}
+.vbase{font-weight:900;font-size:14px;min-width:24px;text-align:right}
+.varr{color:#98a2b3;margin:0 4px;font-size:12px;font-weight:700}
 .pvma{display:inline-flex;align-items:center;flex:0 0 auto}
 .pc .pvma .vin{width:50px;min-height:32px!important;padding:2px 5px!important;text-align:center}
 /* ---- Tableau partagé en 2 colonnes ---- */
@@ -280,7 +281,7 @@ input.vin[class*="vc"]::placeholder{color:inherit;opacity:.9}
 .split2 .ct th,.split2 .ct td{padding:4px 6px;font-size:13px}
 .split2 .ct th:nth-child(1),.split2 .ct td:nth-child(1){width:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .split2 .ct th:nth-child(2),.split2 .ct td:nth-child(2){width:46px}
-.split2 .ct th:nth-child(3),.split2 .ct td:nth-child(3){width:72px}
+.split2 .ct th:nth-child(3),.split2 .ct td:nth-child(3){width:118px;white-space:nowrap}
 .split2 .ct th:nth-child(4),.split2 .ct td:nth-child(4){width:62px}
 .split2 .ct th:nth-child(5),.split2 .ct td:nth-child(5){width:86px}
 .split2 .ct th:nth-child(6),.split2 .ct td:nth-child(6){width:74px}
@@ -989,9 +990,12 @@ function fracVMA(C, s, sid) {
 function vmaInput(C, s, id) {
   const v = fracVMA(C, s, id), L = latestVMA(C, id), raw = s.vmaOv[id] != null ? s.vmaOv[id] : (L ? L.vma : null);
   const tip = raw != null && raw !== v ? `VMA ${fmtVMA(raw)} → ${fmtVMA(v)} pour la séance` : 'Saisir une VMA pour cette séance';
-  // trace de la VMA d'origine (test) quand elle a été modifiée pour la séance
-  const trace = s.vmaOv[id] != null ? `<span class="vtr" title="VMA du test VMA">test ${L ? fmtVMA(L.vma) : '—'}</span>` : '';
-  return `<input enterkeyhint="next" class="vin ${vmaCls(v)}" inputmode="decimal" data-chg="fracVma" data-id="${id}" value="${s.vmaOv[id] != null && v != null ? fmtVMA(v) : ''}" placeholder="${v != null ? fmtVMA(v) : '?'}" title="${tip}">${trace}`;
+  const ov = s.vmaOv[id];
+  const inp = (ph, title) => `<input enterkeyhint="next" class="vin ${ov != null ? vmaCls(v) : ''}" inputmode="decimal" data-chg="fracVma" data-id="${id}" value="${ov != null && v != null ? fmtVMA(v) : ''}" placeholder="${ph}" title="${title}">`;
+  // pas de test VMA : la case sert à saisir la VMA
+  if (!L) return inp(v != null ? fmtVMA(v) : 'VMA', 'Pas de test VMA : saisir la VMA de l\'élève');
+  // VMA du test toujours affichée, puis la vitesse visée pour la séance (vide = VMA)
+  return `<span class="vbase ${vmaCls(L.vma)}" title="VMA du test">${fmtVMA(L.vma)}</span><span class="varr">→</span>${inp(fmtVMA(v), tip + ' — vitesse visée pour cette séance (vide = VMA)')}`;
 }
 function recapRows(C) {
   return sortedStudents(C).map(st => {
@@ -1001,7 +1005,7 @@ function recapRows(C) {
 }
 function buildSheetTables() {
   const vma = [['Classe', 'Nom Prénom', 'Sexe', 'Date', 'Groupe', 'Piste (m)', 'Palier', 'Vitesse palier (km/h)', 'Temps (s)', 'Temps', 'Distance (m)', 'VMA (km/h)', 'Retards', 'Éliminé', 'Statut']];
-  const frac = [['Classe', 'Nom Prénom', 'Date', 'Rôle', 'Binôme', 'Travail (s)', 'Récup (s)', 'Répétitions', '% VMA', 'VMA (km/h)', 'VMA du test', 'Objectif (m)', 'Réussites', 'Échecs', 'Détail', 'Travail d\'observateur', 'Séries', 'Points', 'Points max', 'Note']];
+  const frac = [['Classe', 'Nom Prénom', 'Date', 'Rôle', 'Binôme', 'Travail (s)', 'Récup (s)', 'Répétitions', '% VMA', 'Vitesse visée (km/h)', 'VMA du test', 'Objectif (m)', 'Réussites', 'Échecs', 'Détail', 'Travail d\'observateur', 'Séries', 'Points', 'Points max', 'Note']];
   const crs = [['Classe', 'Nom Prénom', 'Sexe', 'Date', 'Épreuve', 'Course', 'VMA (km/h)', 'Vitesse visée (km/h)', 'Distance (m)', 'Vitesse (km/h)', 'Temps de passage', 'Régularité', 'Note vitesse', 'Marches', 'Continuité', 'Temps 900 m', 'Lancers ratés', 'Temps final', 'Note temps', 'Statut']];
   const syn = [['Classe', 'Nom Prénom', 'Sexe', 'VMA (km/h)', 'Date du test', 'Palier', 'Vitesse palier (km/h)', 'Temps', 'Distance (m)', 'Historique VMA', 'Réussite fractionné (%)']];
   state.classOrder.forEach(cn => {
@@ -2011,7 +2015,7 @@ function viewFrac(C, s) {
     <p class="hint">Par défaut : 1re moitié de la classe (ordre alphabétique) en groupe A, 2e moitié en groupe B. Le 1er observateur observe le 1er coureur, et ainsi de suite.</p>
     ${pairsHTML(C, s, { A: 'Groupe A · coureurs', B: 'Groupe B · observateurs' })}
     <label class="lbl" style="margin-top:16px">VMA et distances à parcourir en ${fmtDur(s.work)} (${s.pct} % VMA)</label>
-    <p class="hint" style="margin-top:0">VMA du dernier test (grisée) ; saisissez une valeur pour la remplacer dans cette séance.</p>
+    <p class="hint" style="margin-top:0">VMA du test, puis → vitesse visée : saisissez une vitesse visée pour cette séance si besoin (case vide = VMA). La VMA du test n'est jamais modifiée.</p>
     ${present.length ? distTable : ''}
   </section>
   ${section3}` : fracShortSections(C, s, rows, section3)}`;
@@ -2048,8 +2052,8 @@ function fracShortSections(C, s, rows, section4) {
   return `
   <section class="card">
     <h3><span class="step">2</span>Élèves, VMA et distance à parcourir en ${fmtDur(s.work)}</h3>
-    <p class="hint">VMA du dernier test (grisée) ; saisissez une valeur pour la remplacer dans cette séance. Groupe A / B et statut ABS, DP, DISP modifiables ici.</p>
-    ${sortTable('fl-' + s.id, ['Nom Prénom', 'Sexe', 'VMA', fmtDur(s.work), 'Gr.', 'Statut'], listRows, undefined, true)}
+    <p class="hint">VMA du test, puis → vitesse visée : saisissez une vitesse visée pour cette séance si besoin (case vide = VMA). La VMA du test n'est jamais modifiée. Groupe A / B et statut ABS, DP, DISP modifiables ici.</p>
+    ${sortTable('fl-' + s.id, ['Nom Prénom', 'Sexe', 'VMA → visée', fmtDur(s.work), 'Gr.', 'Statut'], listRows, undefined, true)}
   </section>
 
   <section class="card">
@@ -2097,7 +2101,7 @@ function viewLapSession(C, s) {
     <p class="hint">Par défaut : 1re moitié de la classe (ordre alphabétique) court, 2e moitié observe. Le 1er observateur observe le 1er coureur, et ainsi de suite.</p>
     ${pairsHTML(C, s, { A: 'Groupe A · court en 1er', B: 'Groupe B · observe en 1er' })}
     <label class="lbl" style="margin-top:16px">VMA et objectifs</label>
-    <p class="hint" style="margin-top:0">VMA du dernier test (grisée) ; saisissez une valeur pour la remplacer dans cette épreuve.</p>
+    <p class="hint" style="margin-top:0">VMA du test, puis → vitesse visée : saisissez une vitesse visée pour cette épreuve si besoin (case vide = VMA). La VMA du test n'est jamais modifiée.</p>
     ${present.length ? pairTable(C, s, rows, objs, false) : ''}
   </section>
   ${lapSection(C, s, rows)}`;
