@@ -263,6 +263,8 @@ table.ct.fit{table-layout:fixed}
 .ser{font-size:10px;font-weight:900;color:#667085;align-self:center;margin:0 2px 0 4px}
 .vmain{font-weight:900;width:72px}
 .vmain.man{background:#fff7ed;border-color:#fdba74;color:#c2410c}
+.gv.vc7{color:#7c3aed}.gv.vc8{color:#ca8a04}.gv.vc9{color:#16a34a}.gv.vc10{color:#2563eb}.gv.vc11{color:#f97316}.gv.vc12{color:#dc2626}
+.pc .gv{font-size:14px;font-weight:900}
 .stepper{display:inline-flex;align-items:center;gap:6px}
 .stepper b{min-width:34px;text-align:center;font-size:20px}
 #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:#111827;color:#fff;padding:11px 18px;border-radius:12px;font-weight:600;opacity:0;pointer-events:none;transition:.25s;z-index:99;max-width:calc(100% - 32px);text-align:center}
@@ -491,6 +493,10 @@ const fmtDate = iso => iso ? iso.split('-').reverse().join('/') : '';
 const fmtT = t => { t = Math.max(0, Math.round(t)); return Math.floor(t / 60) + ':' + pad(t % 60); };
 const fmtNum = (x, d = 1) => (x == null || isNaN(x)) ? '—' : (Number.isInteger(x) ? String(x) : x.toFixed(d).replace('.', ','));
 const fmtVMA = x => fmtNum(x, 1);
+// Palier de VMA : un demi-point compte pour la VMA supérieure (9,5 → 10)
+const vmaBand = v => Math.ceil(v - 1e-9);
+// Couleur selon la VMA : 8 jaune · 9 vert · 10 bleu · 11 orange · 12 et + rouge (7 et moins : violet)
+const vmaCls = v => { if (v == null) return ''; const b = vmaBand(v); return b <= 7 ? 'vc7' : b >= 12 ? 'vc12' : 'vc' + b; };
 const fmtDur = s => s < 60 ? s + '"' : (s % 60 ? Math.floor(s / 60) + "'" + pad(s % 60) : s / 60 + "'");
 const durSay = s => s < 60 ? s + ' secondes' : (s % 60 ? Math.floor(s / 60) + ' minute ' + (s % 60) : (s / 60) + (s === 60 ? ' minute' : ' minutes'));
 const parseNum = v => { const n = parseFloat(String(v).replace(',', '.')); return isNaN(n) ? null : n; };
@@ -1164,7 +1170,7 @@ function pairsHTML(C, s, lab) {
     if (!id) return `<div class="pc empty">— sans binôme —</div>`;
     const st = byId.get(id);
     const v = s.type === 'vma' ? (s.results[id] ? resPerf(s.results[id]).vma : null) : fracVMA(C, s, id);
-    return `<div class="pc"><span class="sx ${st.sexe}">${esc(st.sexe || '?')}</span><span class="gn">${esc(st.name)}</span>${v != null ? `<span class="gv">${fmtVMA(v)}</span>` : ''}
+    return `<div class="pc"><span class="sx ${st.sexe}">${esc(st.sexe || '?')}</span><span class="gn">${esc(st.name)}</span>${v != null ? `<span class="gv ${vmaCls(v)}">${fmtVMA(v)}</span>` : ''}
       <div class="seg ab">${['A', 'B'].map(x => `<button class="${g === x ? 'on ' + x : ''}" data-act="setAB" data-id="${id}" data-v="${x}">${x}</button>`).join('')}</div>${statusSel(id)}</div>`;
   };
   const rows = Array.from({ length: n }, (_, i) => `<div class="prow"><span class="pn">${i + 1}</span>${item(s.order.A[i], 'A')}${item(s.order.B[i], 'B')}</div>`).join('');
@@ -1190,7 +1196,7 @@ function viewVMA(C, s) {
       : (s.status[st.id] ? STATUS[s.status[st.id]] : '');
     return { cells: [
       cell(st.name, `<b>${esc(st.name)}</b>`), cell(st.sexe), cell(s.status[st.id] || (r && r.g) || s.groups[st.id] || ''),
-      cell(p ? p.vma : null, `<input class="vin vmain ${r && r.vma != null ? 'man' : ''}" inputmode="decimal" data-chg="vmaManual" data-id="${st.id}" value="${p && p.vma != null ? fmtVMA(p.vma) : ''}" placeholder="—" title="Saisir ou corriger la VMA (km/h)">`),
+      cell(p ? p.vma : null, `<input enterkeyhint="next" class="vin vmain ${r && r.vma != null ? 'man' : ''}" inputmode="decimal" data-chg="vmaManual" data-id="${st.id}" value="${p && p.vma != null ? fmtVMA(p.vma) : ''}" placeholder="—" title="Saisir ou corriger la VMA (km/h)">`),
       cell(hasT ? p.p : null, hasT ? String(p.p) : '—'), cell(hasT ? p.v : null, hasT ? p.v + ' km/h' : '—'),
       cell(hasT ? p.t : null, hasT ? fmtT(p.t) : '—'), cell(hasT ? p.d : null, hasT ? p.d + ' m' : '—'),
       cell(obs),
@@ -1388,6 +1394,35 @@ function autoDuos(C, s) {
   const v = id => { const x = fracVMA(C, s, id); return x == null ? -1 : x; };
   s.duoNum = {};
   ['A', 'B'].forEach(g => s.order[g].slice().sort((a, b) => v(b) - v(a)).forEach((id, i) => { s.duoNum[id] = Math.floor(i / 2) + 1; }));
+}
+// Bouton « Former les binômes par VMA » : élèves de même palier de VMA (9,5 compte pour 10) associés par 2 sur toute la classe,
+// puis binômes répartis entre A et B pour équilibrer, dans chaque groupe, le nombre de binômes VMA 9, 10, 11, 12…
+// Le binôme n° k du groupe B (qui observe) a la même VMA que le binôme n° k du groupe A.
+function balanceDuos(C, s) {
+  const vOf = id => { const x = fracVMA(C, s, id); return x == null ? -1 : x; };
+  const band = id => vOf(id) < 0 ? -1 : vmaBand(vOf(id));
+  const ids = [...s.order.A, ...s.order.B].sort((a, b) => vOf(b) - vOf(a));
+  // 1. binômes dans chaque palier de VMA ; les élèves restants sont associés au plus proche
+  const duos = [], left = [];
+  [...new Set(ids.map(band))].forEach(b => {
+    const grp = ids.filter(id => band(id) === b);
+    for (let i = 0; i + 1 < grp.length; i += 2) duos.push([grp[i], grp[i + 1]]);
+    if (grp.length % 2) left.push(grp[grp.length - 1]);
+  });
+  for (let i = 0; i < left.length; i += 2) duos.push(left.slice(i, i + 2));
+  const avg = d => d.reduce((a, id) => a + vOf(id), 0) / d.length;
+  duos.sort((a, b) => avg(b) - avg(a));
+  // 2. répartition A / B : chaque binôme va dans le groupe qui a le moins de binômes de ce palier (puis le moins de binômes)
+  const per = { A: {}, B: {} }, tot = { A: 0, B: 0 }, out = { A: [], B: [] };
+  duos.forEach(d => {
+    const b = d.some(id => vOf(id) < 0) ? -1 : vmaBand(avg(d)), nA = per.A[b] || 0, nB = per.B[b] || 0;
+    const g = nA < nB ? 'A' : nB < nA ? 'B' : tot.A <= tot.B ? 'A' : 'B';
+    per[g][b] = (per[g][b] || 0) + 1; tot[g]++; out[g].push(d);
+  });
+  // 3. numérotation par VMA décroissante dans chaque groupe
+  s.order = { A: out.A.flat(), B: out.B.flat() };
+  s.duoNum = {};
+  ['A', 'B'].forEach(g => out[g].forEach((d, k) => d.forEach(id => { s.duoNum[id] = k + 1; })));
 }
 function syncDuos(C, s) {
   if (!s.duoNum || !Object.keys(s.duoNum).length) { autoDuos(C, s); return; }
@@ -1617,7 +1652,7 @@ function lapSection(C, s, rows) {
       } else main = `Tour <b>${cum.length}</b> / ${BIATH_TOURS}${last ? ' · dernier ' + last : ''}`;
     } else {
       main = `${cum.length} tour${cum.length > 1 ? 's' : ''} · <b>${cum.length * L}${ev && ev.extra ? ' + ' + ev.extra : ''} m</b>${last ? ' · dernier ' + last : ''}`;
-      if ((!now || !now.running) && (cum.length || ev)) extra = `<label class="xd">+<input class="vin" inputmode="numeric" data-chg="extraDist" data-id="${id}" data-r="${r}" value="${sub(s.extra, id, r) || ''}" placeholder="0">m</label>`;
+      if ((!now || !now.running) && (cum.length || ev)) extra = `<label class="xd">+<input enterkeyhint="next" class="vin" inputmode="numeric" data-chg="extraDist" data-id="${id}" data-r="${r}" value="${sub(s.extra, id, r) || ''}" placeholder="0">m</label>`;
     }
     const obs = u.obs.length ? u.obs.map(o => `<button class="ob ${s.obsOk[o] === false ? 'bad' : 'good'}" data-act="obsToggle" data-id="${o}" title="Vert = bien, orange = à revoir">${esc(short(o))}</button>`).join('') : '<span class="hint" style="margin:0">sans observateur</span>';
     return `<div class="lcard ${cls}">
@@ -1698,7 +1733,7 @@ function duosHTML(C, s, rows) {
   const K = rows.length;
   const item = (id, g) => {
     const st = byId.get(id), v = fracVMA(C, s, id);
-    return `<div class="pc"><span class="sx ${st.sexe}">${esc(st.sexe || '?')}</span><span class="gn">${esc(st.name)}</span>${v != null ? `<span class="gv">${fmtVMA(v)}</span>` : ''}
+    return `<div class="pc"><span class="sx ${st.sexe}">${esc(st.sexe || '?')}</span><span class="gn">${esc(st.name)}</span>${v != null ? `<span class="gv ${vmaCls(v)}">${fmtVMA(v)}</span>` : ''}
       <select class="nsel" data-chg="duoNum" data-id="${id}" title="Numéro du binôme">${Array.from({ length: K + 1 }, (_, k) => `<option value="${k + 1}" ${s.duoNum[id] === k + 1 ? 'selected' : ''}>n°${k + 1}</option>`).join('')}</select>
       <div class="seg ab">${['A', 'B'].map(x => `<button class="${g === x ? 'on ' + x : ''}" data-act="setAB" data-id="${id}" data-v="${x}">${x}</button>`).join('')}</div>${fracStatusSel(s, id)}</div>`;
   };
@@ -1718,7 +1753,7 @@ function pairTable(C, s, rows, objs, duo) {
     const st = byId.get(id), v = fracVMA(C, s, id), L = latestVMA(C, id);
     return {
       n: `<div class="dl"><span class="sx ${st.sexe}">${esc(st.sexe || '?')}</span><span class="gn">${esc(st.name)}</span></div>`,
-      v: `<div class="dl"><input class="vin" inputmode="decimal" data-chg="fracVma" data-id="${id}" value="${s.vmaOv[id] != null ? fmtVMA(s.vmaOv[id]) : ''}" placeholder="${L ? fmtVMA(L.vma) : '?'}"></div>`,
+      v: `<div class="dl"><input enterkeyhint="next" class="vin" inputmode="decimal" data-chg="fracVma" data-id="${id}" value="${s.vmaOv[id] != null ? fmtVMA(s.vmaOv[id]) : ''}" placeholder="${L ? fmtVMA(L.vma) : '?'}"></div>`,
       o: objs.map(o => `<div class="dl c">${o.val(v, st)}</div>`)
     };
   };
@@ -1760,7 +1795,7 @@ function viewFrac(C, s) {
     ${duo ? `<p>📋 <b>Relais en binôme : ${s.reps} × 18"</b>${S > 1 ? ` × <b>${S} séries</b>` : ''} à <b>${s.pct} % de la VMA</b> — chacun court ${Math.ceil(s.reps / 2)} fois par série, sa récupération est la course de son partenaire. Durée de course ≈ ${fmtT(total)}.</p>`
       : `<p>📋 <b>${s.reps} × ${fmtDur(s.work)}</b> de course individuelle, <b>${fmtDur(s.rest)}</b> de récupération${S > 1 ? `, <b>${S} séries</b>` : ''}, à <b>${s.pct} % de la VMA</b> — durée ≈ ${fmtT(total)}${lap ? ` · chronométrage au tour (${lapLen(s)} m) et notes de régularité, vitesse et continuité` : ''}.</p>`}
     <p>Distance à parcourir en ${fmtDur(s.work)} selon la VMA :</p>
-    <ul>${[...byV.keys()].sort((a, b) => a - b).map(v => `<li><b>VMA ${fmtVMA(v)} km/h → ${fracDist(v, s.work, s.pct)} m</b> <span class="hint">(${plotsTxt(fracDist(v, s.work, s.pct))}) — ${byV.get(v).map(esc).join(', ')}</span></li>`).join('') || '<li>Aucune VMA connue : faites un test VMA ou saisissez les VMA ci-dessous.</li>'}</ul>
+    <ul>${[...byV.keys()].sort((a, b) => a - b).map(v => `<li><b>VMA ${fmtVMA(v)} km/h → ${fracDist(v, s.work, s.pct)} m</b> <span class="hint">— ${byV.get(v).map(esc).join(', ')}</span></li>`).join('') || '<li>Aucune VMA connue : faites un test VMA ou saisissez les VMA ci-dessous.</li>'}</ul>
     ${noV ? `<p class="hint">⚠ ${noV} élève(s) sans VMA.</p>` : ''}
     <p class="hint">Calcul : distance = VMA (km/h) ÷ 3,6 × durée (s) × ${s.pct} %. Ex. : VMA 12 en 36" → 12 ÷ 3,6 × 36 = 120 m.</p>
   </div>`;
@@ -1862,8 +1897,8 @@ function fracShortSections(C, s, rows, section4) {
     const stt = s.status[st.id], g = groupOf(s, st.id), v = fracVMA(C, s, st.id), L = latestVMA(C, st.id), d = fracDist(v, s.work, s.pct);
     return { cells: [
       cell(st.name, `<b>${esc(st.name)}</b>`), cell(st.sexe),
-      cell(v, `<input class="vin" inputmode="decimal" data-chg="fracVma" data-id="${st.id}" value="${s.vmaOv[st.id] != null ? fmtVMA(s.vmaOv[st.id]) : ''}" placeholder="${L ? fmtVMA(L.vma) : '?'}">`),
-      cell(d, stt ? '—' : d != null ? `<b>${d} m</b> <span class="hint">${plotsTxt(d)}</span>` : '—'),
+      cell(v, `<input enterkeyhint="next" class="vin" inputmode="decimal" data-chg="fracVma" data-id="${st.id}" value="${s.vmaOv[st.id] != null ? fmtVMA(s.vmaOv[st.id]) : ''}" placeholder="${L ? fmtVMA(L.vma) : '?'}">`),
+      cell(d, stt ? '—' : d != null ? `<b>${d} m</b>` : '—'),
       cell(stt ? 'Z' : g, stt ? '—' : `<div class="seg ab">${['A', 'B'].map(x => `<button class="${g === x ? 'on ' + x : ''}" data-act="setAB" data-id="${st.id}" data-v="${x}">${x}</button>`).join('')}</div>`),
       cell(stt || '', fracStatusSel(s, st.id))
     ] };
@@ -2316,7 +2351,14 @@ const ACT = {
     commit();
   },
   setRunGroup(el) { curSession().runGroup = el.dataset.v; commit(); },
-  autoDuos() { const C = curClass(), s = curSession(); autoDuos(C, s); commit(); toast('Binômes formés par VMA'); },
+  autoDuos() {
+    const C = curClass(), s = curSession();
+    if (s.valid && Object.keys(s.valid).length && !confirm('Refaire les binômes et les groupes A / B ? (les validations déjà saisies restent attachées à chaque élève)')) return;
+    balanceDuos(C, s); syncOrder(C, s); commit();
+    const rows = duoRows(s), bands = {};
+    rows.forEach(r => ['A', 'B'].forEach(g => { if (!r[g].length) return; const v = r[g].map(id => fracVMA(C, s, id)).filter(x => x != null); const b = v.length ? vmaBand(v.reduce((a, x) => a + x, 0) / v.length) : '?'; (bands[b] = bands[b] || { A: 0, B: 0 })[g]++; }));
+    toast('Binômes formés · ' + Object.keys(bands).sort((a, b) => b - a).map(b => `VMA ${b} : ${bands[b].A} A / ${bands[b].B} B`).join(' · '), 6000);
+  },
   obsToggle(el) {
     const s = curSession(), id = el.dataset.id; s.obsOk = s.obsOk || {};
     if (s.obsOk[id] === false) delete s.obsOk[id]; else s.obsOk[id] = false;
@@ -2456,6 +2498,23 @@ document.addEventListener('click', e => {
 document.addEventListener('change', e => {
   const el = e.target.closest('[data-chg]');
   if (el && CHG[el.dataset.chg]) CHG[el.dataset.chg](el, e);
+});
+// Saisie en série : Entrée valide la case et passe à l'élève suivant (VMA du test, VMA du fractionné, distance supplémentaire)
+const CHAIN_INPUTS = ['vmaManual', 'fracVma', 'extraDist'];
+document.addEventListener('keydown', e => {
+  const t = e.target;
+  if (e.key !== 'Enter' || !t || !t.dataset || !CHAIN_INPUTS.includes(t.dataset.chg)) return;
+  e.preventDefault();
+  const sel = `input[data-chg="${t.dataset.chg}"]`;
+  const list = [...document.querySelectorAll(sel)];
+  const next = list[list.indexOf(t) + 1];
+  const key = next ? { id: next.dataset.id, r: next.dataset.r } : null;
+  t.blur();   // déclenche l'enregistrement (et le réaffichage)
+  setTimeout(() => {
+    if (!key) { toast('Dernier élève de la liste'); return; }
+    const el = [...document.querySelectorAll(sel)].find(x => x.dataset.id === key.id && x.dataset.r === key.r);
+    if (el) { el.focus(); try { el.select(); } catch (err) {} el.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+  }, 30);
 });
 document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && e.target.id === 'newTab') ACT.addTab();
