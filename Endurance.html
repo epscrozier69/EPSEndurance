@@ -2106,7 +2106,7 @@ function viewLapSession(C, s) {
   const e3 = s.type === 'endu3';
   const objs = e3
     ? [{ label: "3' VMA+1", val: v => v == null ? '—' : `<b>${Math.round((v + 1) / 3.6 * 180)} m</b>` }, { label: "9' VMA−1", val: v => v == null ? '—' : `<b>${Math.round((v - 1) / 3.6 * 540)} m</b>` }]
-    : [{ label: '900 m à VMA', val: v => v ? `<b>${fmtT(900 / (v / 3.6))}</b>` : '—' }, { label: 'TB si ≤', val: (v, st) => `<b>${fmtT(BIATH_BAREME[st.sexe === 'F' ? 'F' : 'G'][0])}</b>` }];
+    : [{ label: '900 m à VMA', val: v => v ? `<b>${fmtT(900 / (v / 3.6))}</b>` : '—' }];
   const info = e3
     ? `<div class="note"><p>🏁 <b>Course 1 : 3' à VMA+1</b>, puis <b>course 2 : 9' à VMA−1</b>. Lancez chaque course séparément.</p>
         <p>Distance visée = (VMA ± 1) ÷ 3,6 × durée. Notes : régularité au tour, vitesse par rapport à la vitesse visée, continuité (marches).</p></div>`
