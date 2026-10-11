@@ -241,6 +241,17 @@ table.ct.fit{table-layout:fixed}
 .lc-info .phase{font-size:20px}
 .lc-bar{grid-column:1/-1;margin:2px 0 0}
 @media (max-width:600px){.live.compact{grid-template-columns:auto 1fr}.live.compact .liveact{grid-column:1/-1}.lc-time{font-size:42px}.vcards{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}}
+/* ---- Colonne « Nom Prénom » figée dans les tableaux ---- */
+.tw .ct th:first-child,.tw .ct td:first-child{position:sticky;left:0;z-index:2;box-shadow:2px 0 4px rgba(15,23,42,.08)}
+.tw .ct td:first-child{background:#f0f5ff}
+/* ---- Résultats des courses au tour / biathlon : compacts pour tenir en largeur ---- */
+.lapres .ct th,.lapres .ct td{padding:4px 5px;font-size:12px;white-space:nowrap}
+.lapres .ct th .arr{display:none}
+.lapres .ct td:first-child{max-width:170px;overflow:hidden;text-overflow:ellipsis}
+.lapres .ct td:nth-last-child(2){white-space:normal;min-width:150px}
+.lapres .spl{font-size:10.5px;line-height:1.35}
+.lapres .rc{min-width:120px}
+.lapres .btn.sm{min-height:28px;padding:2px 7px}
 /* ---- Courses chronométrées au tour ---- */
 .sess .ic.endu3{background:#fce7f3}.sess .ic.biath{background:#ede9fe}
 .lcard{border:1px solid var(--line);border-radius:12px;padding:6px;background:#fff;display:flex;flex-direction:column;gap:4px;box-shadow:0 1px 2px rgba(16,24,40,.05)}
@@ -260,7 +271,7 @@ table.ct.fit{table-layout:fixed}
 .thr{width:32px;height:30px;border-radius:8px;border:0;font-weight:900;color:#fff;cursor:pointer;margin-right:3px}
 .thr.y{background:#2563eb}.thr.n{background:#e11d48}
 .nt{display:inline-block;border-radius:6px;padding:1px 6px;font-size:11px;font-weight:900;color:#fff;margin:1px 2px 1px 0;white-space:nowrap}
-.nt-TB{background:#2563eb}.nt-S{background:#7c3aed}.nt-F{background:#f97316}.nt-I{background:#e11d48}.nt-0{background:#cbd5e1;color:#475467}
+.nt-TB{background:#39ff14;color:#0b3d02}.nt-S{background:#16a34a}.nt-F{background:#f97316}.nt-I{background:#dc2626}.nt-0{background:#cbd5e1;color:#475467}
 .rc{font-size:13px;white-space:normal;min-width:140px}
 .spl{font-size:11px;color:#475467;white-space:normal}
 .ser{font-size:10px;font-weight:900;color:#667085;align-self:center;margin:0 2px 0 4px}
@@ -272,24 +283,31 @@ input.vin[class*="vc"]::placeholder{color:inherit;opacity:.9}
 .pc .gv{font-size:14px;font-weight:900}
 .vbase{font-weight:900;font-size:14px;min-width:24px;text-align:right}
 .varr{color:#98a2b3;margin:0 4px;font-size:12px;font-weight:700}
+.vbtn{border:1px dashed transparent;background:transparent;border-radius:8px;padding:4px 8px;cursor:pointer;min-height:32px;min-width:44px;text-align:center}
+.vbtn:hover{border-color:#c7d2fe;background:#f5f7ff}
 .pvma{display:inline-flex;align-items:center;flex:0 0 auto}
 .pc .pvma .vin{width:50px;min-height:32px!important;padding:2px 5px!important;text-align:center}
-/* ---- Tableau partagé en 2 colonnes ---- */
-.split2{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start}
-.split2 .tw{margin-top:8px}
+/* ---- Tableau partagé en 2 colonnes (groupe A | groupe B) — tient en largeur sur iPad portrait ---- */
+.split2{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:start}
+.split2 .tw{margin-top:4px}
+.sph{display:flex;justify-content:space-between;align-items:center;gap:6px;color:#fff;font-weight:900;font-size:13px;border-radius:10px;padding:6px 10px;margin-top:6px}
+.sph.A{background:#2563eb}.sph.B{background:#db2777}
+.sph small{background:rgba(255,255,255,.25);border-radius:999px;padding:0 8px}
 .split2 table.ct{table-layout:fixed}
-.split2 .ct th,.split2 .ct td{padding:4px 6px;font-size:13px}
+.split2 .ct th,.split2 .ct td{padding:3px 4px;font-size:12.5px}
+.split2 .ct th .arr{display:none}
 .split2 .ct th:nth-child(1),.split2 .ct td:nth-child(1){width:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.split2 .ct th:nth-child(2),.split2 .ct td:nth-child(2){width:46px}
-.split2 .ct th:nth-child(3),.split2 .ct td:nth-child(3){width:118px;white-space:nowrap}
-.split2 .ct th:nth-child(4),.split2 .ct td:nth-child(4){width:62px}
-.split2 .ct th:nth-child(5),.split2 .ct td:nth-child(5){width:86px}
-.split2 .ct th:nth-child(6),.split2 .ct td:nth-child(6){width:74px}
-.split2 .vin{width:58px;min-height:32px!important;padding:3px 6px!important}
-.split2 .stsel{width:60px}
-.split2 .seg.ab button{min-width:28px;min-height:28px;padding:2px 7px}
-@media (max-width:900px){.split2{grid-template-columns:1fr}}
-.stepper{display:inline-flex;align-items:center;gap:6px}
+.split2 .ct th:nth-child(2),.split2 .ct td:nth-child(2){width:26px;text-align:center}
+.split2 .ct th:nth-child(3),.split2 .ct td:nth-child(3){width:96px;white-space:nowrap}
+.split2 .ct th:nth-child(4),.split2 .ct td:nth-child(4){width:46px}
+.split2 .ct th:nth-child(5),.split2 .ct td:nth-child(5){width:62px}
+.sttag{color:#be123c;font-size:12px}
+.split2 .vin{width:44px;min-height:30px!important;padding:2px 4px!important}
+.split2 .vbtn{min-height:30px;padding:2px 6px}
+.split2 .stsel{width:48px;min-height:30px!important;font-size:11px}
+.split2 .seg{padding:2px}
+.split2 .seg.ab button{min-width:24px;min-height:26px;padding:1px 6px}
+@media (max-width:680px){.split2{grid-template-columns:1fr}}.stepper{display:inline-flex;align-items:center;gap:6px}
 .stepper b{min-width:34px;text-align:center;font-size:20px}
 #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:#111827;color:#fff;padding:11px 18px;border-radius:12px;font-weight:600;opacity:0;pointer-events:none;transition:.25s;z-index:99;max-width:calc(100% - 32px);text-align:center}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -994,6 +1012,8 @@ function vmaInput(C, s, id) {
   const inp = (ph, title) => `<input enterkeyhint="next" class="vin ${ov != null ? vmaCls(v) : ''}" inputmode="decimal" data-chg="fracVma" data-id="${id}" value="${ov != null && v != null ? fmtVMA(v) : ''}" placeholder="${ph}" title="${title}">`;
   // pas de test VMA : la case sert à saisir la VMA
   if (!L) return inp(v != null ? fmtVMA(v) : 'VMA', 'Pas de test VMA : saisir la VMA de l\'élève');
+  // sans vitesse visée : seule la VMA du test est affichée ; un toucher ouvre la saisie de la vitesse visée
+  if (ov == null && ui.editVisee !== id) return `<button class="vbase vbtn ${vmaCls(L.vma)}" data-act="editVisee" data-id="${id}" title="Toucher pour définir une vitesse visée différente de la VMA">${fmtVMA(L.vma)}</button>`;
   // VMA du test toujours affichée, puis la vitesse visée pour la séance (vide = VMA)
   return `<span class="vbase ${vmaCls(L.vma)}" title="VMA du test">${fmtVMA(L.vma)}</span><span class="varr">→</span>${inp(fmtVMA(v), tip + ' — vitesse visée pour cette séance (vide = VMA)')}`;
 }
@@ -1092,6 +1112,12 @@ function sortTable(key, heads, rows, def = { col: 0, dir: 1 }, split = false) {
   }).join('')}</tr></thead><tbody>${list.length ? list.map(r => `<tr>${r.cells.map(c => `<td class="${c.cls || ''}">${c.h != null ? c.h : esc(c.s == null ? '' : c.s)}</td>`).join('')}</tr>`).join('')
     : `<tr><td colspan="${heads.length}" style="text-align:center;color:#667085;padding:18px">Aucune donnée</td></tr>`}</tbody></table></div>`;
   if (!split || sorted.length < 2) return table(sorted);
+  // split = { side: rang → 0 (gauche) / 1 (droite) / 2 (droite, en bas), titles: [gauche, droite] }
+  if (typeof split === 'object') {
+    const L = sorted.filter(r => split.side(r) === 0), R = sorted.filter(r => split.side(r) === 1).concat(sorted.filter(r => split.side(r) === 2));
+    const col = (t, list, cls) => `<div><div class="sph ${cls}">${t}<small>${list.length}</small></div>${table(list)}</div>`;
+    return `<div class="split2">${col(split.titles[0], L, 'A')}${col(split.titles[1], R, 'B')}</div>`;
+  }
   const half = Math.ceil(sorted.length / 2);
   return `<div class="split2">${table(sorted.slice(0, half))}${table(sorted.slice(half))}</div>`;
 }
@@ -1816,7 +1842,7 @@ function lapSection(C, s, rows) {
         cell('', ev ? `<button class="btn sm danger" data-act="lapClear" data-id="${st.id}" title="Effacer">🗑</button>` : '')
       ] };
     }).concat(statused.map(st => ({ cells: [cell(st.name, `<b>${esc(st.name)}</b>`), cell(st.sexe), cell(null, '—'), cell(null, `<b>${s.status[st.id]}</b>`), ...Array(8).fill(cell(null, ''))] })));
-    table = sortTable('lap-' + s.id, ['Nom Prénom', 'Sexe', 'VMA', 'Temps final', { t: 'Note temps', cls: 'c' }, 'Temps 900 m', 'Lancers', { t: 'Régularité', cls: 'c' }, { t: 'Vitesse/VMA', cls: 'c' }, { t: 'Continuité', cls: 'c' }, { t: 'Temps de passage (ligne km/h)', nosort: true }, { t: '', nosort: true }], rws);
+    table = sortTable('lap-' + s.id, ['Nom Prénom', 'S.', 'VMA', 'Final', { t: 'Note', cls: 'c' }, '900 m', 'Lancers', { t: 'Rég.', cls: 'c' }, { t: 'Vit.', cls: 'c' }, { t: 'Cont.', cls: 'c' }, { t: 'Temps de passage (ligne km/h)', nosort: true }, { t: '', nosort: true }], rws);
   } else {
     const rws = present.map(st => {
       const v = fracVMA(C, s, st.id), evs = runs.map((_, i) => lapEval(C, s, st.id, i));
@@ -1845,7 +1871,7 @@ function lapSection(C, s, rows) {
     <div class="row sp" style="margin-top:0"><h3 style="margin:0"><span class="step">4</span>Résultats et notes</h3>
       <div class="row" style="margin:0"><button class="btn danger sm" data-act="clearAll">🗑 Effacer tous les résultats</button><button class="btn pri sm" data-act="exportSession">📊 Export Excel</button></div></div>
     <p class="hint">${s.type === 'biath' ? 'Note temps : barème filles / garçons. ' : 'R = régularité · V = vitesse par rapport à la VMA visée · C = continuité. '}Régularité : écart entre les lignes (vitesses, 1 ligne = ${fmtNum(LINE_STEP, 1)} km/h) où tombent les temps de passage de chaque tour, comme sur la fiche — ≤ 1 ligne TB · 2 S · 3 F · 4 et + I. Vitesse : VMA visée ou + TB · −0,5/−1 S · −1,5 à −2,5 F · au-delà I. Continuité : 0 marche TB · 1 S · 2-3 F · 4 et + I.</p>
-    ${table}
+    <div class="lapres">${table}</div>
   </section>`;
 }
 
@@ -2015,7 +2041,7 @@ function viewFrac(C, s) {
     <p class="hint">Par défaut : 1re moitié de la classe (ordre alphabétique) en groupe A, 2e moitié en groupe B. Le 1er observateur observe le 1er coureur, et ainsi de suite.</p>
     ${pairsHTML(C, s, { A: 'Groupe A · coureurs', B: 'Groupe B · observateurs' })}
     <label class="lbl" style="margin-top:16px">VMA et distances à parcourir en ${fmtDur(s.work)} (${s.pct} % VMA)</label>
-    <p class="hint" style="margin-top:0">VMA du test, puis → vitesse visée : saisissez une vitesse visée pour cette séance si besoin (case vide = VMA). La VMA du test n'est jamais modifiée.</p>
+    <p class="hint" style="margin-top:0">Touchez la VMA d'un élève pour lui donner une vitesse visée différente (elle s'affiche alors : VMA → visée ; case vidée = retour à la VMA). La VMA du test n'est jamais modifiée.</p>
     ${present.length ? distTable : ''}
   </section>
   ${section3}` : fracShortSections(C, s, rows, section3)}`;
@@ -2026,12 +2052,11 @@ function fracShortSections(C, s, rows, section4) {
   const studs = sortedStudents(C);
   const listRows = studs.map(st => {
     const stt = s.status[st.id], g = groupOf(s, st.id), v = fracVMA(C, s, st.id), L = latestVMA(C, st.id), d = fracDist(v, s.work, s.pct);
-    return { cells: [
+    return { side: stt ? 2 : g === 'A' ? 0 : 1, cells: [
       cell(st.name, `<b>${esc(st.name)}</b>`), cell(st.sexe),
       cell(v, vmaInput(C, s, st.id)),
       cell(d, stt ? '—' : d != null ? `<b class="${vmaCls(v)}">${d} m</b>` : '—'),
-      cell(stt ? 'Z' : g, stt ? '—' : `<div class="seg ab">${['A', 'B'].map(x => `<button class="${g === x ? 'on ' + x : ''}" data-act="setAB" data-id="${st.id}" data-v="${x}">${x}</button>`).join('')}</div>`),
-      cell(stt || '', fracStatusSel(s, st.id))
+      cell(stt ? 'Z' : g, stt ? `<b class="sttag" title="${STATUS[stt]}">${stt}</b>` : `<div class="seg ab">${['A', 'B'].map(x => `<button class="${g === x ? 'on ' + x : ''}" data-act="setAB" data-id="${st.id}" data-v="${x}">${x}</button>`).join('')}</div>`)
     ] };
   });
   const present = [...s.order.A, ...s.order.B].map(id => byId.get(id)).filter(Boolean);
@@ -2052,8 +2077,9 @@ function fracShortSections(C, s, rows, section4) {
   return `
   <section class="card">
     <h3><span class="step">2</span>Élèves, VMA et distance à parcourir en ${fmtDur(s.work)}</h3>
-    <p class="hint">VMA du test, puis → vitesse visée : saisissez une vitesse visée pour cette séance si besoin (case vide = VMA). La VMA du test n'est jamais modifiée. Groupe A / B et statut ABS, DP, DISP modifiables ici.</p>
-    ${sortTable('fl-' + s.id, ['Nom Prénom', 'Sexe', 'VMA → visée', fmtDur(s.work), 'Gr.', 'Statut'], listRows, undefined, true)}
+    <p class="hint">Touchez la VMA d'un élève pour lui donner une vitesse visée différente (elle s'affiche alors : VMA → visée ; case vidée = retour à la VMA). La VMA du test n'est jamais modifiée. Groupe A / B modifiable ici ; statut ABS, DP, DISP dans le tableau des binômes (3).</p>
+    ${sortTable('fl-' + s.id, ['Nom Prénom', 'S.', 'VMA', fmtDur(s.work), 'Gr.'], listRows, undefined,
+      { side: r => r.side, titles: [duo ? 'Groupe A · binômes qui courent en 1er' : 'Groupe A · coureurs', duo ? 'Groupe B · binômes qui observent en 1er' : 'Groupe B · observateurs'] })}
   </section>
 
   <section class="card">
@@ -2101,7 +2127,7 @@ function viewLapSession(C, s) {
     <p class="hint">Par défaut : 1re moitié de la classe (ordre alphabétique) court, 2e moitié observe. Le 1er observateur observe le 1er coureur, et ainsi de suite.</p>
     ${pairsHTML(C, s, { A: 'Groupe A · court en 1er', B: 'Groupe B · observe en 1er' })}
     <label class="lbl" style="margin-top:16px">VMA et objectifs</label>
-    <p class="hint" style="margin-top:0">VMA du test, puis → vitesse visée : saisissez une vitesse visée pour cette épreuve si besoin (case vide = VMA). La VMA du test n'est jamais modifiée.</p>
+    <p class="hint" style="margin-top:0">Touchez la VMA d'un élève pour lui donner une vitesse visée différente (elle s'affiche alors : VMA → visée ; case vidée = retour à la VMA). La VMA du test n'est jamais modifiée.</p>
     ${present.length ? pairTable(C, s, rows, objs, false) : ''}
   </section>
   ${lapSection(C, s, rows)}`;
@@ -2263,6 +2289,14 @@ const ACT = {
     else if (isLap(s)) { s.laps = {}; s.walk = {}; s.extra = {}; s.throws = {}; s.final = {}; }
     else s.valid = {};
     commit(); toast('Résultats effacés');
+  },
+  // Toucher la VMA : ouvre la case « vitesse visée » de cet élève (dans le tableau touché)
+  editVisee(el) {
+    const id = el.dataset.id, secs = [...document.querySelectorAll('section')], si = secs.indexOf(el.closest('section'));
+    ui.editVisee = id; render();
+    const sec = document.querySelectorAll('section')[si] || document;
+    const inp = sec.querySelector(`input[data-chg="fracVma"][data-id="${id}"]`);
+    if (inp) { inp.focus(); try { inp.select(); } catch (e) {} }
   },
   setAB(el) {
     const s = curSession(), id = el.dataset.id, g = el.dataset.v;
@@ -2598,6 +2632,7 @@ const CHG = {
   fracVma(el) {
     const s = curSession(), v = parseNum(el.value);
     if (v == null) delete s.vmaOv[el.dataset.id]; else s.vmaOv[el.dataset.id] = v;
+    ui.editVisee = null;
     commit();
   },
   setStatus(el) {
@@ -2637,6 +2672,13 @@ document.addEventListener('click', e => {
 document.addEventListener('change', e => {
   const el = e.target.closest('[data-chg]');
   if (el && CHG[el.dataset.chg]) CHG[el.dataset.chg](el, e);
+});
+// Case « vitesse visée » ouverte puis quittée sans rien saisir : on la referme
+document.addEventListener('focusout', e => {
+  const t = e.target;
+  if (!t || !t.dataset || t.dataset.chg !== 'fracVma' || t.value.trim()) return;
+  const id = t.dataset.id;
+  setTimeout(() => { if (ui.editVisee === id && document.activeElement !== t) { ui.editVisee = null; render(); } }, 200);
 });
 // Saisie en série : Entrée valide la case et passe à l'élève suivant (VMA du test, VMA du fractionné, distance supplémentaire)
 const CHAIN_INPUTS = ['vmaManual', 'fracVma', 'extraDist'];
