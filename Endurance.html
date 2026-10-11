@@ -261,6 +261,8 @@ table.ct.fit{table-layout:fixed}
 .rc{font-size:13px;white-space:normal;min-width:140px}
 .spl{font-size:11px;color:#475467;white-space:normal}
 .ser{font-size:10px;font-weight:900;color:#667085;align-self:center;margin:0 2px 0 4px}
+.vmain{font-weight:900;width:72px}
+.vmain.man{background:#fff7ed;border-color:#fdba74;color:#c2410c}
 .stepper{display:inline-flex;align-items:center;gap:6px}
 .stepper b{min-width:34px;text-align:center;font-size:20px}
 #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:#111827;color:#fff;padding:11px 18px;border-radius:12px;font-weight:600;opacity:0;pointer-events:none;transition:.25s;z-index:99;max-width:calc(100% - 32px);text-align:center}
@@ -456,6 +458,13 @@ for (let k = 1; k * PLOT <= TOTAL_D + 1e-6; k++) {
   WHISTLES.push({ k, d: k * PLOT, t, p });
 }
 // Performance à partir du temps de course
+// Performance d'un résultat de test VMA ; r.vma = VMA saisie à la main (prioritaire sur la VMA calculée)
+function resPerf(r) {
+  if (!r) return null;
+  const p = r.t != null ? perfAt(r.t) : { p: null, v: null, vma: null, t: null, d: null };
+  if (r.vma != null) p.vma = r.vma;
+  return p;
+}
 function perfAt(t) {
   t = Math.max(0, Math.min(t, TOTAL_T));
   if (t >= TOTAL_T - 1e-6) {
@@ -843,12 +852,12 @@ function latestVMA(C, sid) {
   const ss = C.sessions.filter(s => s.type === 'vma' && s.results && s.results[sid])
     .sort((a, b) => (b.date || '').localeCompare(a.date || '') || b.createdAt - a.createdAt);
   if (!ss.length) return null;
-  return Object.assign(perfAt(ss[0].results[sid].t), { date: ss[0].date, r: ss[0].results[sid] });
+  return Object.assign(resPerf(ss[0].results[sid]), { date: ss[0].date, r: ss[0].results[sid] });
 }
 function vmaHistory(C, sid) {
   return C.sessions.filter(s => s.type === 'vma' && s.results && s.results[sid])
     .sort((a, b) => (a.date || '').localeCompare(b.date || '') || a.createdAt - b.createdAt)
-    .map(s => perfAt(s.results[sid].t).vma);
+    .map(s => resPerf(s.results[sid]).vma);
 }
 function fracStats(C, sid) {
   let y = 0, n = 0;
@@ -878,8 +887,8 @@ function buildSheetTables() {
         sortedStudents(C).forEach(st => {
           const r = s.results[st.id], stt = (s.status || {})[st.id];
           if (!r) { if (stt) vma.push([cn, st.name, st.sexe, fmtDate(s.date), '', s.track, '', '', '', '', '', '', '', '', stt]); return; }
-          const p = perfAt(r.t);
-          vma.push([cn, st.name, st.sexe, fmtDate(s.date), r.g || s.groups[st.id] || '', s.track, p.p, p.v, Math.round(r.t * 10) / 10, fmtT(r.t), p.d, p.vma, r.ret || 0, r.elim ? 'oui' : '', stt || '']);
+          const p = resPerf(r), hasT = r.t != null;
+          vma.push([cn, st.name, st.sexe, fmtDate(s.date), r.g || s.groups[st.id] || '', s.track, hasT ? p.p : '', hasT ? p.v : '', hasT ? Math.round(r.t * 10) / 10 : '', hasT ? fmtT(r.t) : '', hasT ? p.d : '', p.vma, r.ret || 0, r.elim ? 'oui' : '', stt || (r.vma != null ? 'VMA saisie' : '')]);
         });
       } else if (isLap(s)) {
         syncOrder(C, s);
@@ -911,7 +920,7 @@ function buildSheetTables() {
         });
       }
     });
-    recapRows(C).forEach(({ st, L, F, hist }) => syn.push([cn, st.name, st.sexe, L ? L.vma : '', L ? fmtDate(L.date) : '', L ? L.p : '', L ? L.v : '', L ? fmtT(L.t) : '', L ? L.d : '', hist.map(fmtVMA).join(' → '), F.pct == null ? '' : F.pct]));
+    recapRows(C).forEach(({ st, L, F, hist }) => syn.push([cn, st.name, st.sexe, L ? L.vma : '', L ? fmtDate(L.date) : '', L && L.p != null ? L.p : '', L && L.v != null ? L.v : '', L && L.t != null ? fmtT(L.t) : '', L && L.d != null ? L.d : '', hist.map(fmtVMA).join(' → '), F.pct == null ? '' : F.pct]));
   });
   return { 'Résultats VMA': vma, 'Résultats Fractionné': frac, 'Résultats Courses': crs, 'Synthèse classes': syn };
 }
@@ -1077,8 +1086,8 @@ function viewRecap(C) {
     cells: [
       cell(st.name, `<b>${esc(st.name)}</b>`), cell(st.sexe),
       cell(L ? L.vma : null, L ? `<b>${fmtVMA(L.vma)}</b>` : '—'),
-      cell(L ? L.p : null, L ? String(L.p) : '—'), cell(L ? L.v : null, L ? L.v + ' km/h' : '—'),
-      cell(L ? L.t : null, L ? fmtT(L.t) : '—'), cell(L ? L.d : null, L ? L.d + ' m' : '—'),
+      cell(L ? L.p : null, L && L.p != null ? String(L.p) : '—'), cell(L ? L.v : null, L && L.v != null ? L.v + ' km/h' : '—'),
+      cell(L ? L.t : null, L && L.t != null ? fmtT(L.t) : '—'), cell(L ? L.d : null, L && L.d != null ? L.d + ' m' : '—'),
       cell(L ? L.date : null, L ? fmtDate(L.date) : '—'),
       cell(hist.length ? hist[hist.length - 1] : null, hist.length ? hist.map(fmtVMA).join(' → ') : '—'),
       cell(F.pct, F.pct == null ? '—' : `${F.pct} % <span class="hint">(${F.y}/${F.y + F.n})</span>`)
@@ -1154,7 +1163,7 @@ function pairsHTML(C, s, lab) {
   const item = (id, g) => {
     if (!id) return `<div class="pc empty">— sans binôme —</div>`;
     const st = byId.get(id);
-    const v = s.type === 'vma' ? (s.results[id] ? perfAt(s.results[id].t).vma : null) : fracVMA(C, s, id);
+    const v = s.type === 'vma' ? (s.results[id] ? resPerf(s.results[id]).vma : null) : fracVMA(C, s, id);
     return `<div class="pc"><span class="sx ${st.sexe}">${esc(st.sexe || '?')}</span><span class="gn">${esc(st.name)}</span>${v != null ? `<span class="gv">${fmtVMA(v)}</span>` : ''}
       <div class="seg ab">${['A', 'B'].map(x => `<button class="${g === x ? 'on ' + x : ''}" data-act="setAB" data-id="${id}" data-v="${x}">${x}</button>`).join('')}</div>${statusSel(id)}</div>`;
   };
@@ -1176,14 +1185,15 @@ function viewVMA(C, s) {
 
   const resStuds = studs.filter(st => s.results[st.id] || s.groups[st.id] || s.status[st.id]);
   const resRows = resStuds.map(st => {
-    const r = s.results[st.id], p = r ? perfAt(r.t) : null;
-    const obs = r ? [r.elim ? 'Éliminé (2 retards)' : (r.ret ? r.ret + ' retard' : ''), r.manual ? 'saisie manuelle' : '', r.t >= TOTAL_T ? 'test terminé' : ''].filter(Boolean).join(' · ')
+    const r = s.results[st.id], p = resPerf(r), hasT = r && r.t != null;
+    const obs = r ? [r.elim ? 'Éliminé (2 retards)' : (r.ret ? r.ret + ' retard' : ''), r.manual && hasT ? 'temps saisi' : '', r.vma != null ? 'VMA saisie' : '', hasT && r.t >= TOTAL_T ? 'test terminé' : ''].filter(Boolean).join(' · ')
       : (s.status[st.id] ? STATUS[s.status[st.id]] : '');
     return { cells: [
       cell(st.name, `<b>${esc(st.name)}</b>`), cell(st.sexe), cell(s.status[st.id] || (r && r.g) || s.groups[st.id] || ''),
-      cell(p ? p.p : null, p ? String(p.p) : '—'), cell(p ? p.v : null, p ? p.v + ' km/h' : '—'),
-      cell(p ? p.t : null, p ? fmtT(p.t) : '—'), cell(p ? p.d : null, p ? p.d + ' m' : '—'),
-      cell(p ? p.vma : null, p ? `<b>${fmtVMA(p.vma)} km/h</b>` : '—'), cell(obs),
+      cell(p ? p.vma : null, `<input class="vin vmain ${r && r.vma != null ? 'man' : ''}" inputmode="decimal" data-chg="vmaManual" data-id="${st.id}" value="${p && p.vma != null ? fmtVMA(p.vma) : ''}" placeholder="—" title="Saisir ou corriger la VMA (km/h)">`),
+      cell(hasT ? p.p : null, hasT ? String(p.p) : '—'), cell(hasT ? p.v : null, hasT ? p.v + ' km/h' : '—'),
+      cell(hasT ? p.t : null, hasT ? fmtT(p.t) : '—'), cell(hasT ? p.d : null, hasT ? p.d + ' m' : '—'),
+      cell(obs),
       cell('', `<button class="btn sm" data-act="vmaEdit" data-id="${st.id}" title="Corriger le temps">✎</button>${r ? ` <button class="btn sm danger" data-act="clearOne" data-id="${st.id}" title="Effacer le résultat de cet élève">🗑</button>` : ''}`)
     ] };
   });
@@ -1244,7 +1254,7 @@ function viewVMA(C, s) {
     <div class="row sp"><h3 style="margin:0"><span class="step">5</span>Résultats de la séance</h3>
       <div class="row" style="margin:0"><button class="btn danger" data-act="clearAll" ${Object.keys(s.results).length ? '' : 'disabled'}>🗑 Effacer tous les résultats</button><button class="btn pri" data-act="exportSession">📊 Export Excel</button></div></div>
     <p class="hint">✎ pour corriger ou saisir un temps à la main, 🗑 pour effacer le résultat d'un élève. Tri possible sur chaque colonne.</p>
-    ${sortTable('res-' + s.id, ['Nom Prénom', 'Sexe', 'Groupe', 'Palier', 'Vitesse palier', 'Temps', 'Distance', 'VMA', 'Observations', { t: '', nosort: true }], resRows)}
+    ${sortTable('res-' + s.id, ['Nom Prénom', 'Sexe', 'Groupe', 'VMA (km/h)', 'Palier', 'Vitesse palier', 'Temps', 'Distance', 'Observations', { t: '', nosort: true }], resRows)}
   </section>`;
 }
 
@@ -2414,6 +2424,18 @@ const CHG = {
     if (el.value) s.status[el.dataset.id] = el.value; else delete s.status[el.dataset.id];
     if (s.duoNum) delete s.duoNum[el.dataset.id];
     syncOrder(curClass(), s); commit();
+  },
+  // Test VMA : VMA saisie à la main (vide = VMA calculée à partir du temps)
+  vmaManual(el) {
+    const s = curSession(), id = el.dataset.id, v = parseNum(el.value);
+    let r = s.results[id];
+    if (v == null) { if (r) { delete r.vma; if (r.t == null) delete s.results[id]; } }
+    else {
+      if (v < 3 || v > 25) { toast('VMA attendue entre 3 et 25 km/h'); render(); return; }
+      if (!r) r = s.results[id] = { g: s.groups[id] || '', manual: true };
+      if (r.t != null && perfAt(r.t).vma === v) delete r.vma; else r.vma = v;
+    }
+    commit();
   },
   duoNum(el) { const s = curSession(); s.duoNum[el.dataset.id] = +el.value; commit(); },
   extraDist(el) {
