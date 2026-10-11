@@ -218,6 +218,8 @@ table.ct.fit{table-layout:fixed}
 .vs{margin-left:auto;font-weight:900;font-size:13px;color:#1d4ed8}
 .vx{border:0;background:#f2f4f7;border-radius:6px;cursor:pointer;font-weight:900;color:#667085;min-height:24px;padding:0 7px}
 .vr{display:flex;align-items:center;gap:6px;min-width:0}
+.vrn{width:100%;border:0;background:#f8f9fb;border-radius:8px;padding:5px 6px;cursor:pointer;text-align:left;color:var(--ink);min-height:34px}
+.vrn:hover{background:#eef2ff}.vrn:active{background:#fee2e2}
 .vr .gn{flex:1;min-width:0;font-weight:800;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .vr .obj{font-weight:900;font-size:13px;color:#c2410c;white-space:nowrap}
 .mk{flex:0 0 auto;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:900;color:#fff}
@@ -1359,6 +1361,16 @@ function printFiches(C, s, group) {
      course individuelle chronométrée au tour (clic sur le nom), notes TB / S / F / I.
    Validation ✓/✗ : chaque course est validée par défaut ; s.valid[id][k] === 0 signifie ✗. */
 const isDuo = s => s.type === 'frac' && s.work === 18;
+// Ordre de passage en 18" / 36" : A série 1 → B série 1 → A série 2 → B série 2…
+function fracSteps(s) {
+  const out = [];
+  for (let sr = 0; sr < (s.series || 1); sr++) ['A', 'B'].forEach(g => out.push({ g, sr }));
+  return out;
+}
+function setFracStep(s, i) {
+  const steps = fracSteps(s), st = steps[Math.max(0, Math.min(i, steps.length - 1))];
+  s.step = steps.indexOf(st); s.runGroup = st.g; s.curSerie = st.sr;
+}
 const isLap = s => s.type === 'endu3' || s.type === 'biath' || (s.type === 'frac' && s.work >= 90);
 const nSeries = s => (s.type === 'frac' && !isLap(s)) ? (s.series || 1) : 1;
 const groupOf = (s, id) => s.order ? (s.order.A.includes(id) ? 'A' : s.order.B.includes(id) ? 'B' : null) : null;
@@ -1720,6 +1732,7 @@ function viewFrac(C, s) {
   const duo = isDuo(s), lap = isLap(s), S = nSeries(s);
   if (duo) syncDuos(C, s);
   if (!s.runGroup) s.runGroup = 'A';
+  if (!lap && (s.step == null || !fracSteps(s)[s.step])) setFracStep(s, 0);
   if (!s.obsOk) s.obsOk = {};
   const studs = sortedStudents(C);
   const byId = new Map(C.students.map(st => [st.id, st]));
@@ -1759,7 +1772,7 @@ function viewFrac(C, s) {
       const L = u.run.length;
       const runners = u.run.map((id, m) => {
         const d = fracDist(vOf(byId.get(id)), s.work, s.pct);
-        return `<div class="vr">${duo ? `<span class="mk m${m}">${m + 1}</span>` : ''}<span class="gn">${esc(byId.get(id).name)}</span><span class="obj">${d != null ? d + ' m' : '? m'}</span></div>`;
+        return `<button class="vr vrn" data-act="fracNameTap" data-id="${id}" title="Toucher : course en cours non validée (✗)">${duo ? `<span class="mk m${m}">${m + 1}</span>` : ''}<span class="gn">${esc(byId.get(id).name)}</span><span class="obj">${d != null ? d + ' m' : '? m'}</span></button>`;
       }).join('');
       let ok = 0, n = 0, cells = '';
       if (duo) {
@@ -1786,13 +1799,12 @@ function viewFrac(C, s) {
   <section class="card" id="livecard">
     <div class="row sp" style="margin-top:0"><h3 style="margin:0"><span class="step">4</span>Séance en cours</h3>
       <div class="row" style="margin:0"><button class="btn danger sm" data-act="clearAll">🗑 Effacer les validations</button><button class="btn pri sm" data-act="exportSession">📊 Export Excel</button></div></div>
-    <div class="row"><b>Groupe qui court :</b><div class="seg lg">${['A', 'B'].map(v => `<button class="${runG === v ? 'on ' + v : ''}" data-act="setRunGroup" data-v="${v}">Groupe ${v}${s.ran && s.ran[v] ? ' ✓' : ''}</button>`).join('')}</div></div>
-    ${S > 1 ? `<div class="row"><b>Série :</b><div class="seg">${Array.from({ length: S }, (_, i) => `<button class="${serie === i ? 'on' : ''}" data-act="setSerie" data-v="${i}" ${mine ? 'disabled' : ''}>Série ${i + 1}</button>`).join('')}</div></div>` : ''}
+    <div class="row"><b>Ordre de passage :</b><div class="seg lg">${fracSteps(s).map((st, i) => `<button class="${(s.step || 0) === i ? 'on ' + st.g : ''}" data-act="setStep" data-v="${i}" ${mine ? 'disabled' : ''}>${i + 1}. Groupe ${st.g}${S > 1 ? ' · S' + (st.sr + 1) : ''}${(s.doneSteps || {})[i] ? ' ✓' : ''}</button>`).join('')}</div></div>
     ${mine ? viewFracLive(s) : `
       <div class="row"><button class="btn go big" data-act="fracGo" ${live ? 'disabled' : ''}>▶ Lancer — groupe ${runG}${S > 1 ? ' · série ' + (serie + 1) : ''} (${duo ? s.reps + ' relais de 18"' : s.reps + ' × ' + fmtDur(s.work) + ' / ' + fmtDur(s.rest)})</button><button class="btn" data-act="testSound">🔊 Tester le son</button></div>
       <p class="hint">Uniquement des bips, sans annonce vocale : un bip à chaque ${duo ? 'changement de coureur' : 'départ et à chaque fin des ' + fmtDur(s.work)}, 3 bips courts avant le départ, 3 bips longs à la fin.</p>
       ${live ? '<p class="hint">Un chrono est déjà en cours dans une autre séance.</p>' : ''}`}
-    <p class="hint">Chaque course est validée par défaut (✓) : touchez une case pour la passer en ✗ si l'objectif n'est pas atteint. 👁 Observateur : vert = travail bien fait, orange = à revoir (touchez pour changer).${duo ? ' Dans un binôme, les cases alternent entre le coureur ① et le coureur ②.' : ''}</p>
+    <p class="hint">Chaque course est validée par défaut (✓). <b>Touchez le nom d'un élève</b> pendant le chrono pour noter sa course en cours (ou celle qu'il vient de finir) comme non validée (✗) ; touchez à nouveau pour annuler. Vous pouvez aussi toucher directement une case. 👁 Observateur : vert = travail bien fait, orange = à revoir (touchez pour changer).${duo ? ' Dans un binôme, les cases alternent entre le coureur ① et le coureur ②.' : ''}</p>
     ${units.length ? `<div class="vcards">${units.map(card).join('')}</div>` : '<div class="empty">Aucun élève dans ce groupe.</div>'}
   </section>`;
   }
@@ -2200,13 +2212,13 @@ const ACT = {
       if (v === 18) { s.rest = 18; s.reps = 20; s.series = 2; }           // relais en binôme : 18" / 18" × 20, 2 séries
       else if (v === 36) { s.rest = 24; s.reps = 6; s.series = 2; }       // 36" / 24" × 6, 2 séries
       else { if (!RESTS.includes(s.rest) || s.rest < 90) s.rest = 90; s.reps = 3; if (!s.lapLen) s.lapLen = 100; }
-      s.curSerie = 0; s.viewRun = 0;
+      s.viewRun = 0; s.doneSteps = {}; setFracStep(s, 0);
     }
     commit();
   },
   fracReps(el) { const s = curSession(); s.reps = Math.max(1, Math.min(40, s.reps + +el.dataset.v)); commit(); },
-  fracSeries(el) { const s = curSession(); s.series = Math.max(1, Math.min(4, (s.series || 1) + +el.dataset.v)); s.curSerie = 0; commit(); },
-  setSerie(el) { curSession().curSerie = +el.dataset.v; commit(); },
+  fracSeries(el) { const s = curSession(); s.series = Math.max(1, Math.min(4, (s.series || 1) + +el.dataset.v)); s.doneSteps = {}; setFracStep(s, 0); commit(); },
+  setStep(el) { setFracStep(curSession(), +el.dataset.v); commit(); },
   setViewRun(el) { curSession().viewRun = +el.dataset.v; commit(); },
   setLapLen(el) { curSession().lapLen = +el.dataset.v; commit(); },
   /* --- Courses chronométrées au tour --- */
@@ -2305,6 +2317,31 @@ const ACT = {
     el.dataset.ids.split(',').forEach(id => delete s.valid[id]);
     commit();
   },
+  // Toucher le nom : la course en cours (ou la dernière faite) de l'élève passe en ✗ — nouveau toucher : retour à ✓
+  fracNameTap(el) {
+    const C = curClass(), s = curSession(), id = el.dataset.id, st = C.students.find(x => x.id === id);
+    const mine = live && live.kind === 'frac' && live.sid === s.id && live.tl;
+    const last = ui.fracLast && ui.fracLast.sid === s.id ? ui.fracLast : null;
+    if (!mine && !last) { toast('Lancez le chrono, ou touchez directement la case de la course'); return; }
+    const serie = mine ? live.serie : last.serie, e = mine ? live.tl.elapsed() : Infinity;
+    if (e < 0) { toast('Le départ n\'est pas encore donné'); return; }
+    let k, num;
+    if (isDuo(s)) {
+      const d = duoOf(s, id), L = d.length, m = Math.max(0, d.indexOf(id));
+      let j = Math.min(Math.floor(e / s.work), s.reps - 1);
+      while (j >= 0 && j % L !== m) j--;
+      if (j < 0) { toast(`${st.name} n'a pas encore couru`); return; }
+      k = serie * Math.ceil((s.reps - m) / L) + Math.floor(j / L); num = Math.floor(j / L) + 1;
+    } else {
+      const i = Math.min(Math.floor(e / (s.work + s.rest)), s.reps - 1);
+      k = serie * s.reps + i; num = i + 1;
+    }
+    const arr = s.valid[id] || (s.valid[id] = []);
+    while (arr.length <= k) arr.push(null);
+    arr[k] = arr[k] === 0 ? null : 0;
+    commit();
+    toast(`${st.name} — ${nSeries(s) > 1 ? 'série ' + (serie + 1) + ', ' : ''}course ${num} : ${arr[k] === 0 ? '✗ non validée' : '✓ validée'}`);
+  },
   fracVal(el) {
     // validé par défaut : ✓ ⇄ ✗
     const s = curSession(), id = el.dataset.id, k = +el.dataset.k;
@@ -2318,13 +2355,19 @@ const ACT = {
     const C = curClass(), s = curSession();
     s.ran = s.ran || {}; s.ran[s.runGroup || 'A'] = true;
     commit({ render: false });
-    live = { kind: 'frac', cls: C.name, sid: s.id, tl: null, duo: isDuo(s) };
+    live = { kind: 'frac', cls: C.name, sid: s.id, tl: null, duo: isDuo(s), serie: Math.min(s.curSerie || 0, nSeries(s) - 1) };
+    ui.fracLast = { sid: s.id, serie: live.serie };
     const end = fracEnd(s);
     live.tl = new Timeline(fracEvents(s), { lead: 6, end, onTick: fracTick, onEnd: () => {
       live = null; keepAwake(false);
-      const S = nSeries(s), cur = s.curSerie || 0;
-      if (cur < S - 1) { s.curSerie = cur + 1; commit(); toast(`🏁 Série ${cur + 1} terminée — prêt pour la série ${cur + 2}`, 4000); }
-      else { render(); toast('🏁 Série terminée'); }
+      // passage suivant : A S1 → B S1 → A S2 → B S2
+      const steps = fracSteps(s), cur = s.step || 0, S = nSeries(s);
+      s.doneSteps = s.doneSteps || {}; s.doneSteps[cur] = true;
+      const done = `Groupe ${steps[cur].g}${S > 1 ? ' série ' + (steps[cur].sr + 1) : ''} terminé`;
+      if (cur < steps.length - 1) {
+        setFracStep(s, cur + 1); commit();
+        toast(`🏁 ${done} — au tour du groupe ${s.runGroup}${S > 1 ? ', série ' + (s.curSerie + 1) : ''}`, 5000);
+      } else { commit(); toast(`🏁 ${done} — séance terminée`, 5000); }
     } });
     live.tl.start(); keepAwake(true); render();
   },
