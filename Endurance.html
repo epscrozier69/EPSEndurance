@@ -249,6 +249,8 @@ table.ct.fit{table-layout:fixed}
 .lapres .ct th .arr{display:none}
 .lapres .ct td:first-child{max-width:170px;overflow:hidden;text-overflow:ellipsis}
 .lapres .ct td.splc{white-space:normal;min-width:150px}
+.bareme{margin:8px 0 6px;padding-left:18px;font-size:13px;color:#344054;line-height:1.9}
+.bareme .nt{font-size:10.5px}
 .sumd{font-size:10.5px;color:#475467;font-weight:700;white-space:nowrap;margin-top:2px}
 .lapres .ct th.sumh{font-size:11px;white-space:normal;line-height:1.15;min-width:70px}
 .lapres .spl{font-size:10.5px;line-height:1.35}
@@ -1894,7 +1896,14 @@ function lapSection(C, s, rows) {
   <section class="card">
     <div class="row sp" style="margin-top:0"><h3 style="margin:0"><span class="step">4</span>Résultats et notes</h3>
       <div class="row" style="margin:0"><button class="btn danger sm" data-act="clearAll">🗑 Effacer tous les résultats</button><button class="btn pri sm" data-act="exportSession">📊 Export Excel</button></div></div>
-    <p class="hint">${s.type === 'biath' ? 'Note temps : barème filles / garçons. ' : 'R = régularité · V = vitesse par rapport à la VMA visée · C = continuité. '}Régularité : écart entre les lignes (vitesses, 1 ligne = ${fmtNum(LINE_STEP, 1)} km/h) où tombent les temps de passage de chaque tour, comme sur la fiche — ≤ 1 ligne TB · 2 S · 3 F · 4 et + I. Vitesse : VMA visée ou + TB · −0,5/−1 S · −1,5 à −2,5 F · au-delà I. Continuité : 0 marche TB · 1 S · 2-3 F · 4 et + I.</p>
+    <ul class="bareme">
+      ${s.type === 'biath'
+        ? `<li><b>Temps final</b> — filles : TB ≤ 5'20 · S ≤ 6'40 · F ≤ 8'20 · I au-delà ; garçons : TB ≤ 5'00 · S ≤ 6'20 · F ≤ 8'00 · I au-delà</li>`
+        : `<li class="hint" style="list-style:none;margin-left:-18px">Dans chaque course : R = régularité · V = vitesse · C = continuité. Les colonnes « Bilan » regroupent toutes les courses.</li>`}
+      <li><b>Régularité</b> (écart entre les lignes où tombent les temps de passage, 1 ligne = ${fmtNum(LINE_STEP, 1)} km/h${s.type === 'biath' ? '' : ' ; bilan = moyenne des courses'}) : ${nt('TB')} ≤ 1 ligne · ${nt('S')} 2 lignes · ${nt('F')} 3 lignes · ${nt('I')} 4 lignes et +</li>
+      <li><b>Vitesse</b> (vitesse courue par rapport à la ${s.type === 'endu3' ? 'vitesse visée (VMA ± 1)' : 'VMA'}${s.type === 'biath' ? '' : ' ; bilan = écart moyen'}) : ${nt('TB')} VMA ou + · ${nt('S')} −0,5 à −1 · ${nt('F')} −1,5 à −2,5 · ${nt('I')} au-delà de −2,5</li>
+      <li><b>Continuité</b> (nombre de marches${s.type === 'biath' ? '' : ' ; bilan = total des marches de toutes les courses'}) : ${nt('TB')} aucune · ${nt('S')} 1 fois · ${nt('F')} 2 ou 3 fois · ${nt('I')} 4 fois et +</li>
+    </ul>
     <div class="lapres">${table}</div>
   </section>`;
 }
