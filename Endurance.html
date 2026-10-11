@@ -865,7 +865,7 @@ function recapRows(C) {
 }
 function buildSheetTables() {
   const vma = [['Classe', 'Nom Prénom', 'Sexe', 'Date', 'Groupe', 'Piste (m)', 'Palier', 'Vitesse palier (km/h)', 'Temps (s)', 'Temps', 'Distance (m)', 'VMA (km/h)', 'Retards', 'Éliminé', 'Statut']];
-  const frac = [['Classe', 'Nom Prénom', 'Date', 'Rôle', 'Binôme', 'Travail (s)', 'Récup (s)', 'Répétitions', '% VMA', 'VMA (km/h)', 'Objectif (m)', 'Réussites', 'Échecs', 'Détail', 'Travail d\'observateur']];
+  const frac = [['Classe', 'Nom Prénom', 'Date', 'Rôle', 'Binôme', 'Travail (s)', 'Récup (s)', 'Répétitions', '% VMA', 'VMA (km/h)', 'Objectif (m)', 'Réussites', 'Échecs', 'Détail', 'Travail d\'observateur', 'Séries', 'Points', 'Points max', 'Note']];
   const crs = [['Classe', 'Nom Prénom', 'Sexe', 'Date', 'Épreuve', 'Course', 'VMA (km/h)', 'Vitesse visée (km/h)', 'Distance (m)', 'Vitesse (km/h)', 'Temps de passage', 'Régularité', 'Note vitesse', 'Marches', 'Continuité', 'Temps 900 m', 'Lancers ratés', 'Temps final', 'Note temps', 'Statut']];
   const syn = [['Classe', 'Nom Prénom', 'Sexe', 'VMA (km/h)', 'Date du test', 'Palier', 'Vitesse palier (km/h)', 'Temps', 'Distance (m)', 'Historique VMA', 'Réussite fractionné (%)']];
   state.classOrder.forEach(cn => {
@@ -899,12 +899,13 @@ function buildSheetTables() {
         const rest = isDuo(s) ? s.work : s.rest;
         sortedStudents(C).forEach(st => {
           const stt = (s.status || {})[st.id];
-          if (stt) { frac.push([cn, st.name, fmtDate(s.date), stt, '', s.work, rest, s.reps, s.pct, '', '', '', '', '', '']); return; }
+          if (stt) { frac.push([cn, st.name, fmtDate(s.date), stt, '', s.work, rest, s.reps, s.pct, '', '', '', '', '', '', nSeries(s), '', '', '']); return; }
           const g = groupOf(s, st.id); if (!g) return;
           const r = fracRes(s, st.id), v = fracVMA(C, s, st.id), d = fracDist(v, s.work, s.pct);
           const mates = isDuo(s) ? duoOf(s, st.id).filter(x => x !== st.id) : [s.partner[st.id]].filter(Boolean);
           frac.push([cn, st.name, fmtDate(s.date), 'Groupe ' + g, mates.map(x => byId.get(x) ? byId.get(x).name : '').join(', '), s.work, rest, s.reps, s.pct,
-            v == null ? '' : v, d == null ? '' : d, r ? r.y : '', r ? r.n : '', r ? r.detail : '', s.obsOk && s.obsOk[st.id] === false ? 'à revoir' : 'bien']);
+            v == null ? '' : v, d == null ? '' : d, r ? r.y : '', r ? r.n : '', r ? r.detail : '', s.obsOk && s.obsOk[st.id] === false ? 'à revoir' : 'bien',
+            nSeries(s), ...(sc => sc ? [sc.p, sc.max, sc.g] : ['', '', ''])(fracScore(s, st.id))]);
         });
       }
     });
@@ -1359,7 +1360,7 @@ function printFiches(C, s, group) {
    Validation ✓/✗ : chaque course est validée par défaut ; s.valid[id][k] === 0 signifie ✗. */
 const isDuo = s => s.type === 'frac' && s.work === 18;
 const isLap = s => s.type === 'endu3' || s.type === 'biath' || (s.type === 'frac' && s.work >= 90);
-const nSeries = s => (s.type === 'frac' && !isDuo(s) && !isLap(s)) ? (s.series || 1) : 1;
+const nSeries = s => (s.type === 'frac' && !isLap(s)) ? (s.series || 1) : 1;
 const groupOf = (s, id) => s.order ? (s.order.A.includes(id) ? 'A' : s.order.B.includes(id) ? 'B' : null) : null;
 function autoDuos(C, s) {
   const v = id => { const x = fracVMA(C, s, id); return x == null ? -1 : x; };
@@ -1396,7 +1397,22 @@ function duoOf(s, id) {
 function runsOf(s, id) {
   if (!isDuo(s)) return s.reps * nSeries(s);
   const d = duoOf(s, id), m = Math.max(0, d.indexOf(id));
-  return Math.ceil((s.reps - m) / d.length);
+  return nSeries(s) * Math.ceil((s.reps - m) / d.length);
+}
+// Points (courses validées) et note : binôme en 18" (/40 : TB 36-40 · S 30-35 · F 22-29 · I ≤ 21),
+// individuel en 36" (/12 : TB 11-12 · S 8-10 · F 6-7 · I ≤ 5). Seuils proportionnels si le nombre de courses change.
+function fracThresholds(s, max) {
+  const fr = isDuo(s) ? [36 / 40, 30 / 40, 22 / 40] : [11 / 12, 8 / 12, 6 / 12];
+  return fr.map(f => Math.ceil(f * max - 1e-9));
+}
+function fracScore(s, id) {
+  if (s.type !== 'frac' || isLap(s) || !groupOf(s, id)) return null;
+  const ids = isDuo(s) ? duoOf(s, id) : [id];
+  const rs = ids.map(x => fracRes(s, x));
+  if (rs.every(r => !r)) return null;
+  const p = rs.reduce((a, r) => a + (r ? r.y : 0), 0), max = ids.reduce((a, x) => a + runsOf(s, x), 0);
+  const th = fracThresholds(s, max);
+  return { p, max, g: p >= th[0] ? 'TB' : p >= th[1] ? 'S' : p >= th[2] ? 'F' : 'I' };
 }
 // Résultat ✓/✗ d'un élève (null si son groupe n'a pas encore couru)
 function fracRes(s, id) {
@@ -1709,7 +1725,7 @@ function viewFrac(C, s) {
   const byId = new Map(C.students.map(st => [st.id, st]));
   const present = [...s.order.A, ...s.order.B].map(id => byId.get(id)).filter(Boolean);
   const vOf = st => fracVMA(C, s, st.id);
-  const total = duo ? s.reps * s.work : (s.reps * s.work + (s.reps - 1) * s.rest) * S;
+  const total = (duo ? s.reps * s.work : s.reps * s.work + (s.reps - 1) * s.rest) * S;
   const rows = fracRows(s);
 
   // Petit texte récapitulatif
@@ -1718,7 +1734,7 @@ function viewFrac(C, s) {
   pool.forEach(st => { const v = vOf(st); if (v != null) { if (!byV.has(v)) byV.set(v, []); byV.get(v).push(st.name.split(' ')[0]); } });
   const noV = pool.filter(st => vOf(st) == null).length;
   const recap = `<div class="note">
-    ${duo ? `<p>📋 <b>Relais en binôme : ${s.reps} × 18"</b> à <b>${s.pct} % de la VMA</b> — chacun court ${Math.ceil(s.reps / 2)} fois, sa récupération est la course de son partenaire. Durée ≈ ${fmtT(total)}.</p>`
+    ${duo ? `<p>📋 <b>Relais en binôme : ${s.reps} × 18"</b>${S > 1 ? ` × <b>${S} séries</b>` : ''} à <b>${s.pct} % de la VMA</b> — chacun court ${Math.ceil(s.reps / 2)} fois par série, sa récupération est la course de son partenaire. Durée de course ≈ ${fmtT(total)}.</p>`
       : `<p>📋 <b>${s.reps} × ${fmtDur(s.work)}</b> de course individuelle, <b>${fmtDur(s.rest)}</b> de récupération${S > 1 ? `, <b>${S} séries</b>` : ''}, à <b>${s.pct} % de la VMA</b> — durée ≈ ${fmtT(total)}${lap ? ` · chronométrage au tour (${lapLen(s)} m) et notes de régularité, vitesse et continuité` : ''}.</p>`}
     <p>Distance à parcourir en ${fmtDur(s.work)} selon la VMA :</p>
     <ul>${[...byV.keys()].sort((a, b) => a - b).map(v => `<li><b>VMA ${fmtVMA(v)} km/h → ${fracDist(v, s.work, s.pct)} m</b> <span class="hint">(${plotsTxt(fracDist(v, s.work, s.pct))}) — ${byV.get(v).map(esc).join(', ')}</span></li>`).join('') || '<li>Aucune VMA connue : faites un test VMA ou saisissez les VMA ci-dessous.</li>'}</ul>
@@ -1747,7 +1763,13 @@ function viewFrac(C, s) {
       }).join('');
       let ok = 0, n = 0, cells = '';
       if (duo) {
-        for (let i = 0; i < s.reps; i++) { const id = u.run[i % L], b = vbtn(id, Math.floor(i / L), i % L, esc(byId.get(id).name) + ' — course ' + (Math.floor(i / L) + 1)); n++; if (b.ok) ok++; cells += b.h; }
+        for (let sr = 0; sr < S; sr++) {
+          if (S > 1) cells += `<span class="ser">S${sr + 1}</span>`;
+          for (let i = 0; i < s.reps; i++) {
+            const m = i % L, id = u.run[m], k = sr * Math.ceil((s.reps - m) / L) + Math.floor(i / L);
+            const b = vbtn(id, k, m, esc(byId.get(id).name) + ' — série ' + (sr + 1) + ', course ' + (Math.floor(i / L) + 1)); n++; if (b.ok) ok++; cells += b.h;
+          }
+        }
       } else {
         for (let sr = 0; sr < S; sr++) {
           if (S > 1) cells += `<span class="ser">S${sr + 1}</span>`;
@@ -1762,7 +1784,7 @@ function viewFrac(C, s) {
     const mine = live && live.kind === 'frac' && live.sid === s.id;
     section3 = `
   <section class="card" id="livecard">
-    <div class="row sp" style="margin-top:0"><h3 style="margin:0"><span class="step">3</span>Séance en cours</h3>
+    <div class="row sp" style="margin-top:0"><h3 style="margin:0"><span class="step">4</span>Séance en cours</h3>
       <div class="row" style="margin:0"><button class="btn danger sm" data-act="clearAll">🗑 Effacer les validations</button><button class="btn pri sm" data-act="exportSession">📊 Export Excel</button></div></div>
     <div class="row"><b>Groupe qui court :</b><div class="seg lg">${['A', 'B'].map(v => `<button class="${runG === v ? 'on ' + v : ''}" data-act="setRunGroup" data-v="${v}">Groupe ${v}${s.ran && s.ran[v] ? ' ✓' : ''}</button>`).join('')}</div></div>
     ${S > 1 ? `<div class="row"><b>Série :</b><div class="seg">${Array.from({ length: S }, (_, i) => `<button class="${serie === i ? 'on' : ''}" data-act="setSerie" data-v="${i}" ${mine ? 'disabled' : ''}>Série ${i + 1}</button>`).join('')}</div></div>` : ''}
@@ -1789,7 +1811,7 @@ function viewFrac(C, s) {
           : `<div class="chips">${RESTS.map(d => `<button class="chip ${s.rest === d ? 'on' : ''}" data-act="fracSet" data-k="rest" data-v="${d}">${fmtDur(d)}</button>`).join('')}</div>`}
         <div class="row" style="gap:24px">
           <div><label class="lbl">${duo ? 'Relais (total binôme)' : 'Répétitions'}</label><div class="stepper"><button class="btn" data-act="fracReps" data-v="${duo ? -2 : -1}">−</button><b>${s.reps}</b><button class="btn" data-act="fracReps" data-v="${duo ? 2 : 1}">＋</button></div></div>
-          ${!duo && !lap ? `<div><label class="lbl">Séries</label><div class="stepper"><button class="btn" data-act="fracSeries" data-v="-1">−</button><b>${S}</b><button class="btn" data-act="fracSeries" data-v="1">＋</button></div></div>` : ''}
+          ${!lap ? `<div><label class="lbl">Séries</label><div class="stepper"><button class="btn" data-act="fracSeries" data-v="-1">−</button><b>${S}</b><button class="btn" data-act="fracSeries" data-v="1">＋</button></div></div>` : ''}
           <div><label class="lbl">Intensité</label><select data-chg="fracPct">${[70, 75, 80, 85, 90, 95, 100, 105, 110, 115, 120].map(p => `<option value="${p}" ${s.pct === p ? 'selected' : ''}>${p} % VMA</option>`).join('')}</select></div>
         </div>
         ${lap ? lapLenChips(s) : ''}
@@ -1798,16 +1820,66 @@ function viewFrac(C, s) {
     </div>
   </section>
 
+  ${lap ? `
   <section class="card">
-    <div class="row sp" style="margin-top:0"><h3 style="margin:0"><span class="step">2</span>${duo ? 'Binômes de course et binômes observateurs' : 'Coureurs et observateurs'}</h3>
-      <div class="row" style="margin:0">${duo ? '<button class="btn sm" data-act="autoDuos">🤝 Former les binômes par VMA</button>' : ''}<button class="btn sm" data-act="resetPairs">↺ Répartition par défaut</button></div></div>
-    <p class="hint">Par défaut : 1re moitié de la classe (ordre alphabétique) en groupe A, 2e moitié en groupe B.${duo ? ' En 18", les élèves de même VMA sont associés par 2 dans chaque groupe.' : ' Le 1er observateur observe le 1er coureur, et ainsi de suite.'}</p>
-    ${duo ? duosHTML(C, s, rows) : pairsHTML(C, s, { A: 'Groupe A · coureurs', B: 'Groupe B · observateurs' })}
+    <div class="row sp" style="margin-top:0"><h3 style="margin:0"><span class="step">2</span>Coureurs et observateurs</h3>
+      <div class="row" style="margin:0"><button class="btn sm" data-act="resetPairs">↺ Répartition par défaut</button></div></div>
+    <p class="hint">Par défaut : 1re moitié de la classe (ordre alphabétique) en groupe A, 2e moitié en groupe B. Le 1er observateur observe le 1er coureur, et ainsi de suite.</p>
+    ${pairsHTML(C, s, { A: 'Groupe A · coureurs', B: 'Groupe B · observateurs' })}
     <label class="lbl" style="margin-top:16px">VMA et distances à parcourir en ${fmtDur(s.work)} (${s.pct} % VMA)</label>
     <p class="hint" style="margin-top:0">VMA du dernier test (grisée) ; saisissez une valeur pour la remplacer dans cette séance.</p>
     ${present.length ? distTable : ''}
   </section>
-  ${section3}`;
+  ${section3}` : fracShortSections(C, s, rows, section3)}`;
+}
+// Fractionné 18" et 36" : 2. élèves / VMA / distance · 3. binômes · 4. séance en cours · 5. points et notes
+function fracShortSections(C, s, rows, section4) {
+  const duo = isDuo(s), byId = new Map(C.students.map(st => [st.id, st]));
+  const studs = sortedStudents(C);
+  const listRows = studs.map(st => {
+    const stt = s.status[st.id], g = groupOf(s, st.id), v = fracVMA(C, s, st.id), L = latestVMA(C, st.id), d = fracDist(v, s.work, s.pct);
+    return { cells: [
+      cell(st.name, `<b>${esc(st.name)}</b>`), cell(st.sexe),
+      cell(v, `<input class="vin" inputmode="decimal" data-chg="fracVma" data-id="${st.id}" value="${s.vmaOv[st.id] != null ? fmtVMA(s.vmaOv[st.id]) : ''}" placeholder="${L ? fmtVMA(L.vma) : '?'}">`),
+      cell(d, stt ? '—' : d != null ? `<b>${d} m</b> <span class="hint">${plotsTxt(d)}</span>` : '—'),
+      cell(stt ? 'Z' : g, stt ? '—' : `<div class="seg ab">${['A', 'B'].map(x => `<button class="${g === x ? 'on ' + x : ''}" data-act="setAB" data-id="${st.id}" data-v="${x}">${x}</button>`).join('')}</div>`),
+      cell(stt || '', fracStatusSel(s, st.id))
+    ] };
+  });
+  const present = [...s.order.A, ...s.order.B].map(id => byId.get(id)).filter(Boolean);
+  const scRows = present.map(st => {
+    const sc = fracScore(s, st.id), g = groupOf(s, st.id);
+    const mates = (duo ? duoOf(s, st.id).filter(x => x !== st.id) : [s.partner[st.id]].filter(Boolean)).map(x => byId.get(x)).filter(Boolean);
+    return { cells: [
+      cell(st.name, `<b>${esc(st.name)}</b>`), cell(g),
+      ...(duo ? [cell(s.duoNum[st.id], 'n° ' + s.duoNum[st.id])] : []),
+      cell(mates.map(m => m.name).join(', '), esc(mates.map(m => m.name).join(', ')) || '—'),
+      cell(sc ? sc.p : null, sc ? `<b>${sc.p}</b> / ${sc.max}` : '—'),
+      cell(sc ? ['TB', 'S', 'F', 'I'].indexOf(sc.g) : null, nt(sc && sc.g, '', 'Note'), 'c'),
+      cell(s.obsOk[st.id] === false ? 1 : 0, s.obsOk[st.id] === false ? '<span class="ob bad">à revoir</span>' : '<span class="ob good">bien</span>', 'c')
+    ] };
+  }).concat(studs.filter(st => s.status[st.id]).map(st => ({ cells: [cell(st.name, `<b>${esc(st.name)}</b>`), cell('Z', `<b>${s.status[st.id]}</b>`), ...(duo ? [cell(null, '')] : []), cell(null, ''), cell(null, '—'), cell(null, ''), cell(null, '')] })));
+  const max = duo ? s.reps * nSeries(s) : s.reps * nSeries(s), th = fracThresholds(s, max);
+  const bareme = `${duo ? 'Points du binôme' : 'Points'} sur ${max} : TB ${th[0]}-${max} · S ${th[1]}-${th[0] - 1} · F ${th[2]}-${th[1] - 1} · I ${th[2] - 1} ou moins.`;
+  return `
+  <section class="card">
+    <h3><span class="step">2</span>Élèves, VMA et distance à parcourir en ${fmtDur(s.work)}</h3>
+    <p class="hint">VMA du dernier test (grisée) ; saisissez une valeur pour la remplacer dans cette séance. Groupe A / B et statut ABS, DP, DISP modifiables ici.</p>
+    ${sortTable('fl-' + s.id, ['Nom Prénom', 'Sexe', 'VMA', `Distance en ${fmtDur(s.work)} (${s.pct} %)`, 'Groupe', 'Statut'], listRows)}
+  </section>
+
+  <section class="card">
+    <div class="row sp" style="margin-top:0"><h3 style="margin:0"><span class="step">3</span>${duo ? 'Binômes constitués' : 'Binômes coureur / observateur'}</h3>
+      <div class="row" style="margin:0">${duo ? '<button class="btn sm" data-act="autoDuos">🤝 Former les binômes par VMA</button>' : ''}<button class="btn sm" data-act="resetPairs">↺ Répartition par défaut</button></div></div>
+    <p class="hint">Par défaut : 1re moitié de la classe (ordre alphabétique) en groupe A, 2e moitié en groupe B.${duo ? ' En 18", les élèves de même VMA sont associés par 2 dans chaque groupe ; le binôme n° 1 du groupe B observe le binôme n° 1 du groupe A.' : ' Le 1er observateur observe le 1er coureur, et ainsi de suite.'}</p>
+    ${duo ? duosHTML(C, s, rows) : pairsHTML(C, s, { A: 'Groupe A · coureurs', B: 'Groupe B · observateurs' })}
+  </section>
+  ${section4}
+  <section class="card">
+    <div class="row sp" style="margin-top:0"><h3 style="margin:0"><span class="step">5</span>Points et notes</h3><button class="btn pri sm" data-act="exportSession">📊 Export Excel</button></div>
+    <p class="hint">1 point par course validée (✓). ${bareme}${duo ? ' Les deux élèves d\'un binôme ont les mêmes points.' : ''}</p>
+    ${sortTable('sc-' + s.id, ['Nom Prénom', 'Groupe', ...(duo ? ['Binôme'] : []), duo ? 'Partenaire' : 'Binôme', 'Points', { t: 'Note', cls: 'c' }, { t: 'Observateur', cls: 'c' }], scRows)}
+  </section>`;
 }
 
 /* ----- Épreuve d'endurance 3e et Biathlon 6e ----- */
@@ -1981,7 +2053,7 @@ const ACT = {
       ? Object.assign(base, { type: 'vma', track: 150, groups: {}, startGroup: 'A', results: {}, runs: {}, status: {} })
       : t === 'endu3' ? Object.assign(base, lapData, { type: 'endu3', lapLen: 100, viewRun: 0 })
       : t === 'biath' ? Object.assign(base, lapData, { type: 'biath', throws: {}, final: {} })
-      : Object.assign(base, lapData, { type: 'frac', work: 18, rest: 18, reps: 20, series: 1, pct: 100, lapLen: 100, valid: {} });
+      : Object.assign(base, lapData, { type: 'frac', work: 18, rest: 18, reps: 20, series: 2, pct: 100, lapLen: 100, valid: {} });
     syncOrder(C, s);
     C.sessions.push(s); u.sid = s.id; u.newOpen = false; ui.sel = null;
     commit(); window.scrollTo(0, 0);
@@ -2125,7 +2197,7 @@ const ACT = {
     const s = curSession(), k = el.dataset.k, v = +el.dataset.v, old = s[k];
     s[k] = v;
     if (k === 'work' && v !== old) {
-      if (v === 18) { s.rest = 18; s.reps = 20; }                         // relais en binôme : 18" / 18" × 20
+      if (v === 18) { s.rest = 18; s.reps = 20; s.series = 2; }           // relais en binôme : 18" / 18" × 20, 2 séries
       else if (v === 36) { s.rest = 24; s.reps = 6; s.series = 2; }       // 36" / 24" × 6, 2 séries
       else { if (!RESTS.includes(s.rest) || s.rest < 90) s.rest = 90; s.reps = 3; if (!s.lapLen) s.lapLen = 100; }
       s.curSerie = 0; s.viewRun = 0;
