@@ -267,6 +267,24 @@ table.ct.fit{table-layout:fixed}
 input.vin[class*="vc"]{font-weight:900}
 input.vin[class*="vc"]::placeholder{color:inherit;opacity:.9}
 .pc .gv{font-size:14px;font-weight:900}
+.vtr{font-size:10px;font-weight:700;color:#667085;white-space:nowrap;margin-left:3px}
+.pvma{display:inline-flex;align-items:center;flex:0 0 auto}
+.pc .pvma .vin{width:50px;min-height:32px!important;padding:2px 5px!important;text-align:center}
+/* ---- Tableau partagé en 2 colonnes ---- */
+.split2{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start}
+.split2 .tw{margin-top:8px}
+.split2 table.ct{table-layout:fixed}
+.split2 .ct th,.split2 .ct td{padding:4px 6px;font-size:13px}
+.split2 .ct th:nth-child(1),.split2 .ct td:nth-child(1){width:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.split2 .ct th:nth-child(2),.split2 .ct td:nth-child(2){width:46px}
+.split2 .ct th:nth-child(3),.split2 .ct td:nth-child(3){width:72px}
+.split2 .ct th:nth-child(4),.split2 .ct td:nth-child(4){width:62px}
+.split2 .ct th:nth-child(5),.split2 .ct td:nth-child(5){width:86px}
+.split2 .ct th:nth-child(6),.split2 .ct td:nth-child(6){width:74px}
+.split2 .vin{width:58px;min-height:32px!important;padding:3px 6px!important}
+.split2 .stsel{width:60px}
+.split2 .seg.ab button{min-width:28px;min-height:28px;padding:2px 7px}
+@media (max-width:900px){.split2{grid-template-columns:1fr}}
 .stepper{display:inline-flex;align-items:center;gap:6px}
 .stepper b{min-width:34px;text-align:center;font-size:20px}
 #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:#111827;color:#fff;padding:11px 18px;border-radius:12px;font-weight:600;opacity:0;pointer-events:none;transition:.25s;z-index:99;max-width:calc(100% - 32px);text-align:center}
@@ -872,6 +890,19 @@ function fracStats(C, sid) {
   C.sessions.filter(s => s.type === 'frac').forEach(s => { const r = fracRes(s, sid); if (r) { y += r.y; n += r.n; } });
   return { y, n, pct: y + n ? Math.round(y / (y + n) * 100) : null };
 }
+// Prénom d'un élève « NOM Prénom » (mots qui ne sont pas tout en majuscules) ;
+// si deux élèves ont le même prénom, on ajoute l'initiale du nom (ex. « Assya I. », « Assya L. »)
+function firstNameMap(students) {
+  const split = n => {
+    const parts = String(n).trim().split(/\s+/);
+    const i = parts.findIndex(p => p !== p.toUpperCase());
+    return i > 0 ? { first: parts.slice(i).join(' '), last: parts.slice(0, i).join(' ') } : { first: parts[parts.length - 1], last: parts.slice(0, -1).join(' ') };
+  };
+  const sp = new Map(students.map(st => [st.id, split(st.name)]));
+  const count = {};
+  sp.forEach(x => { count[x.first] = (count[x.first] || 0) + 1; });
+  return new Map([...sp].map(([id, x]) => [id, count[x.first] > 1 && x.last ? `${x.first} ${x.last.charAt(0)}.` : x.first]));
+}
 // VMA utilisée pour la séance ; en fractionné, une VMA à virgule prend la valeur de la VMA supérieure (8,5 → 9)
 function fracVMA(C, s, sid) {
   let v = s.vmaOv[sid];
@@ -883,7 +914,9 @@ function fracVMA(C, s, sid) {
 function vmaInput(C, s, id) {
   const v = fracVMA(C, s, id), L = latestVMA(C, id), raw = s.vmaOv[id] != null ? s.vmaOv[id] : (L ? L.vma : null);
   const tip = raw != null && raw !== v ? `VMA ${fmtVMA(raw)} → ${fmtVMA(v)} pour la séance` : 'Saisir une VMA pour cette séance';
-  return `<input enterkeyhint="next" class="vin ${vmaCls(v)}" inputmode="decimal" data-chg="fracVma" data-id="${id}" value="${s.vmaOv[id] != null && v != null ? fmtVMA(v) : ''}" placeholder="${v != null ? fmtVMA(v) : '?'}" title="${tip}">`;
+  // trace de la VMA d'origine (test) quand elle a été modifiée pour la séance
+  const trace = s.vmaOv[id] != null ? `<span class="vtr" title="VMA du test VMA">test ${L ? fmtVMA(L.vma) : '—'}</span>` : '';
+  return `<input enterkeyhint="next" class="vin ${vmaCls(v)}" inputmode="decimal" data-chg="fracVma" data-id="${id}" value="${s.vmaOv[id] != null && v != null ? fmtVMA(v) : ''}" placeholder="${v != null ? fmtVMA(v) : '?'}" title="${tip}">${trace}`;
 }
 function recapRows(C) {
   return sortedStudents(C).map(st => {
@@ -893,7 +926,7 @@ function recapRows(C) {
 }
 function buildSheetTables() {
   const vma = [['Classe', 'Nom Prénom', 'Sexe', 'Date', 'Groupe', 'Piste (m)', 'Palier', 'Vitesse palier (km/h)', 'Temps (s)', 'Temps', 'Distance (m)', 'VMA (km/h)', 'Retards', 'Éliminé', 'Statut']];
-  const frac = [['Classe', 'Nom Prénom', 'Date', 'Rôle', 'Binôme', 'Travail (s)', 'Récup (s)', 'Répétitions', '% VMA', 'VMA (km/h)', 'Objectif (m)', 'Réussites', 'Échecs', 'Détail', 'Travail d\'observateur', 'Séries', 'Points', 'Points max', 'Note']];
+  const frac = [['Classe', 'Nom Prénom', 'Date', 'Rôle', 'Binôme', 'Travail (s)', 'Récup (s)', 'Répétitions', '% VMA', 'VMA (km/h)', 'VMA du test', 'Objectif (m)', 'Réussites', 'Échecs', 'Détail', 'Travail d\'observateur', 'Séries', 'Points', 'Points max', 'Note']];
   const crs = [['Classe', 'Nom Prénom', 'Sexe', 'Date', 'Épreuve', 'Course', 'VMA (km/h)', 'Vitesse visée (km/h)', 'Distance (m)', 'Vitesse (km/h)', 'Temps de passage', 'Régularité', 'Note vitesse', 'Marches', 'Continuité', 'Temps 900 m', 'Lancers ratés', 'Temps final', 'Note temps', 'Statut']];
   const syn = [['Classe', 'Nom Prénom', 'Sexe', 'VMA (km/h)', 'Date du test', 'Palier', 'Vitesse palier (km/h)', 'Temps', 'Distance (m)', 'Historique VMA', 'Réussite fractionné (%)']];
   state.classOrder.forEach(cn => {
@@ -927,12 +960,12 @@ function buildSheetTables() {
         const rest = isDuo(s) ? s.work : s.rest;
         sortedStudents(C).forEach(st => {
           const stt = (s.status || {})[st.id];
-          if (stt) { frac.push([cn, st.name, fmtDate(s.date), stt, '', s.work, rest, s.reps, s.pct, '', '', '', '', '', '', nSeries(s), '', '', '']); return; }
+          if (stt) { frac.push([cn, st.name, fmtDate(s.date), stt, '', s.work, rest, s.reps, s.pct, '', '', '', '', '', '', '', nSeries(s), '', '', '']); return; }
           const g = groupOf(s, st.id); if (!g) return;
           const r = fracRes(s, st.id), v = fracVMA(C, s, st.id), d = fracDist(v, s.work, s.pct);
           const mates = isDuo(s) ? duoOf(s, st.id).filter(x => x !== st.id) : [s.partner[st.id]].filter(Boolean);
           frac.push([cn, st.name, fmtDate(s.date), 'Groupe ' + g, mates.map(x => byId.get(x) ? byId.get(x).name : '').join(', '), s.work, rest, s.reps, s.pct,
-            v == null ? '' : v, d == null ? '' : d, r ? r.y : '', r ? r.n : '', r ? r.detail : '', s.obsOk && s.obsOk[st.id] === false ? 'à revoir' : 'bien',
+            v == null ? '' : v, (L0 => L0 ? L0.vma : '')(latestVMA(C, st.id)), d == null ? '' : d, r ? r.y : '', r ? r.n : '', r ? r.detail : '', s.obsOk && s.obsOk[st.id] === false ? 'à revoir' : 'bien',
             nSeries(s), ...(sc => sc ? [sc.p, sc.max, sc.g] : ['', '', ''])(fracScore(s, st.id))]);
         });
       }
@@ -962,7 +995,8 @@ function exportXLSX(filename, sheets) {
    Tableaux triables
    ===================================================================== */
 const cell = (s, h, cls) => ({ s, h, cls });
-function sortTable(key, heads, rows, def = { col: 0, dir: 1 }) {
+// split = true : la liste triée est partagée en 2 tableaux côte à côte (plus d'élèves visibles sans défiler)
+function sortTable(key, heads, rows, def = { col: 0, dir: 1 }, split = false) {
   const st = ui.sort[key] || def;
   const cmpCell = (a, b) => {
     const x = a.cells[st.col] && a.cells[st.col].s, y = b.cells[st.col] && b.cells[st.col].s;
@@ -972,12 +1006,15 @@ function sortTable(key, heads, rows, def = { col: 0, dir: 1 }) {
     return String(x).localeCompare(String(y), 'fr', { numeric: true, sensitivity: 'base' }) * st.dir;
   };
   const sorted = rows.slice().sort((a, b) => cmpCell(a, b) || String(a.cells[0].s).localeCompare(String(b.cells[0].s), 'fr'));
-  return `<div class="tw"><table class="ct"><thead><tr>${heads.map((h, i) => {
+  const table = list => `<div class="tw"><table class="ct"><thead><tr>${heads.map((h, i) => {
     const hh = typeof h === 'string' ? { t: h } : h;
     if (hh.nosort) return `<th class="${hh.cls || ''}">${hh.t}</th>`;
     return `<th class="s ${hh.cls || ''}" data-act="sort" data-key="${esc(key)}" data-col="${i}">${hh.t}<span class="arr">${st.col === i ? (st.dir > 0 ? '▲' : '▼') : '↕'}</span></th>`;
-  }).join('')}</tr></thead><tbody>${sorted.length ? sorted.map(r => `<tr>${r.cells.map(c => `<td class="${c.cls || ''}">${c.h != null ? c.h : esc(c.s == null ? '' : c.s)}</td>`).join('')}</tr>`).join('')
+  }).join('')}</tr></thead><tbody>${list.length ? list.map(r => `<tr>${r.cells.map(c => `<td class="${c.cls || ''}">${c.h != null ? c.h : esc(c.s == null ? '' : c.s)}</td>`).join('')}</tr>`).join('')
     : `<tr><td colspan="${heads.length}" style="text-align:center;color:#667085;padding:18px">Aucune donnée</td></tr>`}</tbody></table></div>`;
+  if (!split || sorted.length < 2) return table(sorted);
+  const half = Math.ceil(sorted.length / 2);
+  return `<div class="split2">${table(sorted.slice(0, half))}${table(sorted.slice(half))}</div>`;
 }
 
 /* =====================================================================
@@ -1181,7 +1218,8 @@ function pairsHTML(C, s, lab) {
     if (!id) return `<div class="pc empty">— sans binôme —</div>`;
     const st = byId.get(id);
     const v = s.type === 'vma' ? (s.results[id] ? resPerf(s.results[id]).vma : null) : fracVMA(C, s, id);
-    return `<div class="pc"><span class="sx ${st.sexe}">${esc(st.sexe || '?')}</span><span class="gn">${esc(st.name)}</span>${v != null ? `<span class="gv ${vmaCls(v)}">${fmtVMA(v)}</span>` : ''}
+    const vh = s.type === 'vma' ? (v != null ? `<span class="gv ${vmaCls(v)}">${fmtVMA(v)}</span>` : '') : `<span class="pvma">${vmaInput(C, s, id)}</span>`;
+    return `<div class="pc"><span class="sx ${st.sexe}">${esc(st.sexe || '?')}</span><span class="gn">${esc(st.name)}</span>${vh}
       <div class="seg ab">${['A', 'B'].map(x => `<button class="${g === x ? 'on ' + x : ''}" data-act="setAB" data-id="${id}" data-v="${x}">${x}</button>`).join('')}</div>${statusSel(id)}</div>`;
   };
   const rows = Array.from({ length: n }, (_, i) => `<div class="prow"><span class="pn">${i + 1}</span>${item(s.order.A[i], 'A')}${item(s.order.B[i], 'B')}</div>`).join('');
@@ -1743,8 +1781,8 @@ function duosHTML(C, s, rows) {
   const byId = new Map(C.students.map(st => [st.id, st]));
   const K = rows.length;
   const item = (id, g) => {
-    const st = byId.get(id), v = fracVMA(C, s, id);
-    return `<div class="pc"><span class="sx ${st.sexe}">${esc(st.sexe || '?')}</span><span class="gn">${esc(st.name)}</span>${v != null ? `<span class="gv ${vmaCls(v)}">${fmtVMA(v)}</span>` : ''}
+    const st = byId.get(id);
+    return `<div class="pc"><span class="sx ${st.sexe}">${esc(st.sexe || '?')}</span><span class="gn">${esc(st.name)}</span><span class="pvma">${vmaInput(C, s, id)}</span>
       <select class="nsel" data-chg="duoNum" data-id="${id}" title="Numéro du binôme">${Array.from({ length: K + 1 }, (_, k) => `<option value="${k + 1}" ${s.duoNum[id] === k + 1 ? 'selected' : ''}>n°${k + 1}</option>`).join('')}</select>
       <div class="seg ab">${['A', 'B'].map(x => `<button class="${g === x ? 'on ' + x : ''}" data-act="setAB" data-id="${id}" data-v="${x}">${x}</button>`).join('')}</div>${fracStatusSel(s, id)}</div>`;
   };
@@ -1800,7 +1838,9 @@ function viewFrac(C, s) {
   // Petit texte récapitulatif
   const pool = present.length ? present : studs;
   const byV = new Map();
-  pool.forEach(st => { const v = vOf(st); if (v != null) { if (!byV.has(v)) byV.set(v, []); byV.get(v).push(st.name.split(' ')[0]); } });
+  const firstNames = firstNameMap(C.students);
+  pool.forEach(st => { const v = vOf(st); if (v != null) { if (!byV.has(v)) byV.set(v, []); byV.get(v).push(firstNames.get(st.id)); } });
+  byV.forEach(list => list.sort((a, b) => a.localeCompare(b, 'fr')));
   const noV = pool.filter(st => vOf(st) == null).length;
   const recap = `<div class="note">
     ${duo ? `<p>📋 <b>Relais en binôme : ${s.reps} × 18"</b>${S > 1 ? ` × <b>${S} séries</b>` : ''} à <b>${s.pct} % de la VMA</b> — chacun court ${Math.ceil(s.reps / 2)} fois par série, sa récupération est la course de son partenaire. Durée de course ≈ ${fmtT(total)}.</p>`
@@ -1933,7 +1973,7 @@ function fracShortSections(C, s, rows, section4) {
   <section class="card">
     <h3><span class="step">2</span>Élèves, VMA et distance à parcourir en ${fmtDur(s.work)}</h3>
     <p class="hint">VMA du dernier test (grisée) ; saisissez une valeur pour la remplacer dans cette séance. Groupe A / B et statut ABS, DP, DISP modifiables ici.</p>
-    ${sortTable('fl-' + s.id, ['Nom Prénom', 'Sexe', 'VMA', `Distance en ${fmtDur(s.work)} (${s.pct} %)`, 'Groupe', 'Statut'], listRows)}
+    ${sortTable('fl-' + s.id, ['Nom Prénom', 'Sexe', 'VMA', fmtDur(s.work), 'Gr.', 'Statut'], listRows, undefined, true)}
   </section>
 
   <section class="card">
@@ -2517,13 +2557,16 @@ document.addEventListener('keydown', e => {
   if (e.key !== 'Enter' || !t || !t.dataset || !CHAIN_INPUTS.includes(t.dataset.chg)) return;
   e.preventDefault();
   const sel = `input[data-chg="${t.dataset.chg}"]`;
-  const list = [...document.querySelectorAll(sel)];
+  // on reste dans la même partie de la page (la même VMA peut apparaître dans plusieurs tableaux)
+  const sec = t.closest('section'), secs = [...document.querySelectorAll('section')], si = secs.indexOf(sec);
+  const scope = () => (si >= 0 && document.querySelectorAll('section')[si]) || document;
+  const list = [...scope().querySelectorAll(sel)];
   const next = list[list.indexOf(t) + 1];
   const key = next ? { id: next.dataset.id, r: next.dataset.r } : null;
   t.blur();   // déclenche l'enregistrement (et le réaffichage)
   setTimeout(() => {
     if (!key) { toast('Dernier élève de la liste'); return; }
-    const el = [...document.querySelectorAll(sel)].find(x => x.dataset.id === key.id && x.dataset.r === key.r);
+    const el = [...scope().querySelectorAll(sel)].find(x => x.dataset.id === key.id && x.dataset.r === key.r);
     if (el) { el.focus(); try { el.select(); } catch (err) {} el.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
   }, 30);
 });
