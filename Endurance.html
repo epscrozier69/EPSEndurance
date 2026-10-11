@@ -190,9 +190,9 @@ ol.steps li{margin:4px 0}
 .pc:hover{background:#eef2ff}
 .pc.sel{border-color:var(--pri);background:#eef2ff;box-shadow:0 0 0 3px #c7d2fe}
 .pc.empty{color:var(--muted);font-size:12px;justify-content:center;cursor:default;font-style:italic;padding:3px 6px;border:0}
-.pc .gn{flex:1 1 90px;min-width:0;font-weight:700;font-size:14px;white-space:normal;overflow-wrap:anywhere;line-height:1.15}
-/* écrans étroits (iPad portrait) : les boutons passent sous le nom si besoin, le nom reste entier */
-@media (max-width:1100px){.pc{flex-wrap:wrap;row-gap:3px}.pc .gn{flex-basis:calc(100% - 40px);font-size:13.5px}.pc .seg.ab button{min-width:26px;padding:2px 6px}.sx{width:18px;height:18px}}
+.pc .gn{flex:1;min-width:0;font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* écrans étroits (iPad) : numéro, VMA, boutons et menu réduits au minimum pour laisser la place au nom */
+@media (max-width:1100px){.phead,.prow{grid-template-columns:12px minmax(0,1fr) minmax(0,1fr);gap:4px;padding:2px 3px}.pn{font-size:10px}.pc{gap:3px;padding:2px}.pc .gn{font-size:13px}.pc .gv{font-size:12px!important}.pc .vbtn{min-width:0;padding:2px 3px;font-size:12px}.pc .vbase{min-width:0;font-size:12px}.pc .varr{margin:0 1px}.pc .pvma .vin{width:36px;padding:2px 3px!important}.pc .seg.ab{padding:1px}.pc .seg.ab button{min-width:22px;min-height:28px;padding:1px 4px;font-size:13px}.pc .stsel{width:40px!important;max-width:40px;padding:2px 1px!important;font-size:11px}.sx{width:16px;height:16px;font-size:10px}.pc [data-drag]::before{margin-right:1px;font-size:10px}}
 .pc .gv{font-size:12px;font-weight:800;color:#475467}
 .pswap{border:1px solid #d0d5dd;background:#fff;border-radius:8px;height:30px;cursor:pointer;font-weight:900;color:#475467}
 .selbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px 12px;border-radius:12px;background:#f8f9fb;margin:8px 0;min-height:44px}
