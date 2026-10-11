@@ -174,10 +174,10 @@ ol.steps li{margin:4px 0}
 @media (max-width:600px){.groups{gap:6px}.gcol ul{padding:2px}.gcol .gn{font-size:13px}.gcol .gv{display:none}.mv{padding:3px 5px}}
 /* ---- Binômes coureur / observateur ---- */
 .pairs{border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-top:8px}
-.phead,.prow{display:grid;grid-template-columns:28px minmax(0,1fr) minmax(0,1fr);align-items:center;gap:10px;padding:3px 8px}
+.phead,.prow{display:grid;grid-template-columns:16px minmax(0,1fr) minmax(0,1fr);align-items:center;gap:8px;padding:3px 6px}
 .pc .seg.ab{padding:2px;flex:0 0 auto}
 .pc .seg.ab button{min-width:30px;min-height:28px;padding:2px 8px}
-.stsel{flex:0 0 auto;min-height:32px!important;padding:2px 4px!important;border-radius:8px!important;font-weight:800;font-size:12px;width:62px}
+.stsel{flex:0 0 auto;min-height:32px!important;padding:2px 4px!important;border-radius:8px!important;font-weight:800;font-size:12px;width:54px!important;max-width:54px}
 .stsel.on{background:#fee2e2;color:#be123c;border-color:#fecdd3}
 .phead{background:#f8f9fb;padding:8px}
 .phead .gh{color:#fff;font-weight:900;border-radius:10px;padding:7px 10px;display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:14px}
@@ -185,12 +185,14 @@ ol.steps li{margin:4px 0}
 .gh.A{background:#2563eb}.gh.B{background:#db2777}
 .prow{border-top:1px solid var(--line)}
 .prow:nth-child(odd){background:#fafbff}
-.pn{font-size:12px;color:var(--muted);font-weight:800;text-align:center}
+.pn{font-size:11px;color:var(--muted);font-weight:800;text-align:center}
 .pc{display:flex;align-items:center;gap:6px;border:2px solid transparent;background:transparent;border-radius:9px;padding:3px 6px;min-height:36px;cursor:pointer;text-align:left;min-width:0;width:100%;color:var(--ink)}
 .pc:hover{background:#eef2ff}
 .pc.sel{border-color:var(--pri);background:#eef2ff;box-shadow:0 0 0 3px #c7d2fe}
 .pc.empty{color:var(--muted);font-size:12px;justify-content:center;cursor:default;font-style:italic;padding:3px 6px;border:0}
-.pc .gn{flex:1;min-width:0;font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pc .gn{flex:1 1 90px;min-width:0;font-weight:700;font-size:14px;white-space:normal;overflow-wrap:anywhere;line-height:1.15}
+/* écrans étroits (iPad portrait) : les boutons passent sous le nom si besoin, le nom reste entier */
+@media (max-width:1100px){.pc{flex-wrap:wrap;row-gap:3px}.pc .gn{flex-basis:calc(100% - 40px);font-size:13.5px}.pc .seg.ab button{min-width:26px;padding:2px 6px}.sx{width:18px;height:18px}}
 .pc .gv{font-size:12px;font-weight:800;color:#475467}
 .pswap{border:1px solid #d0d5dd;background:#fff;border-radius:8px;height:30px;cursor:pointer;font-weight:900;color:#475467}
 .selbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px 12px;border-radius:12px;background:#f8f9fb;margin:8px 0;min-height:44px}
