@@ -248,7 +248,9 @@ table.ct.fit{table-layout:fixed}
 .lapres .ct th,.lapres .ct td{padding:4px 5px;font-size:12px;white-space:nowrap}
 .lapres .ct th .arr{display:none}
 .lapres .ct td:first-child{max-width:170px;overflow:hidden;text-overflow:ellipsis}
-.lapres .ct td:nth-last-child(2){white-space:normal;min-width:150px}
+.lapres .ct td.splc{white-space:normal;min-width:150px}
+.sumd{font-size:10.5px;color:#475467;font-weight:700;white-space:nowrap;margin-top:2px}
+.lapres .ct th.sumh{font-size:11px;white-space:normal;line-height:1.15;min-width:70px}
 .lapres .spl{font-size:10.5px;line-height:1.35}
 .lapres .rc{min-width:120px}
 .lapres .btn.sm{min-height:28px;padding:2px 7px}
@@ -1747,6 +1749,32 @@ function viewLapLive(s) {
     <div class="bar lc-bar"><i id="lv-bar"></i></div>
   </div>`;
 }
+// Bilan de toutes les courses d'un élève, noté avec le barème général :
+//  vitesse = écart moyen (vitesse courue − vitesse visée) · régularité = moyenne des écarts de lignes · continuité = total des marches
+function lapSummary(evs) {
+  const done = evs.filter(Boolean);
+  if (!done.length) return null;
+  const diffs = done.filter(ev => ev.target != null && ev.speed).map(ev => ev.speed - ev.target);
+  const regs = done.filter(ev => ev.reg).map(ev => ev.reg.e);
+  const walks = done.reduce((a, ev) => a + ev.walk, 0);
+  const dAvg = diffs.length ? diffs.reduce((a, x) => a + x, 0) / diffs.length : null;
+  const eAvg = regs.length ? regs.reduce((a, x) => a + x, 0) / regs.length : null;
+  const eR = eAvg == null ? null : Math.round(eAvg);
+  return {
+    dAvg, vg: dAvg == null ? null : vmaGrade(dAvg),
+    eAvg, rg: eR == null ? null : eR <= 1 ? 'TB' : eR === 2 ? 'S' : eR === 3 ? 'F' : 'I',
+    walks, cg: contGrade(walks), n: done.length
+  };
+}
+function lapSummaryCells(evs) {
+  const S = lapSummary(evs), sg = n => (n > 0 ? '+' : n < 0 ? '−' : '') + fmtNum(Math.abs(Math.round(n * 10) / 10), 1);
+  if (!S) return [cell(null, '—', 'c'), cell(null, '—', 'c'), cell(null, '—', 'c')];
+  return [
+    cell(S.vg ? ['TB', 'S', 'F', 'I'].indexOf(S.vg) : null, S.vg ? `${nt(S.vg, '', 'Vitesse moyenne par rapport à la vitesse visée')}<div class="sumd">${sg(S.dAvg)} km/h</div>` : '—', 'c'),
+    cell(S.rg ? ['TB', 'S', 'F', 'I'].indexOf(S.rg) : null, S.rg ? `${nt(S.rg, '', 'Régularité moyenne')}<div class="sumd">moy. ${fmtNum(Math.round(S.eAvg * 10) / 10, 1)} ligne${S.eAvg >= 2 ? 's' : ''}</div>` : '—', 'c'),
+    cell(['TB', 'S', 'F', 'I'].indexOf(S.cg), `${nt(S.cg, '', 'Continuité sur toutes les courses')}<div class="sumd">${S.walks} 🚶 / ${S.n} course${S.n > 1 ? 's' : ''}</div>`, 'c')
+  ];
+}
 // Fiche observateur des courses au tour : temps de passage cumulés par ligne de vitesse (16 → 7 km/h)
 function lapFicheHTML(C, s, runner, observer) {
   const runs = lapRuns(s), L = lapLen(s), biath = s.type === 'biath';
@@ -1833,7 +1861,7 @@ function lapSection(C, s, rows) {
         cell(ev && ev.reg && ev.reg.e, nt(ev && ev.reg && ev.reg.g, '', 'Régularité'), 'c'),
         cell(ev && ev.vg, nt(ev && ev.vg, '', 'Vitesse / VMA'), 'c'),
         cell(ev && ev.cont, ev ? nt(ev.cont, '', 'Continuité') + ` <span class="hint">${ev.walk} 🚶</span>` : nt(null), 'c'),
-        cell('', ev ? `<span class="spl">${passTxt(ev.cum.slice(0, BIATH_TOURS), BIATH_LAP)}</span>` : ''),
+        cell('', ev ? `<span class="spl">${passTxt(ev.cum.slice(0, BIATH_TOURS), BIATH_LAP)}</span>` : '', 'splc'),
         cell('', ev ? `<button class="btn sm danger" data-act="lapClear" data-id="${st.id}" title="Effacer">🗑</button>` : '')
       ] };
     }).concat(statused.map(st => ({ cells: [cell(st.name, `<b>${esc(st.name)}</b>`), cell(st.sexe), cell(null, '—'), cell(null, `<b>${s.status[st.id]}</b>`), ...Array(8).fill(cell(null, ''))] })));
@@ -1844,10 +1872,11 @@ function lapSection(C, s, rows) {
       return { cells: [
         cell(st.name, `<b>${esc(st.name)}</b>`), cell(st.sexe), cell(v, v != null ? fmtVMA(v) : '—'),
         ...evs.map(ev => cell(ev ? ev.dist : null, ev ? `<div class="rc"><b>${ev.dist} m</b> · ${fmtNum(ev.speed, 1)} km/h<div>${nt(ev.reg && ev.reg.g, 'R', 'Régularité')}${nt(ev.vg, 'V', 'Vitesse / VMA visée')}${nt(ev.cont, 'C', 'Continuité (' + ev.walk + ' marche(s))')}</div><div class="spl">${passTxt(ev.cum, L)}</div></div>` : '—')),
+        ...lapSummaryCells(evs),
         cell('', evs.some(Boolean) ? `<button class="btn sm danger" data-act="lapClear" data-id="${st.id}" title="Effacer">🗑</button>` : '')
       ] };
-    }).concat(statused.map(st => ({ cells: [cell(st.name, `<b>${esc(st.name)}</b>`), cell(st.sexe), cell(null, `<b>${s.status[st.id]}</b>`), ...runs.map(() => cell(null, '')), cell(null, '')] })));
-    table = sortTable('lap-' + s.id, ['Nom Prénom', 'Sexe', 'VMA', ...runs.map(x => x.label), { t: '', nosort: true }], rws);
+    }).concat(statused.map(st => ({ cells: [cell(st.name, `<b>${esc(st.name)}</b>`), cell(st.sexe), cell(null, `<b>${s.status[st.id]}</b>`), ...runs.map(() => cell(null, '')), cell(null, ''), cell(null, ''), cell(null, ''), cell(null, '')] })));
+    table = sortTable('lap-' + s.id, ['Nom Prénom', 'Sexe', 'VMA', ...runs.map(x => x.label), { t: 'Bilan vitesse', cls: 'c sumh' }, { t: 'Bilan régularité', cls: 'c sumh' }, { t: 'Bilan continuité', cls: 'c sumh' }, { t: '', nosort: true }], rws);
   }
 
   return `
