@@ -190,7 +190,7 @@ ol.steps li{margin:4px 0}
 .pc:hover{background:#eef2ff}
 .pc.sel{border-color:var(--pri);background:#eef2ff;box-shadow:0 0 0 3px #c7d2fe}
 .pc.empty{color:var(--muted);font-size:12px;justify-content:center;cursor:default;font-style:italic;padding:3px 6px;border:0}
-.pc .gn{flex:1;min-width:0;font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pc .gn{flex:1;min-width:0;font-weight:700;font-size:14px;white-space:normal;overflow:hidden;line-height:1.1;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere}
 /* écrans étroits (iPad) : numéro, VMA, boutons et menu réduits au minimum pour laisser la place au nom */
 @media (max-width:1100px){.phead,.prow{grid-template-columns:12px minmax(0,1fr) minmax(0,1fr);gap:4px;padding:2px 3px}.pn{font-size:10px}.pc{gap:3px;padding:2px}.pc .gn{font-size:13px}.pc .gv{font-size:12px!important}.pc .vbtn{min-width:0;padding:2px 3px;font-size:12px}.pc .vbase{min-width:0;font-size:12px}.pc .varr{margin:0 1px}.pc .pvma .vin{width:36px;padding:2px 3px!important}.pc .seg.ab{padding:1px}.pc .seg.ab button{min-width:22px;min-height:28px;padding:1px 4px;font-size:13px}.pc .stsel{width:40px!important;max-width:40px;padding:2px 1px!important;font-size:11px}.sx{width:16px;height:16px;font-size:10px}.pc [data-drag]::before{margin-right:1px;font-size:10px}}
 .pc .gv{font-size:12px;font-weight:800;color:#475467}
@@ -211,7 +211,7 @@ table.ct.fit{table-layout:fixed}
 .ct.fit col.cv{width:56px}.ct.fit col.cd{width:62px}
 .ct.fit .dl{display:flex;align-items:center;gap:6px;min-height:40px;min-width:0}
 .ct.fit .dl.c{justify-content:center}
-.ct.fit .gn{flex:1;min-width:0;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ct.fit .gn{flex:1;min-width:0;font-weight:700;overflow:hidden;white-space:normal;line-height:1.1;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere}
 .ct.fit .vin{width:42px;padding:3px 4px!important}
 .ct.fit .vbtn{min-width:0;padding:2px 4px}.ct.fit .vbase{min-width:0}.ct.fit .varr{margin:0 1px}
 .vcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:8px;margin-top:8px}
