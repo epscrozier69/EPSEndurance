@@ -452,7 +452,9 @@ function json_(o) {
    Constantes
    ===================================================================== */
 const DEFAULT_SHEET = 'https://docs.google.com/spreadsheets/d/1Z0TAaNaws4UEdbYMpkmCdWkAepr1JVth6lYgTzxUvgU/edit?gid=326295564#gid=326295564';
-const DEFAULT_TABS = [6, 5, 4, 3].flatMap(n => [1, 2, 3, 4].map(i => n + 'ème' + i));
+// Niveaux ayant de l'endurance (seules ces classes sont proposées à l'import) — ajouter 5 ou 4 le moment venu
+const LEVELS = [6, 3];
+const DEFAULT_TABS = LEVELS.flatMap(n => [1, 2, 3, 4].map(i => n + 'ème' + i));
 // URL du script Google (Apps Script) : la renseigner ici évite de la saisir sur chaque appareil
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw9-4SKbr4HdJYdF4JAqsrTOhUvAK_plWzvCruGjs3CdkxWAMmRNILiERsuQSYISIF2_g/exec';
 // Onglet contenant tous les élèves du collège (colonnes Nom, Prénom, Classe, Sexe)
@@ -1152,16 +1154,6 @@ function viewGeneral() {
     <p class="hint">Réimporter une classe ajoute les nouveaux élèves sans effacer les résultats.</p>
   </section>
 
-  <section class="card">
-    <h2>📚 Classes importées</h2>
-    ${state.classOrder.length ? `<div class="classes">${state.classOrder.map(c => {
-      const C = state.classes[c]; if (!C) return '';
-      const f = C.students.filter(s => s.sexe === 'F').length, g = C.students.filter(s => s.sexe === 'G').length;
-      return `<div class="clsbox"><b>${esc(c)}</b><div class="hint">${C.students.length} élèves · ${f} F / ${g} G · ${C.sessions.length} séance(s)</div>
-        <div class="row"><button class="btn pri sm" data-act="tab" data-id="${esc(c)}">Ouvrir</button><button class="btn danger sm" data-act="delClass" data-id="${esc(c)}">Supprimer</button></div></div>`;
-    }).join('')}</div>` : '<div class="empty">Aucune classe importée pour l\'instant.</div>'}
-  </section>
-
   ${SCRIPT_URL ? '' : `<section class="card">
     <h2>☁️ Synchronisation Google Sheet (PC ⇄ iPad)</h2>
     <label class="lbl">URL du script (application Web, se termine par /exec)</label>
@@ -1202,7 +1194,8 @@ function viewClass(C) {
   }
   const f = C.students.filter(s => s.sexe === 'F').length, g = C.students.filter(s => s.sexe === 'G').length;
   return `
-  <div class="clshead"><h2>${esc(C.name)}</h2><span class="hint">${C.students.length} élèves · ${f} filles · ${g} garçons</span></div>
+  <div class="clshead"><div><h2>${esc(C.name)}</h2><span class="hint">${C.students.length} élèves · ${f} filles · ${g} garçons · ${C.sessions.length} séance${C.sessions.length > 1 ? 's' : ''}</span></div>
+    <button class="btn danger sm" data-act="delClass" data-id="${esc(C.name)}">🗑 Supprimer la classe</button></div>
   <div class="subnav">
     ${[['seances', '🗓 Séances'], ['resultats', '🏆 Résultats'], ['eleves', '👥 Élèves']].map(([k, t]) => `<button class="${u.sub === k ? 'on' : ''}" data-act="sub" data-v="${k}">${t}</button>`).join('')}
   </div>
@@ -1212,6 +1205,8 @@ function viewClass(C) {
 function viewSessions(C, u) {
   const list = C.sessions.slice().sort((a, b) => (b.date || '').localeCompare(a.date || '') || b.createdAt - a.createdAt);
   const hasVMA = C.sessions.some(s => s.type === 'vma' && Object.keys(s.results).length);
+  // niveau de la classe (« 3ème2 » → 3) : Endurance 3e pour les 3es, Biathlon 6e pour les 6es
+  const lvl = parseInt(C.name, 10);
   return `
   <section class="card">
     <div class="row sp"><h3 style="margin:0">Séances</h3><button class="btn pri" data-act="toggleNew">${u.newOpen ? '✕ Fermer' : '＋ Nouvelle séance'}</button></div>
@@ -1220,8 +1215,8 @@ function viewSessions(C, u) {
       <div class="newsess">
         <button class="bigchoice" data-act="createSession" data-v="vma"><span class="e">⏱️</span><b>Test VMA</b><span class="hint">Léger-Boucher : bande son, groupes A/B, fiches observateurs, résultats.</span></button>
         <button class="bigchoice" data-act="createSession" data-v="frac"><span class="e">🔁</span><b>Séance fractionnée</b><span class="hint">18" en relais par binôme, 36" en séries, 1'30 à 3' chronométrées au tour.${hasVMA ? '' : ' <br>⚠ Aucun test VMA encore : VMA à saisir.'}</span></button>
-        <button class="bigchoice" data-act="createSession" data-v="endu3"><span class="e">🏁</span><b>Épreuve d'endurance 3e</b><span class="hint">Course de 3' à VMA+1 puis 9' à VMA−1, temps au tour et notes.</span></button>
-        <button class="bigchoice" data-act="createSession" data-v="biath"><span class="e">🎯</span><b>Biathlon 6e</b><span class="hint">900 m (9 tours) + 2 lancers de vortex, pénalités et barème F / G.</span></button>
+        ${lvl === 3 ? `<button class="bigchoice" data-act="createSession" data-v="endu3"><span class="e">🏁</span><b>Épreuve d'endurance 3e</b><span class="hint">Course de 3' à VMA+1 puis 9' à VMA−1, temps au tour et notes.</span></button>` : ''}
+        ${lvl === 6 ? `<button class="bigchoice" data-act="createSession" data-v="biath"><span class="e">🎯</span><b>Biathlon 6e</b><span class="hint">900 m (9 tours) + 2 lancers de vortex, pénalités et barème F / G.</span></button>` : ''}
       </div></div>` : ''}
     <div class="sessions" style="margin-top:14px">
       ${list.length ? list.map(s => {
@@ -2205,7 +2200,8 @@ const ACT = {
     try {
       const all = await loadMaster();
       const list = [...new Set(all.map(s => s.classe).filter(Boolean))];
-      ui.avail = list.length ? list.sort(classOrder) : DEFAULT_TABS.slice();
+      const kept = list.filter(c => LEVELS.includes(parseInt(c, 10)));
+      ui.avail = kept.length ? kept.sort(classOrder) : DEFAULT_TABS.slice();
       if (ui.tab === 'general') render();
       if (!silent) toast(ui.avail.length + ' classe(s) trouvée(s)');
     } catch (e) { ui.avail = DEFAULT_TABS.slice(); if (ui.tab === 'general') render(); toast('⚠ Lecture des classes impossible : ' + e.message, 5000); }
