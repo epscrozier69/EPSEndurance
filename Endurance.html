@@ -207,12 +207,13 @@ ol.steps li{margin:4px 0}
 .dwarn{font-size:11px;color:#c2410c;font-weight:700;padding:0 6px}
 .nsel{flex:0 0 auto;min-height:32px!important;padding:2px 4px!important;border-radius:8px!important;font-weight:800;font-size:12px;width:58px}
 table.ct.fit{table-layout:fixed}
-.ct.fit th,.ct.fit td{white-space:normal;padding:4px 6px}
-.ct.fit col.cv{width:118px}.ct.fit col.cd{width:70px}
+.ct.fit th,.ct.fit td{white-space:normal;padding:3px 4px}
+.ct.fit col.cv{width:56px}.ct.fit col.cd{width:62px}
 .ct.fit .dl{display:flex;align-items:center;gap:6px;min-height:40px;min-width:0}
 .ct.fit .dl.c{justify-content:center}
 .ct.fit .gn{flex:1;min-width:0;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ct.fit .vin{width:64px}
+.ct.fit .vin{width:42px;padding:3px 4px!important}
+.ct.fit .vbtn{min-width:0;padding:2px 4px}.ct.fit .vbase{min-width:0}.ct.fit .varr{margin:0 1px}
 .vcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:8px;margin-top:8px}
 .vcard{border:1px solid var(--line);border-radius:12px;padding:7px 8px;background:#fff;display:flex;flex-direction:column;gap:4px;box-shadow:0 1px 2px rgba(16,24,40,.05)}
 .vtop{display:flex;align-items:center;gap:6px}
@@ -1996,7 +1997,7 @@ function pairTable(C, s, rows, objs, duo) {
     const es = ids.map(entry);
     return `<td>${es.map(e => e.n).join('')}</td><td>${es.map(e => e.v).join('')}</td>` + objs.map((_, j) => `<td class="c">${es.map(e => e.o[j]).join('')}</td>`).join('');
   };
-  const cols = '<col style="width:42px">' + ('<col><col class="cv">' + objs.map(() => '<col class="cd">').join('')).repeat(2);
+  const cols = '<col style="width:26px">' + ('<col><col class="cv">' + objs.map(() => '<col class="cd">').join('')).repeat(2);
   const head = side => `<th>${side}</th><th>VMA</th>` + objs.map(o => `<th class="c">${o.label}</th>`).join('');
   return `<div class="tw"><table class="ct fit"><colgroup>${cols}</colgroup>
     <thead><tr><th class="c">N°</th>${head(duo ? 'Binôme qui court (gr. A)' : 'Coureur (gr. A)')}${head(duo ? 'Binôme qui observe (gr. B)' : 'Observateur (gr. B)')}</tr></thead>
