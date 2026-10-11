@@ -263,7 +263,9 @@ table.ct.fit{table-layout:fixed}
 .ser{font-size:10px;font-weight:900;color:#667085;align-self:center;margin:0 2px 0 4px}
 .vmain{font-weight:900;width:72px}
 .vmain.man{background:#fff7ed;border-color:#fdba74;color:#c2410c}
-.gv.vc7{color:#7c3aed}.gv.vc8{color:#ca8a04}.gv.vc9{color:#16a34a}.gv.vc10{color:#2563eb}.gv.vc11{color:#f97316}.gv.vc12{color:#dc2626}
+.vc7,.vc7 *{color:#7c3aed!important}.vc8{color:#ca8a04!important}.vc9{color:#16a34a!important}.vc10{color:#2563eb!important}.vc11{color:#f97316!important}.vc12{color:#dc2626!important}.vc13{color:#0ea5e9!important}.vc14{color:#7f1d1d!important}
+input.vin[class*="vc"]{font-weight:900}
+input.vin[class*="vc"]::placeholder{color:inherit;opacity:.9}
 .pc .gv{font-size:14px;font-weight:900}
 .stepper{display:inline-flex;align-items:center;gap:6px}
 .stepper b{min-width:34px;text-align:center;font-size:20px}
@@ -495,8 +497,8 @@ const fmtNum = (x, d = 1) => (x == null || isNaN(x)) ? '—' : (Number.isInteger
 const fmtVMA = x => fmtNum(x, 1);
 // Palier de VMA : un demi-point compte pour la VMA supérieure (9,5 → 10)
 const vmaBand = v => Math.ceil(v - 1e-9);
-// Couleur selon la VMA : 8 jaune · 9 vert · 10 bleu · 11 orange · 12 et + rouge (7 et moins : violet)
-const vmaCls = v => { if (v == null) return ''; const b = vmaBand(v); return b <= 7 ? 'vc7' : b >= 12 ? 'vc12' : 'vc' + b; };
+// Couleur selon la VMA : 8 jaune · 9 vert · 10 bleu · 11 orange · 12 rouge · 13 bleu clair · 14 et + rouge foncé (7 et moins : violet)
+const vmaCls = v => { if (v == null) return ''; const b = vmaBand(v); return b <= 7 ? 'vc7' : b >= 14 ? 'vc14' : 'vc' + b; };
 const fmtDur = s => s < 60 ? s + '"' : (s % 60 ? Math.floor(s / 60) + "'" + pad(s % 60) : s / 60 + "'");
 const durSay = s => s < 60 ? s + ' secondes' : (s % 60 ? Math.floor(s / 60) + ' minute ' + (s % 60) : (s / 60) + (s === 60 ? ' minute' : ' minutes'));
 const parseNum = v => { const n = parseFloat(String(v).replace(',', '.')); return isNaN(n) ? null : n; };
@@ -870,9 +872,18 @@ function fracStats(C, sid) {
   C.sessions.filter(s => s.type === 'frac').forEach(s => { const r = fracRes(s, sid); if (r) { y += r.y; n += r.n; } });
   return { y, n, pct: y + n ? Math.round(y / (y + n) * 100) : null };
 }
+// VMA utilisée pour la séance ; en fractionné, une VMA à virgule prend la valeur de la VMA supérieure (8,5 → 9)
 function fracVMA(C, s, sid) {
-  if (s.vmaOv[sid] != null) return s.vmaOv[sid];
-  const L = latestVMA(C, sid); return L ? L.vma : null;
+  let v = s.vmaOv[sid];
+  if (v == null) { const L = latestVMA(C, sid); v = L ? L.vma : null; }
+  if (v == null) return null;
+  return s.type === 'frac' ? vmaBand(v) : v;
+}
+// Case de saisie de la VMA d'une séance (valeur utilisée + couleur ; la VMA d'origine en info-bulle)
+function vmaInput(C, s, id) {
+  const v = fracVMA(C, s, id), L = latestVMA(C, id), raw = s.vmaOv[id] != null ? s.vmaOv[id] : (L ? L.vma : null);
+  const tip = raw != null && raw !== v ? `VMA ${fmtVMA(raw)} → ${fmtVMA(v)} pour la séance` : 'Saisir une VMA pour cette séance';
+  return `<input enterkeyhint="next" class="vin ${vmaCls(v)}" inputmode="decimal" data-chg="fracVma" data-id="${id}" value="${s.vmaOv[id] != null && v != null ? fmtVMA(v) : ''}" placeholder="${v != null ? fmtVMA(v) : '?'}" title="${tip}">`;
 }
 function recapRows(C) {
   return sortedStudents(C).map(st => {
@@ -1753,7 +1764,7 @@ function pairTable(C, s, rows, objs, duo) {
     const st = byId.get(id), v = fracVMA(C, s, id), L = latestVMA(C, id);
     return {
       n: `<div class="dl"><span class="sx ${st.sexe}">${esc(st.sexe || '?')}</span><span class="gn">${esc(st.name)}</span></div>`,
-      v: `<div class="dl"><input enterkeyhint="next" class="vin" inputmode="decimal" data-chg="fracVma" data-id="${id}" value="${s.vmaOv[id] != null ? fmtVMA(s.vmaOv[id]) : ''}" placeholder="${L ? fmtVMA(L.vma) : '?'}"></div>`,
+      v: `<div class="dl">${vmaInput(C, s, id)}</div>`,
       o: objs.map(o => `<div class="dl c">${o.val(v, st)}</div>`)
     };
   };
@@ -1795,7 +1806,7 @@ function viewFrac(C, s) {
     ${duo ? `<p>📋 <b>Relais en binôme : ${s.reps} × 18"</b>${S > 1 ? ` × <b>${S} séries</b>` : ''} à <b>${s.pct} % de la VMA</b> — chacun court ${Math.ceil(s.reps / 2)} fois par série, sa récupération est la course de son partenaire. Durée de course ≈ ${fmtT(total)}.</p>`
       : `<p>📋 <b>${s.reps} × ${fmtDur(s.work)}</b> de course individuelle, <b>${fmtDur(s.rest)}</b> de récupération${S > 1 ? `, <b>${S} séries</b>` : ''}, à <b>${s.pct} % de la VMA</b> — durée ≈ ${fmtT(total)}${lap ? ` · chronométrage au tour (${lapLen(s)} m) et notes de régularité, vitesse et continuité` : ''}.</p>`}
     <p>Distance à parcourir en ${fmtDur(s.work)} selon la VMA :</p>
-    <ul>${[...byV.keys()].sort((a, b) => a - b).map(v => `<li><b>VMA ${fmtVMA(v)} km/h → ${fracDist(v, s.work, s.pct)} m</b> <span class="hint">— ${byV.get(v).map(esc).join(', ')}</span></li>`).join('') || '<li>Aucune VMA connue : faites un test VMA ou saisissez les VMA ci-dessous.</li>'}</ul>
+    <ul>${[...byV.keys()].sort((a, b) => a - b).map(v => `<li><b class="${vmaCls(v)}">VMA ${fmtVMA(v)} km/h → ${fracDist(v, s.work, s.pct)} m</b> <span class="hint">— ${byV.get(v).map(esc).join(', ')}</span></li>`).join('') || '<li>Aucune VMA connue : faites un test VMA ou saisissez les VMA ci-dessous.</li>'}</ul>
     ${noV ? `<p class="hint">⚠ ${noV} élève(s) sans VMA.</p>` : ''}
     <p class="hint">Calcul : distance = VMA (km/h) ÷ 3,6 × durée (s) × ${s.pct} %. Ex. : VMA 12 en 36" → 12 ÷ 3,6 × 36 = 120 m.</p>
   </div>`;
@@ -1817,7 +1828,7 @@ function viewFrac(C, s) {
       const L = u.run.length;
       const runners = u.run.map((id, m) => {
         const d = fracDist(vOf(byId.get(id)), s.work, s.pct);
-        return `<button class="vr vrn" data-act="fracNameTap" data-id="${id}" title="Toucher : course en cours non validée (✗)">${duo ? `<span class="mk m${m}">${m + 1}</span>` : ''}<span class="gn">${esc(byId.get(id).name)}</span><span class="obj">${d != null ? d + ' m' : '? m'}</span></button>`;
+        return `<button class="vr vrn" data-act="fracNameTap" data-id="${id}" title="Toucher : course en cours non validée (✗)">${duo ? `<span class="mk m${m}">${m + 1}</span>` : ''}<span class="gn ${vmaCls(vOf(byId.get(id)))}">${esc(byId.get(id).name)}</span><span class="obj ${vmaCls(vOf(byId.get(id)))}">${d != null ? d + ' m' : '? m'}</span></button>`;
       }).join('');
       let ok = 0, n = 0, cells = '';
       if (duo) {
@@ -1897,8 +1908,8 @@ function fracShortSections(C, s, rows, section4) {
     const stt = s.status[st.id], g = groupOf(s, st.id), v = fracVMA(C, s, st.id), L = latestVMA(C, st.id), d = fracDist(v, s.work, s.pct);
     return { cells: [
       cell(st.name, `<b>${esc(st.name)}</b>`), cell(st.sexe),
-      cell(v, `<input enterkeyhint="next" class="vin" inputmode="decimal" data-chg="fracVma" data-id="${st.id}" value="${s.vmaOv[st.id] != null ? fmtVMA(s.vmaOv[st.id]) : ''}" placeholder="${L ? fmtVMA(L.vma) : '?'}">`),
-      cell(d, stt ? '—' : d != null ? `<b>${d} m</b>` : '—'),
+      cell(v, vmaInput(C, s, st.id)),
+      cell(d, stt ? '—' : d != null ? `<b class="${vmaCls(v)}">${d} m</b>` : '—'),
       cell(stt ? 'Z' : g, stt ? '—' : `<div class="seg ab">${['A', 'B'].map(x => `<button class="${g === x ? 'on ' + x : ''}" data-act="setAB" data-id="${st.id}" data-v="${x}">${x}</button>`).join('')}</div>`),
       cell(stt || '', fracStatusSel(s, st.id))
     ] };
