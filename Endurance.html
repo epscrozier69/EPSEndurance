@@ -200,6 +200,65 @@ ol.steps li{margin:4px 0}
 .stchip{display:inline-flex;align-items:center;gap:6px;background:#f2f4f7;border-radius:999px;padding:3px 4px 3px 12px;font-weight:700;font-size:13px}
 .stchip select{min-height:30px;padding:2px 6px;border-radius:999px;font-weight:800}
 @media (max-width:600px){.phead,.prow{grid-template-columns:18px minmax(0,1fr) minmax(0,1fr);gap:4px;padding:2px 4px}.pc .seg.ab button{min-width:24px;padding:2px 4px}.stsel{width:50px}.pc{padding:2px 3px}.pc .gn{font-size:13px}.pc .gv{display:none}.sx{width:18px;height:18px}}
+/* ---- Fractionné : binômes, tableau ajusté, cartes de validation ---- */
+.dcol{display:flex;flex-direction:column;gap:2px;min-width:0}
+.dwarn{font-size:11px;color:#c2410c;font-weight:700;padding:0 6px}
+.nsel{flex:0 0 auto;min-height:32px!important;padding:2px 4px!important;border-radius:8px!important;font-weight:800;font-size:12px;width:58px}
+table.ct.fit{table-layout:fixed}
+.ct.fit th,.ct.fit td{white-space:normal;padding:4px 6px}
+.ct.fit col.cv{width:78px}.ct.fit col.cd{width:70px}
+.ct.fit .dl{display:flex;align-items:center;gap:6px;min-height:40px;min-width:0}
+.ct.fit .dl.c{justify-content:center}
+.ct.fit .gn{flex:1;min-width:0;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ct.fit .vin{width:64px}
+.vcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:8px;margin-top:8px}
+.vcard{border:1px solid var(--line);border-radius:12px;padding:7px 8px;background:#fff;display:flex;flex-direction:column;gap:4px;box-shadow:0 1px 2px rgba(16,24,40,.05)}
+.vtop{display:flex;align-items:center;gap:6px}
+.vn{font-weight:900;font-size:12px;color:#fff;background:var(--pri);border-radius:6px;padding:1px 7px}
+.vs{margin-left:auto;font-weight:900;font-size:13px;color:#1d4ed8}
+.vx{border:0;background:#f2f4f7;border-radius:6px;cursor:pointer;font-weight:900;color:#667085;min-height:24px;padding:0 7px}
+.vr{display:flex;align-items:center;gap:6px;min-width:0}
+.vr .gn{flex:1;min-width:0;font-weight:800;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vr .obj{font-weight:900;font-size:13px;color:#c2410c;white-space:nowrap}
+.mk{flex:0 0 auto;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:900;color:#fff}
+.mk.m0{background:#f97316}.mk.m1{background:#2563eb}.mk.m2{background:#7c3aed}
+.vcells{display:flex;flex-wrap:wrap;gap:3px}
+.vb.sm{width:30px;height:28px;font-size:15px;border-radius:7px;border-width:2px}
+.vb.sm.m0.y{background:#f97316;border-color:#f97316}
+.vb.sm.m1.y{background:#2563eb;border-color:#2563eb}
+.vb.sm.m2.y{background:#7c3aed;border-color:#7c3aed}
+.vo{display:flex;flex-wrap:wrap;align-items:center;gap:4px;font-size:13px}
+.ob{border:0;border-radius:999px;padding:3px 10px;font-weight:800;font-size:12px;cursor:pointer;color:#fff;min-height:26px}
+.ob.good{background:#16a34a}.ob.bad{background:#f97316}
+.live.compact{display:grid;grid-template-columns:auto 1fr auto;gap:6px 16px;align-items:center;padding:10px 16px;position:sticky;top:108px;z-index:6;margin:8px 0}
+.lc-time{font-size:54px;font-weight:900;min-width:96px;text-align:center;font-variant-numeric:tabular-nums;line-height:1}
+.lc-info{display:flex;flex-direction:column;gap:2px;font-size:14px}
+.lc-info .phase{font-size:20px}
+.lc-bar{grid-column:1/-1;margin:2px 0 0}
+@media (max-width:600px){.live.compact{grid-template-columns:auto 1fr}.live.compact .liveact{grid-column:1/-1}.lc-time{font-size:42px}.vcards{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}}
+/* ---- Courses chronométrées au tour ---- */
+.sess .ic.endu3{background:#fce7f3}.sess .ic.biath{background:#ede9fe}
+.lcard{border:1px solid var(--line);border-radius:12px;padding:6px;background:#fff;display:flex;flex-direction:column;gap:4px;box-shadow:0 1px 2px rgba(16,24,40,.05)}
+.lcard.throw{border-color:#f59e0b;background:#fffbeb}
+.lcard.done{background:#eef2ff;border-color:#c7d2fe}
+.lname{display:flex;align-items:center;gap:6px;width:100%;border:0;border-radius:9px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;font-weight:900;font-size:15px;padding:10px;min-height:46px;cursor:pointer;text-align:left}
+.lname:active{transform:scale(.98)}
+.lcard.done .lname{background:#94a3b8}
+.lname .gn{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lname .ln{font-size:11px;background:rgba(255,255,255,.25);border-radius:999px;padding:1px 7px}
+.lmain{font-size:13px}
+.lmain .tap{font-size:11px;color:var(--muted)}
+.lacts{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.lacts .btn.sm{min-height:30px;padding:2px 8px}
+.xd{display:inline-flex;align-items:center;gap:3px;font-weight:800;font-size:13px}
+.xd .vin{width:58px;min-height:30px!important;padding:2px 6px!important}
+.thr{width:32px;height:30px;border-radius:8px;border:0;font-weight:900;color:#fff;cursor:pointer;margin-right:3px}
+.thr.y{background:#2563eb}.thr.n{background:#e11d48}
+.nt{display:inline-block;border-radius:6px;padding:1px 6px;font-size:11px;font-weight:900;color:#fff;margin:1px 2px 1px 0;white-space:nowrap}
+.nt-TB{background:#2563eb}.nt-S{background:#7c3aed}.nt-F{background:#f97316}.nt-I{background:#e11d48}.nt-0{background:#cbd5e1;color:#475467}
+.rc{font-size:13px;white-space:normal;min-width:140px}
+.spl{font-size:11px;color:#475467;white-space:normal}
+.ser{font-size:10px;font-weight:900;color:#667085;align-self:center;margin:0 2px 0 4px}
 .stepper{display:inline-flex;align-items:center;gap:6px}
 .stepper b{min-width:34px;text-align:center;font-size:20px}
 #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:#111827;color:#fff;padding:11px 18px;border-radius:12px;font-weight:600;opacity:0;pointer-events:none;transition:.25s;z-index:99;max-width:calc(100% - 32px);text-align:center}
@@ -235,6 +294,13 @@ ol.steps li{margin:4px 0}
 .fiche .ct td .bx{display:inline-block;width:3.2mm;height:3.2mm;border:1.4px solid #000;border-radius:1px;background:#fff;margin-top:.5mm}
 .fiche .ct td.lap{box-shadow:inset 0 0 0 2.2px #111}
 .fiche .ct td.vide{background:#fff}
+.fiche.lapf .fbs{display:grid;gap:2.5mm}
+.fiche.lapf .fb{break-inside:avoid;page-break-inside:avoid}
+.fiche.lapf table.ct{table-layout:auto;font-size:8pt}
+.fiche.lapf .ct th,.fiche.lapf .ct td{height:4.2mm;padding:0 1px;font-size:8pt;line-height:1.1}
+.fiche.lapf .ct thead th{height:4.2mm}
+.fiche.lapf .ct th.fbt{font-size:10.5pt;background:#fff;color:#2563eb;height:6mm}
+.fiche.lapf .ct td.fbf{font-weight:800;font-size:8.5pt;background:#fff;height:6mm}
 .fiche .ff{display:flex;gap:8mm;margin-top:2.5mm;font-size:10pt;flex-wrap:wrap}
 </style>
 </head>
@@ -348,7 +414,7 @@ const fmtClass = s => { const t = String(s || '').trim(), m = t.match(/^(\d)\s*[
 const classOrder = (a, b) => (parseInt(b) || 0) - (parseInt(a) || 0) || a.localeCompare(b, 'fr', { numeric: true });
 const LS_STATE = 'eps_endurance_state_v1';
 const LS_CFG = 'eps_endurance_cfg_v1';
-const DURS = [18, 36, 90, 180];   // temps de travail
+const DURS = [18, 36, 90, 120, 180];   // temps de travail
 const RESTS = [18, 24, 90, 180];  // temps de récupération
 const STATUS = { ABS: 'Absent', DP: 'Dispensé ponctuel', DISP: 'Dispensé' };
 
@@ -610,11 +676,28 @@ function mergeClass(name, studs) {
 /* =====================================================================
    Audio : sifflet synthétisé (fort, strident) + voix
    ===================================================================== */
+// Petit fichier son silencieux joué en boucle : force iOS à utiliser la sortie « lecture » (ignore le mode silencieux)
+let silentURL = null;
+function silentWavURL() {
+  if (silentURL) return silentURL;
+  const sr = 8000, n = sr / 2, buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
+  const w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+  w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVE'); w(12, 'fmt '); v.setUint32(16, 16, true);
+  v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true);
+  v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, n * 2, true);
+  return (silentURL = URL.createObjectURL(new Blob([buf], { type: 'audio/wav' })));
+}
 const Snd = {
   ctx: null, master: null,
   init() {
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) { toast('Audio non disponible sur ce navigateur'); return; }
+    // iPad / iPhone : sans cela, le mode silencieux coupe les sons générés par la page
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+    try {
+      if (!this.keep) { this.keep = new Audio(silentWavURL()); this.keep.loop = true; this.keep.setAttribute('playsinline', ''); }
+      const p = this.keep.play(); if (p && p.catch) p.catch(() => {});
+    } catch (e) {}
     if (!this.ctx) {
       this.ctx = new AC();
       const comp = this.ctx.createDynamicsCompressor();
@@ -767,7 +850,7 @@ function vmaHistory(C, sid) {
 }
 function fracStats(C, sid) {
   let y = 0, n = 0;
-  C.sessions.filter(s => s.type === 'frac').forEach(s => (s.valid[sid] || []).slice(0, s.reps).forEach(v => { if (v === 1) y++; else if (v === 0) n++; }));
+  C.sessions.filter(s => s.type === 'frac').forEach(s => { const r = fracRes(s, sid); if (r) { y += r.y; n += r.n; } });
   return { y, n, pct: y + n ? Math.round(y / (y + n) * 100) : null };
 }
 function fracVMA(C, s, sid) {
@@ -782,7 +865,8 @@ function recapRows(C) {
 }
 function buildSheetTables() {
   const vma = [['Classe', 'Nom Prénom', 'Sexe', 'Date', 'Groupe', 'Piste (m)', 'Palier', 'Vitesse palier (km/h)', 'Temps (s)', 'Temps', 'Distance (m)', 'VMA (km/h)', 'Retards', 'Éliminé', 'Statut']];
-  const frac = [['Classe', 'Nom Prénom', 'Date', 'Rôle', 'Binôme', 'Travail (s)', 'Récup (s)', 'Répétitions', '% VMA', 'VMA (km/h)', 'Objectif (m)', 'Réussites', 'Échecs', 'Détail']];
+  const frac = [['Classe', 'Nom Prénom', 'Date', 'Rôle', 'Binôme', 'Travail (s)', 'Récup (s)', 'Répétitions', '% VMA', 'VMA (km/h)', 'Objectif (m)', 'Réussites', 'Échecs', 'Détail', 'Travail d\'observateur']];
+  const crs = [['Classe', 'Nom Prénom', 'Sexe', 'Date', 'Épreuve', 'Course', 'VMA (km/h)', 'Vitesse visée (km/h)', 'Distance (m)', 'Vitesse (km/h)', 'Temps de passage', 'Régularité', 'Note vitesse', 'Marches', 'Continuité', 'Temps 900 m', 'Lancers ratés', 'Temps final', 'Note temps', 'Statut']];
   const syn = [['Classe', 'Nom Prénom', 'Sexe', 'VMA (km/h)', 'Date du test', 'Palier', 'Vitesse palier (km/h)', 'Temps', 'Distance (m)', 'Historique VMA', 'Réussite fractionné (%)']];
   state.classOrder.forEach(cn => {
     const C = state.classes[cn]; if (!C) return;
@@ -795,22 +879,38 @@ function buildSheetTables() {
           const p = perfAt(r.t);
           vma.push([cn, st.name, st.sexe, fmtDate(s.date), r.g || s.groups[st.id] || '', s.track, p.p, p.v, Math.round(r.t * 10) / 10, fmtT(r.t), p.d, p.vma, r.ret || 0, r.elim ? 'oui' : '', stt || '']);
         });
-      } else {
+      } else if (isLap(s)) {
+        syncOrder(C, s);
+        const runs = lapRuns(s);
+        const name = s.type === 'biath' ? 'Biathlon 6e' : s.type === 'endu3' ? 'Endurance 3e' : `Fractionné ${s.reps} × ${fmtDur(s.work)}`;
         sortedStudents(C).forEach(st => {
-          const role = s.roles[st.id], stt = (s.status || {})[st.id];
-          if (stt) { frac.push([cn, st.name, fmtDate(s.date), stt, '', s.work, s.rest, s.reps, s.pct, '', '', '', '', '']); return; }
-          if (role !== 'C' && role !== 'O') return;
-          const vals = (s.valid[st.id] || []).slice(0, s.reps);
-          const v = fracVMA(C, s, st.id), pa = byId.get(s.partner[st.id]);
-          frac.push([cn, st.name, fmtDate(s.date), role === 'C' ? 'Coureur (1er)' : 'Observateur (1er)', pa ? pa.name : '', s.work, s.rest, s.reps, s.pct, v == null ? '' : v,
-            fracDist(v, s.work, s.pct) == null ? '' : fracDist(v, s.work, s.pct), vals.filter(x => x === 1).length, vals.filter(x => x === 0).length,
-            vals.map(x => x === 1 ? '✓' : x === 0 ? '✗' : '·').join(' ')]);
+          const stt = (s.status || {})[st.id];
+          if (stt) { crs.push([cn, st.name, st.sexe, fmtDate(s.date), name, '', '', '', '', '', '', '', '', '', '', '', '', '', '', stt]); return; }
+          if (!groupOf(s, st.id)) return;
+          runs.forEach((run, r) => {
+            const ev = lapEval(C, s, st.id, r); if (!ev) return;
+            crs.push([cn, st.name, st.sexe, fmtDate(s.date), name, run.label, fracVMA(C, s, st.id) == null ? '' : fracVMA(C, s, st.id), ev.target == null ? '' : ev.target,
+              ev.dist, ev.speed ? Math.round(ev.speed * 10) / 10 : '', ev.cum.map(x => fmtT(x)).join(' '), ev.reg ? ev.reg.g : '', ev.vg || '', ev.walk, ev.cont,
+              ev.t9 ? fmtT(ev.t9) : '', ev.throws ? ev.pen : '', ev.fin != null ? fmtT(ev.fin) : '', ev.tg || '', '']);
+          });
+        });
+      } else {
+        syncOrder(C, s); if (isDuo(s)) syncDuos(C, s);
+        const rest = isDuo(s) ? s.work : s.rest;
+        sortedStudents(C).forEach(st => {
+          const stt = (s.status || {})[st.id];
+          if (stt) { frac.push([cn, st.name, fmtDate(s.date), stt, '', s.work, rest, s.reps, s.pct, '', '', '', '', '', '']); return; }
+          const g = groupOf(s, st.id); if (!g) return;
+          const r = fracRes(s, st.id), v = fracVMA(C, s, st.id), d = fracDist(v, s.work, s.pct);
+          const mates = isDuo(s) ? duoOf(s, st.id).filter(x => x !== st.id) : [s.partner[st.id]].filter(Boolean);
+          frac.push([cn, st.name, fmtDate(s.date), 'Groupe ' + g, mates.map(x => byId.get(x) ? byId.get(x).name : '').join(', '), s.work, rest, s.reps, s.pct,
+            v == null ? '' : v, d == null ? '' : d, r ? r.y : '', r ? r.n : '', r ? r.detail : '', s.obsOk && s.obsOk[st.id] === false ? 'à revoir' : 'bien']);
         });
       }
     });
     recapRows(C).forEach(({ st, L, F, hist }) => syn.push([cn, st.name, st.sexe, L ? L.vma : '', L ? fmtDate(L.date) : '', L ? L.p : '', L ? L.v : '', L ? fmtT(L.t) : '', L ? L.d : '', hist.map(fmtVMA).join(' → '), F.pct == null ? '' : F.pct]));
   });
-  return { 'Résultats VMA': vma, 'Résultats Fractionné': frac, 'Synthèse classes': syn };
+  return { 'Résultats VMA': vma, 'Résultats Fractionné': frac, 'Résultats Courses': crs, 'Synthèse classes': syn };
 }
 function exportXLSX(filename, sheets) {
   if (window.XLSX) {
@@ -926,7 +1026,7 @@ function viewClass(C) {
   const u = clsUI(C.name);
   if (u.sid) {
     const s = findSession(C, u.sid);
-    if (s) return s.type === 'vma' ? viewVMA(C, s) : viewFrac(C, s);
+    if (s) return s.type === 'vma' ? viewVMA(C, s) : s.type === 'frac' ? viewFrac(C, s) : viewLapSession(C, s);
     u.sid = null;
   }
   const f = C.students.filter(s => s.sexe === 'F').length, g = C.students.filter(s => s.sexe === 'G').length;
@@ -948,15 +1048,20 @@ function viewSessions(C, u) {
       <label class="lbl" style="margin-top:0">Date de la séance</label><input type="date" id="newDate" value="${todayISO()}">
       <div class="newsess">
         <button class="bigchoice" data-act="createSession" data-v="vma"><span class="e">⏱️</span><b>Test VMA</b><span class="hint">Léger-Boucher : bande son, groupes A/B, fiches observateurs, résultats.</span></button>
-        <button class="bigchoice" data-act="createSession" data-v="frac"><span class="e">🔁</span><b>Séance fractionnée</b><span class="hint">Travail / récupération / répétitions, binômes, validation des objectifs.${hasVMA ? '' : ' <br>⚠ Aucun test VMA encore : VMA à saisir.'}</span></button>
+        <button class="bigchoice" data-act="createSession" data-v="frac"><span class="e">🔁</span><b>Séance fractionnée</b><span class="hint">18" en relais par binôme, 36" en séries, 1'30 à 3' chronométrées au tour.${hasVMA ? '' : ' <br>⚠ Aucun test VMA encore : VMA à saisir.'}</span></button>
+        <button class="bigchoice" data-act="createSession" data-v="endu3"><span class="e">🏁</span><b>Épreuve d'endurance 3e</b><span class="hint">Course de 3' à VMA+1 puis 9' à VMA−1, temps au tour et notes.</span></button>
+        <button class="bigchoice" data-act="createSession" data-v="biath"><span class="e">🎯</span><b>Biathlon 6e</b><span class="hint">900 m (9 tours) + 2 lancers de vortex, pénalités et barème F / G.</span></button>
       </div></div>` : ''}
     <div class="sessions" style="margin-top:14px">
       ${list.length ? list.map(s => {
-        const isV = s.type === 'vma';
-        const sum = isV ? `${Object.keys(s.results).length} résultat(s) · piste ${s.track} m`
-          : `${s.reps} × ${fmtDur(s.work)} / ${fmtDur(s.rest)} · ${s.pct} % VMA · ${Object.values(s.roles).filter(r => r === 'C' || r === 'O').length} élèves`;
-        return `<div class="sess"><div class="ic ${s.type}">${isV ? '⏱️' : '🔁'}</div>
-          <div class="info"><b>${isV ? 'Test VMA' : 'Séance fractionnée'}</b> — ${fmtDate(s.date)}<div class="hint">${sum}</div></div>
+        const T = { vma: ['⏱️', 'Test VMA'], frac: ['🔁', 'Séance fractionnée'], endu3: ['🏁', 'Épreuve d\'endurance 3e'], biath: ['🎯', 'Biathlon 6e'] }[s.type] || ['•', s.type];
+        const nRun = Object.keys(s.laps || {}).length;
+        const sum = s.type === 'vma' ? `${Object.keys(s.results).length} résultat(s) · piste ${s.track} m`
+          : s.type === 'frac' ? `${s.reps} × ${fmtDur(s.work)}${isDuo(s) ? ' en relais' : ' / ' + fmtDur(s.rest)}${nSeries(s) > 1 ? ' · ' + nSeries(s) + ' séries' : ''} · ${s.pct} % VMA`
+          : s.type === 'endu3' ? `3' à VMA+1 · 9' à VMA−1 · ${nRun} élève(s) chronométré(s)`
+          : `900 m + 2 lancers · ${Object.keys(s.final || {}).length} arrivée(s)`;
+        return `<div class="sess"><div class="ic ${s.type}">${T[0]}</div>
+          <div class="info"><b>${T[1]}</b> — ${fmtDate(s.date)}<div class="hint">${sum}</div></div>
           <button class="btn pri" data-act="openSession" data-id="${s.id}">Ouvrir</button>
           <button class="btn danger" data-act="delSession" data-id="${s.id}">🗑</button></div>`;
       }).join('') : '<div class="empty">Aucune séance. Cliquez sur « Nouvelle séance ».</div>'}
@@ -1245,14 +1350,367 @@ function printFiches(C, s, group) {
   setTimeout(() => window.print(), 80);
 }
 
-/* ---------- Séance fractionnée ---------- */
+/* ---------- Séance fractionnée et épreuves chronométrées au tour ----------
+   Fractionné 18" : relais en binômes de course (VMA proches). Dans un binôme, l'un court pendant que l'autre
+     récupère ; le binôme n° k du groupe B observe le binôme n° k du groupe A. Validation ✓/✗ par course.
+   Fractionné 36" : course individuelle 36" / 24" × 6, en 2 séries. Validation ✓/✗ par course.
+   Fractionné 1'30, 2', 3', Endurance 3e (3' à VMA+1 puis 9' à VMA−1), Biathlon 6e (900 m + 2 lancers) :
+     course individuelle chronométrée au tour (clic sur le nom), notes TB / S / F / I.
+   Validation ✓/✗ : chaque course est validée par défaut ; s.valid[id][k] === 0 signifie ✗. */
+const isDuo = s => s.type === 'frac' && s.work === 18;
+const isLap = s => s.type === 'endu3' || s.type === 'biath' || (s.type === 'frac' && s.work >= 90);
+const nSeries = s => (s.type === 'frac' && !isDuo(s) && !isLap(s)) ? (s.series || 1) : 1;
+const groupOf = (s, id) => s.order ? (s.order.A.includes(id) ? 'A' : s.order.B.includes(id) ? 'B' : null) : null;
+function autoDuos(C, s) {
+  const v = id => { const x = fracVMA(C, s, id); return x == null ? -1 : x; };
+  s.duoNum = {};
+  ['A', 'B'].forEach(g => s.order[g].slice().sort((a, b) => v(b) - v(a)).forEach((id, i) => { s.duoNum[id] = Math.floor(i / 2) + 1; }));
+}
+function syncDuos(C, s) {
+  if (!s.duoNum || !Object.keys(s.duoNum).length) { autoDuos(C, s); return; }
+  ['A', 'B'].forEach(g => {
+    const cnt = {};
+    s.order[g].forEach(id => { const n = s.duoNum[id]; if (n) cnt[n] = (cnt[n] || 0) + 1; });
+    s.order[g].forEach(id => {
+      if (s.duoNum[id]) return;
+      let n = 1; while ((cnt[n] || 0) >= 2) n++;
+      s.duoNum[id] = n; cnt[n] = (cnt[n] || 0) + 1;
+    });
+  });
+}
+function duoRows(s) {
+  const K = Math.max(0, ...[...s.order.A, ...s.order.B].map(id => s.duoNum[id] || 0));
+  return Array.from({ length: K }, (_, k) => ({ A: s.order.A.filter(id => s.duoNum[id] === k + 1), B: s.order.B.filter(id => s.duoNum[id] === k + 1) }));
+}
+function fracRows(s) {
+  if (isDuo(s)) return duoRows(s);
+  return Array.from({ length: Math.max(s.order.A.length, s.order.B.length) }, (_, i) => ({ A: s.order.A[i] ? [s.order.A[i]] : [], B: s.order.B[i] ? [s.order.B[i]] : [] }));
+}
+// Membres du binôme de course de l'élève (lui compris)
+function duoOf(s, id) {
+  const g = groupOf(s, id);
+  if (!g) return [id];
+  return isDuo(s) && s.duoNum ? s.order[g].filter(x => s.duoNum[x] === s.duoNum[id]) : [id];
+}
+// Nombre de courses de l'élève dans la séance (validation ✓/✗)
+function runsOf(s, id) {
+  if (!isDuo(s)) return s.reps * nSeries(s);
+  const d = duoOf(s, id), m = Math.max(0, d.indexOf(id));
+  return Math.ceil((s.reps - m) / d.length);
+}
+// Résultat ✓/✗ d'un élève (null si son groupe n'a pas encore couru)
+function fracRes(s, id) {
+  if (s.type !== 'frac' || isLap(s)) return null;
+  const vals = (s.valid || {})[id] || [], g = groupOf(s, id);
+  if (!((s.ran && g && s.ran[g]) || vals.some(x => x === 0 || x === 1))) return null;
+  const arr = Array.from({ length: runsOf(s, id) }, (_, k) => vals[k] === 0 ? 0 : 1);
+  const y = arr.filter(Boolean).length;
+  return { y, n: arr.length - y, detail: arr.map(x => x ? '✓' : '✗').join(' ') };
+}
+
+/* ----- Barèmes ----- */
+const LINE_STEP = 0.5;   // une « ligne » du tableau des temps de passage = 0,5 km/h
+const SPEED_ROWS = []; for (let v = 16; v >= 7 - 1e-9; v -= LINE_STEP) SPEED_ROWS.push(v);   // lignes de la fiche : 16 → 7 km/h
+const rowTime = (n, L, v) => Math.ceil(n * L / (v / 3.6) - 0.5);   // temps de passage (s) au tour n, comme sur la fiche
+// Ligne (vitesse) dont le temps de passage cumulé au tour n est le plus proche du temps réalisé
+function lineOf(n, L, t) {
+  let best = null, bd = Infinity;
+  for (let v = 4; v <= 25 + 1e-9; v += LINE_STEP) { const d = Math.abs(rowTime(n, L, v) - t); if (d < bd) { bd = d; best = v; } }
+  return best;
+}
+// Régularité : écart (en lignes) entre les lignes des temps de passage de chaque tour
+function regGrade(cum, L) {
+  if (cum.length < 2) return null;
+  const lines = cum.map((t, i) => Math.round(lineOf(i + 1, L, t) / LINE_STEP));
+  const e = Math.max(...lines) - Math.min(...lines);
+  return { g: e <= 1 ? 'TB' : e === 2 ? 'S' : e === 3 ? 'F' : 'I', e };
+}
+// Temps de passage avec la ligne correspondante, ex. « 0:30 (12) »
+const passTxt = (cum, L) => cum.map((t, i) => `${fmtT(t)} <i>(${fmtVMA(lineOf(i + 1, L, t))})</i>`).join(' · ');
+// Vitesse réalisée par rapport à la vitesse visée : ≥ 0 TB · −0,5/−1 S · −1,5 à −2,5 F · au-delà I
+function vmaGrade(diff) {
+  const d = Math.round(diff * 2) / 2;
+  return d >= 0 ? 'TB' : d >= -1 ? 'S' : d >= -2.5 ? 'F' : 'I';
+}
+// Continuité : 0 marche TB · 1 S · 2-3 F · 4 et + I
+const contGrade = w => w === 0 ? 'TB' : w === 1 ? 'S' : w <= 3 ? 'F' : 'I';
+const BIATH_TOURS = 9, BIATH_LAP = 100;
+// Biathlon 6e, temps final : filles TB ≤ 5'20 · S ≤ 6'40 · F ≤ 8'20 · I au-delà — garçons TB ≤ 5'00 · S ≤ 6'20 · F ≤ 8'00 · I au-delà
+const BIATH_BAREME = { F: [320, 400, 500], G: [300, 380, 480] };
+function timeGrade(t, sexe) {
+  const b = BIATH_BAREME[sexe === 'F' ? 'F' : 'G'], x = Math.floor(t);
+  return x <= b[0] ? 'TB' : x <= b[1] ? 'S' : x <= b[2] ? 'F' : 'I';
+}
+const nt = (g, letter, title) => `<span class="nt nt-${g || '0'}" title="${esc(title)}">${letter ? letter + ' ' : ''}${g || '—'}</span>`;
+
+/* ----- Courses chronométrées au tour ----- */
+function lapRuns(s) {
+  if (s.type === 'endu3') return [{ dur: 180, delta: 1, label: "Course 1 : 3' à VMA+1" }, { dur: 540, delta: -1, label: "Course 2 : 9' à VMA−1" }];
+  if (s.type === 'biath') return [{ dur: null, delta: 0, label: '900 m + 2 lancers' }];
+  return Array.from({ length: s.reps }, (_, i) => ({ dur: s.work, delta: 0, label: 'Course ' + (i + 1) }));
+}
+const lapLen = s => s.type === 'biath' ? BIATH_LAP : (s.lapLen || 100);
+const lapsOf = (s, id, r) => ((s.laps || {})[id] || {})[r] || [];
+const splitsOf = cum => cum.map((t, i) => t - (i ? cum[i - 1] : 0));
+const sub = (o, id, r) => ((o || {})[id] || {})[r];
+function lapEval(C, s, id, r) {
+  const st = C.students.find(x => x.id === id), run = lapRuns(s)[r], L = lapLen(s), cum = lapsOf(s, id, r);
+  if (!st || !run) return null;
+  const walk = sub(s.walk, id, r) || 0, fin = s.type === 'biath' ? (s.final || {})[id] : null;
+  if (!cum.length && !walk && fin == null) return null;
+  const vma = fracVMA(C, s, id), res = { cum, splits: splitsOf(cum), walk, cont: contGrade(walk) };
+  if (s.type === 'biath') {
+    const t9 = cum.length >= BIATH_TOURS ? cum[BIATH_TOURS - 1] : null, th = (s.throws || {})[id] || [1, 1];
+    Object.assign(res, { t9, throws: th, pen: th.filter(x => x === 0).length, fin: fin == null ? null : fin,
+      dist: t9 ? BIATH_TOURS * L : cum.length * L, speed: t9 ? BIATH_TOURS * L / t9 * 3.6 : null, tg: fin != null ? timeGrade(fin, st.sexe) : null });
+    res.reg = regGrade(cum.slice(0, BIATH_TOURS), L);
+  } else {
+    res.extra = sub(s.extra, id, r) || 0;
+    res.dist = cum.length * L + res.extra;
+    res.speed = res.dist / run.dur * 3.6;
+    res.reg = regGrade(cum, L);
+  }
+  res.target = vma == null ? null : vma + run.delta;
+  res.vg = res.target != null && res.speed ? vmaGrade(res.speed - res.target) : null;
+  return res;
+}
+// Position du chrono : course en cours, temps dans la course
+function lapNow() {
+  if (!live || live.kind !== 'lap' || !live.tl) return null;
+  const { s } = currentVMASession(); if (!s) return null;
+  const e = live.tl.elapsed();
+  if (live.mode === 'reps') {
+    const W = s.work, cyc = W + s.rest, i = Math.floor(Math.max(0, e) / cyc), w = e - i * cyc;
+    return { r: Math.min(i, s.reps - 1), t: w, running: e >= 0 && i < s.reps && w < W };
+  }
+  if (live.mode === 'single') return { r: live.run, t: e, running: e >= 0 && e < lapRuns(s)[live.run].dur };
+  return { r: 0, t: e, running: e >= 0 };
+}
+function lapEvents(s, mode, run) {
+  if (mode === 'reps') return fracEvents(s);
+  const ev = [{ t: -3, snd: 'beep' }, { t: -2, snd: 'beep' }, { t: -1, snd: 'beep' }, { t: 0, snd: mode === 'open' ? 'long' : 'bip' }];
+  if (mode === 'single') ev.push({ t: lapRuns(s)[run].dur, snd: 'bipEnd' });
+  return ev;
+}
+function lapTick(e) {
+  const g = id => document.getElementById(id);
+  if (!g('lv-time') || !live || live.kind !== 'lap') return;
+  const { s } = currentVMASession(); if (!s) return;
+  const box = g('live');
+  const set = (ph, rep, time, pct, cls) => {
+    g('lv-phase').textContent = live.tl.paused ? 'PAUSE' : ph;
+    g('lv-rep').textContent = rep; g('lv-time').textContent = time;
+    g('lv-bar').style.width = Math.max(0, Math.min(100, pct)) + '%';
+    box.className = 'live compact ' + cls;
+  };
+  if (e < 0) return set('PRÊTS', '', e > -3.5 ? String(Math.ceil(-e)) : '…', 0, '');
+  if (live.mode === 'open') return set('COURSE', 'Temps écoulé', fmtT(Math.floor(e)), 0, 'work');
+  if (live.mode === 'single') {
+    const run = lapRuns(s)[live.run];
+    if (e >= run.dur) return set('TERMINÉ', 'Saisissez les distances supplémentaires', '0:00', 100, '');
+    return set('COURSE', run.label, fmtT(Math.ceil(run.dur - e)), e / run.dur * 100, 'work');
+  }
+  const W = s.work, R = s.rest, N = s.reps, cyc = W + R, i = Math.floor(e / cyc), w = e - i * cyc;
+  if (i >= N || (i === N - 1 && w >= W)) return set('TERMINÉ', '', '0:00', 100, '');
+  const work = w < W;
+  return set(work ? 'COURSE' : 'RÉCUPÉRATION', 'Répétition ' + (work ? i + 1 : i + 2) + ' / ' + N, fmtT(Math.ceil(work ? W - w : cyc - w)), (work ? w / W : (w - W) / R) * 100, work ? 'work' : 'rest');
+}
+function viewLapLive(s) {
+  const timed = live.mode !== 'open';
+  const dur = live.mode === 'single' ? lapRuns(s)[live.run].dur : s.work;
+  return `<div class="live compact" id="live">
+    <div class="lc-time" id="lv-time">—</div>
+    <div class="lc-info"><div class="phase" id="lv-phase">PRÊTS</div><div id="lv-rep"></div>${timed ? `<div>Temps à réaliser : <b>${fmtDur(dur)}</b></div>` : ''}</div>
+    <div class="liveact">${timed ? '<button class="btn" data-act="fracPause" id="lv-pause">⏸ Pause</button>' : ''}<button class="btn danger" data-act="lapStop">■ ${timed ? 'Arrêter' : 'Terminer'}</button></div>
+    <div class="bar lc-bar"><i id="lv-bar"></i></div>
+  </div>`;
+}
+// Fiche observateur des courses au tour : temps de passage cumulés par ligne de vitesse (16 → 7 km/h)
+function lapFicheHTML(C, s, runner, observer) {
+  const runs = lapRuns(s), L = lapLen(s), biath = s.type === 'biath';
+  const nLaps = run => biath ? BIATH_TOURS : Math.max(1, Math.floor(SPEED_ROWS[0] / 3.6 * run.dur / L + 1e-9));
+  const maxL = Math.max(...runs.map(nLaps));
+  const perRow = Math.max(1, Math.min(runs.length, Math.floor(44 / (maxL + 1.4))));
+  const block = run => {
+    const n = nLaps(run);
+    const cells = v => Array.from({ length: n }, (_, i) => { const t = rowTime(i + 1, L, v); return `<td>${biath || t <= run.dur ? fmtT(t) : ''}</td>`; }).join('');
+    return `<div class="fb"><table class="ct">
+      <thead><tr><th colspan="${n + 1}" class="fbt">${esc(run.label)}</th></tr>
+        <tr><th>Tour</th>${Array.from({ length: n }, (_, i) => `<th>${i + 1}</th>`).join('')}</tr>
+        <tr><th>VMA</th>${Array.from({ length: n }, (_, i) => `<th>${(i + 1) * L}</th>`).join('')}</tr></thead>
+      <tbody>${SPEED_ROWS.map(v => `<tr><th>${fmtVMA(v)}</th>${cells(v)}</tr>`).join('')}</tbody>
+      <tfoot><tr><td colspan="${n + 1}" class="fbf">${biath ? 'Lancer 1 : ✓ ✗ &nbsp;·&nbsp; Lancer 2 : ✓ ✗ &nbsp;·&nbsp; Temps final : ________ &nbsp;·&nbsp; ' : ''}Le coureur a marché : OUI – NON</td></tr></tfoot></table></div>`;
+  };
+  const title = s.type === 'frac' ? `${s.reps} × ${fmtDur(s.work)}` : s.type === 'endu3' ? "Épreuve d'endurance 3e : 3' à VMA+1 et 9' à VMA−1" : 'Biathlon 6e : 900 m + 2 lancers';
+  return `<div class="fiche lapf">
+    <div class="fh"><h1>${title}</h1><div class="who"><span>Classe : <b>${esc(C.name)}</b></span><span>Date : <b>${fmtDate(s.date)}</b></span><span>Tour : <b>${L} m</b></span></div></div>
+    <div class="fh" style="justify-content:flex-start"><div class="who"><span>Coureur : <b>${runner ? esc(runner.name) : '______________________'}</b>${runner && fracVMA(C, s, runner.id) != null ? ` (VMA ${fmtVMA(fracVMA(C, s, runner.id))})` : ''}</span><span>Observateur : <b>${observer ? esc(observer.name) : '______________________'}</b></span></div></div>
+    <p class="cons">À chaque passage de ton coureur, entoure le temps le plus proche dans la colonne du tour. Si les temps entourés restent sur la même ligne (ou à 1 ligne d'écart), la course est régulière.</p>
+    <div class="fbs" style="grid-template-columns:repeat(${perRow},1fr)">${runs.map(block).join('')}</div>
+  </div>`;
+}
+function printLapFiches(C, s, g) {
+  const byId = new Map(C.students.map(st => [st.id, st]));
+  const runners = g ? s.order[g].map(id => byId.get(id)).filter(Boolean) : [null];
+  $('#print-root').innerHTML = runners.map(r => lapFicheHTML(C, s, r, r && byId.get(s.partner[r.id]))).join('');
+  setTimeout(() => window.print(), 80);
+}
+// Sections « Séance en cours » et « Résultats » des courses au tour
+function lapSection(C, s, rows) {
+  const byId = new Map(C.students.map(st => [st.id, st]));
+  const runs = lapRuns(s), L = lapLen(s);
+  const runG = s.runGroup || 'A', obsG = runG === 'A' ? 'B' : 'A';
+  const mine = live && live.kind === 'lap' && live.sid === s.id;
+  const now = mine ? lapNow() : null;
+  const r = now ? now.r : Math.min(s.viewRun || 0, runs.length - 1);
+  const short = id => { const p = byId.get(id).name.split(' '); return p.length > 1 ? p.slice(1).join(' ') + ' ' + p[0].charAt(0) + '.' : p[0]; };
+  const units = rows.map((row, k) => ({ k, id: row[runG][0], obs: row[obsG] })).filter(u => u.id);
+  const card = u => {
+    const id = u.id, st = byId.get(id), cum = lapsOf(s, id, r), ev = lapEval(C, s, id, r), walk = sub(s.walk, id, r) || 0;
+    const last = cum.length ? fmtT(splitsOf(cum).slice(-1)[0]) : '';
+    let cls = '', main, extra = '';
+    if (s.type === 'biath') {
+      const fin = (s.final || {})[id];
+      if (fin != null) { cls = 'done'; main = `Arrivée : <b>${fmtT(fin)}</b> ${nt(timeGrade(fin, st.sexe), '', 'Barème temps')}`; }
+      else if (cum.length >= BIATH_TOURS) {
+        cls = 'throw';
+        const th = (s.throws || {})[id] || [1, 1];
+        main = `Lancers : ${th.map((x, i) => `<button class="thr ${x ? 'y' : 'n'}" data-act="throwToggle" data-id="${id}" data-i="${i}">${x ? '✓' : '✗'}</button>`).join('')} → <b>${th.filter(x => !x).length}</b> tour(s) de pénalité<div class="tap">Touchez le nom à l'arrivée finale</div>`;
+      } else main = `Tour <b>${cum.length}</b> / ${BIATH_TOURS}${last ? ' · dernier ' + last : ''}`;
+    } else {
+      main = `${cum.length} tour${cum.length > 1 ? 's' : ''} · <b>${cum.length * L}${ev && ev.extra ? ' + ' + ev.extra : ''} m</b>${last ? ' · dernier ' + last : ''}`;
+      if ((!now || !now.running) && (cum.length || ev)) extra = `<label class="xd">+<input class="vin" inputmode="numeric" data-chg="extraDist" data-id="${id}" data-r="${r}" value="${sub(s.extra, id, r) || ''}" placeholder="0">m</label>`;
+    }
+    const obs = u.obs.length ? u.obs.map(o => `<button class="ob ${s.obsOk[o] === false ? 'bad' : 'good'}" data-act="obsToggle" data-id="${o}" title="Vert = bien, orange = à revoir">${esc(short(o))}</button>`).join('') : '<span class="hint" style="margin:0">sans observateur</span>';
+    return `<div class="lcard ${cls}">
+      <button class="lname" data-act="lapTap" data-id="${id}"><span class="gn">${esc(st.name)}</span><span class="ln">${u.k + 1}</span></button>
+      <div class="lmain">${main}</div>
+      <div class="lacts"><button class="btn sm" data-act="walk" data-id="${id}" title="L'élève a marché">🚶 ${walk}</button><button class="btn sm" data-act="lapUndo" data-id="${id}" title="Annuler le dernier enregistrement">↺</button>${extra}</div>
+      <div class="vo"><span>👁</span>${obs}</div></div>`;
+  };
+  const runSel = s.type === 'endu3' || (s.type === 'frac' && runs.length > 1)
+    ? `<div class="row"><b>${s.type === 'endu3' ? 'Course' : 'Répétition affichée'} :</b><div class="seg">${runs.map((x, i) => `<button class="${r === i ? 'on' : ''}" data-act="setViewRun" data-v="${i}" ${mine ? 'disabled' : ''}>${s.type === 'endu3' ? x.label : 'R' + (i + 1)}</button>`).join('')}</div></div>` : '';
+  const goLabel = s.type === 'biath' ? `▶ Départ — groupe ${runG}` : s.type === 'endu3' ? `▶ Lancer — ${runs[r].label} — groupe ${runG}` : `▶ Lancer — groupe ${runG} (${s.reps} × ${fmtDur(s.work)} / ${fmtDur(s.rest)})`;
+  const help = s.type === 'biath'
+    ? `Touchez le nom de l'élève à chaque passage : ${BIATH_TOURS} tours, puis notez les 2 lancers (✓ réussi / ✗ raté = 1 tour de pénalité), puis touchez le nom à l'arrivée finale.`
+    : `Touchez le nom de l'élève à chaque tour (${L} m). À la fin du temps, saisissez la distance supplémentaire parcourue (+ m).`;
+
+  // Résultats
+  const present = [...s.order.A, ...s.order.B].map(id => byId.get(id)).filter(Boolean);
+  const statused = sortedStudents(C).filter(st => s.status[st.id]);
+  let table;
+  if (s.type === 'biath') {
+    const rws = present.map(st => {
+      const ev = lapEval(C, s, st.id, 0), v = fracVMA(C, s, st.id);
+      return { cells: [
+        cell(st.name, `<b>${esc(st.name)}</b>`), cell(st.sexe), cell(v, v != null ? fmtVMA(v) : '—'),
+        cell(ev && ev.fin, ev && ev.fin != null ? `<b>${fmtT(ev.fin)}</b>` : '—'),
+        cell(ev && ev.tg, nt(ev && ev.tg, '', 'Barème temps'), 'c'),
+        cell(ev && ev.t9, ev && ev.t9 ? fmtT(ev.t9) : '—'),
+        cell(ev ? ev.pen : null, ev && ev.t9 ? ev.throws.map(x => x ? '✓' : '✗').join(' ') + ` <span class="hint">(${ev.pen} pén.)</span>` : '—'),
+        cell(ev && ev.reg && ev.reg.e, nt(ev && ev.reg && ev.reg.g, '', 'Régularité'), 'c'),
+        cell(ev && ev.vg, nt(ev && ev.vg, '', 'Vitesse / VMA'), 'c'),
+        cell(ev && ev.cont, ev ? nt(ev.cont, '', 'Continuité') + ` <span class="hint">${ev.walk} 🚶</span>` : nt(null), 'c'),
+        cell('', ev ? `<span class="spl">${passTxt(ev.cum.slice(0, BIATH_TOURS), BIATH_LAP)}</span>` : ''),
+        cell('', ev ? `<button class="btn sm danger" data-act="lapClear" data-id="${st.id}" title="Effacer">🗑</button>` : '')
+      ] };
+    }).concat(statused.map(st => ({ cells: [cell(st.name, `<b>${esc(st.name)}</b>`), cell(st.sexe), cell(null, '—'), cell(null, `<b>${s.status[st.id]}</b>`), ...Array(8).fill(cell(null, ''))] })));
+    table = sortTable('lap-' + s.id, ['Nom Prénom', 'Sexe', 'VMA', 'Temps final', { t: 'Note temps', cls: 'c' }, 'Temps 900 m', 'Lancers', { t: 'Régularité', cls: 'c' }, { t: 'Vitesse/VMA', cls: 'c' }, { t: 'Continuité', cls: 'c' }, { t: 'Temps de passage (ligne km/h)', nosort: true }, { t: '', nosort: true }], rws);
+  } else {
+    const rws = present.map(st => {
+      const v = fracVMA(C, s, st.id), evs = runs.map((_, i) => lapEval(C, s, st.id, i));
+      return { cells: [
+        cell(st.name, `<b>${esc(st.name)}</b>`), cell(st.sexe), cell(v, v != null ? fmtVMA(v) : '—'),
+        ...evs.map(ev => cell(ev ? ev.dist : null, ev ? `<div class="rc"><b>${ev.dist} m</b> · ${fmtNum(ev.speed, 1)} km/h<div>${nt(ev.reg && ev.reg.g, 'R', 'Régularité')}${nt(ev.vg, 'V', 'Vitesse / VMA visée')}${nt(ev.cont, 'C', 'Continuité (' + ev.walk + ' marche(s))')}</div><div class="spl">${passTxt(ev.cum, L)}</div></div>` : '—')),
+        cell('', evs.some(Boolean) ? `<button class="btn sm danger" data-act="lapClear" data-id="${st.id}" title="Effacer">🗑</button>` : '')
+      ] };
+    }).concat(statused.map(st => ({ cells: [cell(st.name, `<b>${esc(st.name)}</b>`), cell(st.sexe), cell(null, `<b>${s.status[st.id]}</b>`), ...runs.map(() => cell(null, '')), cell(null, '')] })));
+    table = sortTable('lap-' + s.id, ['Nom Prénom', 'Sexe', 'VMA', ...runs.map(x => x.label), { t: '', nosort: true }], rws);
+  }
+
+  return `
+  <section class="card" id="livecard">
+    <div class="row sp" style="margin-top:0"><h3 style="margin:0"><span class="step">3</span>Séance en cours</h3>
+      <div class="row" style="margin:0">${['A', 'B'].map(g => `<button class="btn sm" data-act="printLap" data-v="${g}" ${s.order[g].length ? '' : 'disabled'}>🖨 Fiches coureurs ${g}</button>`).join('')}<button class="btn sm" data-act="printLap" data-v="">🖨 Fiche vierge</button></div></div>
+    <div class="row"><b>Groupe qui court :</b><div class="seg lg">${['A', 'B'].map(v => `<button class="${runG === v ? 'on ' + v : ''}" data-act="setRunGroup" data-v="${v}" ${mine ? 'disabled' : ''}>Groupe ${v}</button>`).join('')}</div></div>
+    ${runSel}
+    ${mine ? viewLapLive(s) : `<div class="row"><button class="btn go big" data-act="lapGo" ${live ? 'disabled' : ''}>${goLabel}</button><button class="btn" data-act="testSound">🔊 Tester le son</button></div>
+      ${live ? '<p class="hint">Un chrono est déjà en cours dans une autre séance.</p>' : ''}`}
+    <p class="hint">${help} 🚶 : l'élève a marché. ↺ : annuler le dernier enregistrement. 👁 Observateur : vert = bien, orange = à revoir.</p>
+    ${units.length ? `<div class="vcards">${units.map(card).join('')}</div>` : '<div class="empty">Aucun élève dans ce groupe.</div>'}
+  </section>
+
+  <section class="card">
+    <div class="row sp" style="margin-top:0"><h3 style="margin:0"><span class="step">4</span>Résultats et notes</h3>
+      <div class="row" style="margin:0"><button class="btn danger sm" data-act="clearAll">🗑 Effacer tous les résultats</button><button class="btn pri sm" data-act="exportSession">📊 Export Excel</button></div></div>
+    <p class="hint">${s.type === 'biath' ? 'Note temps : barème filles / garçons. ' : 'R = régularité · V = vitesse par rapport à la VMA visée · C = continuité. '}Régularité : écart entre les lignes (vitesses, 1 ligne = ${fmtNum(LINE_STEP, 1)} km/h) où tombent les temps de passage de chaque tour, comme sur la fiche — ≤ 1 ligne TB · 2 S · 3 F · 4 et + I. Vitesse : VMA visée ou + TB · −0,5/−1 S · −1,5 à −2,5 F · au-delà I. Continuité : 0 marche TB · 1 S · 2-3 F · 4 et + I.</p>
+    ${table}
+  </section>`;
+}
+
+/* ----- Affichage commun ----- */
+const fracStatusSel = (s, id) => `<select class="stsel ${s.status[id] ? 'on' : ''}" data-chg="setStatus" data-id="${id}" title="Absent / dispensé">
+  <option value="">—</option>${Object.keys(STATUS).map(k => `<option value="${k}" ${s.status[id] === k ? 'selected' : ''}>${k}</option>`).join('')}</select>`;
+function fracStatusList(C, s) {
+  const statused = sortedStudents(C).filter(st => s.status[st.id]);
+  return statused.length ? `<div class="stlist"><b>Absents / dispensés (${statused.length}) :</b>${statused.map(st => `<span class="stchip"><span>${esc(st.name)}</span><select data-chg="setStatus" data-id="${st.id}">${Object.keys(STATUS).map(k => `<option value="${k}" ${s.status[st.id] === k ? 'selected' : ''}>${k}</option>`).join('')}<option value="">✓ Présent</option></select></span>`).join('')}</div>` : '';
+}
+function duosHTML(C, s, rows) {
+  const byId = new Map(C.students.map(st => [st.id, st]));
+  const K = rows.length;
+  const item = (id, g) => {
+    const st = byId.get(id), v = fracVMA(C, s, id);
+    return `<div class="pc"><span class="sx ${st.sexe}">${esc(st.sexe || '?')}</span><span class="gn">${esc(st.name)}</span>${v != null ? `<span class="gv">${fmtVMA(v)}</span>` : ''}
+      <select class="nsel" data-chg="duoNum" data-id="${id}" title="Numéro du binôme">${Array.from({ length: K + 1 }, (_, k) => `<option value="${k + 1}" ${s.duoNum[id] === k + 1 ? 'selected' : ''}>n°${k + 1}</option>`).join('')}</select>
+      <div class="seg ab">${['A', 'B'].map(x => `<button class="${g === x ? 'on ' + x : ''}" data-act="setAB" data-id="${id}" data-v="${x}">${x}</button>`).join('')}</div>${fracStatusSel(s, id)}</div>`;
+  };
+  const col = (ids, g) => (ids.map(id => item(id, g)).join('') || '<div class="pc empty">— aucun —</div>') + (ids.length === 1 || ids.length > 2 ? `<div class="dwarn">⚠ ${ids.length} élève${ids.length > 1 ? 's' : ''} dans ce binôme</div>` : '');
+  return `
+  <div class="pairs">
+    <div class="phead"><span></span><div class="gh A">Groupe A · binômes qui courent en 1er<small>${s.order.A.length}</small></div><div class="gh B">Groupe B · binômes qui observent en 1er<small>${s.order.B.length}</small></div></div>
+    ${rows.map((r, k) => `<div class="prow"><span class="pn">${k + 1}</span><div class="dcol">${col(r.A, 'A')}</div><div class="dcol">${col(r.B, 'B')}</div></div>`).join('') || '<div class="empty">Aucun élève présent</div>'}
+  </div>
+  <p class="hint">Menu « n° » : numéro du binôme (2 élèves de même VMA dans le même groupe). Le binôme n° 1 du groupe B observe le binôme n° 1 du groupe A, etc. Boutons A / B : groupe. Menu « — » : ABS, DP, DISP.</p>
+  ${fracStatusList(C, s)}`;
+}
+// Tableau en 2 colonnes : coureur(s) à gauche, observateur(s) en face, avec VMA et objectifs
+function pairTable(C, s, rows, objs, duo) {
+  const byId = new Map(C.students.map(st => [st.id, st]));
+  const entry = id => {
+    const st = byId.get(id), v = fracVMA(C, s, id), L = latestVMA(C, id);
+    return {
+      n: `<div class="dl"><span class="sx ${st.sexe}">${esc(st.sexe || '?')}</span><span class="gn">${esc(st.name)}</span></div>`,
+      v: `<div class="dl"><input class="vin" inputmode="decimal" data-chg="fracVma" data-id="${id}" value="${s.vmaOv[id] != null ? fmtVMA(s.vmaOv[id]) : ''}" placeholder="${L ? fmtVMA(L.vma) : '?'}"></div>`,
+      o: objs.map(o => `<div class="dl c">${o.val(v, st)}</div>`)
+    };
+  };
+  const nc = 2 + objs.length;
+  const td = ids => {
+    if (!ids.length) return `<td colspan="${nc}" class="c" style="color:#667085;font-style:italic">— sans binôme —</td>`;
+    const es = ids.map(entry);
+    return `<td>${es.map(e => e.n).join('')}</td><td>${es.map(e => e.v).join('')}</td>` + objs.map((_, j) => `<td class="c">${es.map(e => e.o[j]).join('')}</td>`).join('');
+  };
+  const cols = '<col style="width:42px">' + ('<col><col class="cv">' + objs.map(() => '<col class="cd">').join('')).repeat(2);
+  const head = side => `<th>${side}</th><th>VMA</th>` + objs.map(o => `<th class="c">${o.label}</th>`).join('');
+  return `<div class="tw"><table class="ct fit"><colgroup>${cols}</colgroup>
+    <thead><tr><th class="c">N°</th>${head(duo ? 'Binôme qui court (gr. A)' : 'Coureur (gr. A)')}${head(duo ? 'Binôme qui observe (gr. B)' : 'Observateur (gr. B)')}</tr></thead>
+    <tbody>${rows.map((r, i) => `<tr><td class="c"><b>${i + 1}</b></td>${td(r.A)}${td(r.B)}</tr>`).join('')}</tbody></table></div>`;
+}
+const lapLenChips = s => `<label class="lbl">Longueur du tour</label><div class="chips">${[100, 150, 200, 250, 400].map(d => `<button class="chip ${lapLen(s) === d ? 'on' : ''}" data-act="setLapLen" data-v="${d}">${d} m</button>`).join('')}</div>`;
+
+/* ----- Séance fractionnée ----- */
 function viewFrac(C, s) {
   syncOrder(C, s);
+  const duo = isDuo(s), lap = isLap(s), S = nSeries(s);
+  if (duo) syncDuos(C, s);
+  if (!s.runGroup) s.runGroup = 'A';
+  if (!s.obsOk) s.obsOk = {};
   const studs = sortedStudents(C);
   const byId = new Map(C.students.map(st => [st.id, st]));
   const present = [...s.order.A, ...s.order.B].map(id => byId.get(id)).filter(Boolean);
   const vOf = st => fracVMA(C, s, st.id);
-  const total = s.reps * s.work + (s.reps - 1) * s.rest;
+  const total = duo ? s.reps * s.work : (s.reps * s.work + (s.reps - 1) * s.rest) * S;
+  const rows = fracRows(s);
 
   // Petit texte récapitulatif
   const pool = present.length ? present : studs;
@@ -1260,38 +1718,62 @@ function viewFrac(C, s) {
   pool.forEach(st => { const v = vOf(st); if (v != null) { if (!byV.has(v)) byV.set(v, []); byV.get(v).push(st.name.split(' ')[0]); } });
   const noV = pool.filter(st => vOf(st) == null).length;
   const recap = `<div class="note">
-    <p>📋 <b>${s.reps} × ${fmtDur(s.work)}</b> de course, <b>${fmtDur(s.rest)}</b> de récupération, à <b>${s.pct} % de la VMA</b> — durée ≈ ${fmtT(total)}.</p>
+    ${duo ? `<p>📋 <b>Relais en binôme : ${s.reps} × 18"</b> à <b>${s.pct} % de la VMA</b> — chacun court ${Math.ceil(s.reps / 2)} fois, sa récupération est la course de son partenaire. Durée ≈ ${fmtT(total)}.</p>`
+      : `<p>📋 <b>${s.reps} × ${fmtDur(s.work)}</b> de course individuelle, <b>${fmtDur(s.rest)}</b> de récupération${S > 1 ? `, <b>${S} séries</b>` : ''}, à <b>${s.pct} % de la VMA</b> — durée ≈ ${fmtT(total)}${lap ? ` · chronométrage au tour (${lapLen(s)} m) et notes de régularité, vitesse et continuité` : ''}.</p>`}
     <p>Distance à parcourir en ${fmtDur(s.work)} selon la VMA :</p>
     <ul>${[...byV.keys()].sort((a, b) => a - b).map(v => `<li><b>VMA ${fmtVMA(v)} km/h → ${fracDist(v, s.work, s.pct)} m</b> <span class="hint">(${plotsTxt(fracDist(v, s.work, s.pct))}) — ${byV.get(v).map(esc).join(', ')}</span></li>`).join('') || '<li>Aucune VMA connue : faites un test VMA ou saisissez les VMA ci-dessous.</li>'}</ul>
     ${noV ? `<p class="hint">⚠ ${noV} élève(s) sans VMA.</p>` : ''}
     <p class="hint">Calcul : distance = VMA (km/h) ÷ 3,6 × durée (s) × ${s.pct} %. Ex. : VMA 12 en 36" → 12 ÷ 3,6 × 36 = 120 m.</p>
   </div>`;
 
-  const distRows = present.map(st => {
-    const v = vOf(st), L = latestVMA(C, st.id);
-    return { cells: [cell(st.name, `<b>${esc(st.name)}</b>`),
-      cell(s.roles[st.id], `<span class="pill ${s.roles[st.id]}" style="font-size:12px;padding:3px 9px">${s.roles[st.id] === 'C' ? 'Coureur' : 'Observateur'}</span>`),
-      cell(v, `<input class="vin" inputmode="decimal" data-chg="fracVma" data-id="${st.id}" value="${s.vmaOv[st.id] != null ? fmtVMA(s.vmaOv[st.id]) : ''}" placeholder="${L ? fmtVMA(L.vma) : '?'}">`),
-      ...DURS.map(dd => { const d = fracDist(v, dd, s.pct); return cell(d, d != null ? d + ' m' : '—', dd === s.work ? 'hl' : ''); })] };
-  });
+  const distTable = pairTable(C, s, rows, [{ label: fmtDur(s.work), val: v => { const d = fracDist(v, s.work, s.pct); return d != null ? `<b>${d} m</b>` : '—'; } }], duo);
 
-  const valRows = present.map(st => {
-    const vals = (s.valid[st.id] || []), v = vOf(st), d = fracDist(v, s.work, s.pct);
-    const ok = vals.slice(0, s.reps).filter(x => x === 1).length, done = vals.slice(0, s.reps).filter(x => x === 1 || x === 0).length;
-    const pa = byId.get(s.partner[st.id]);
-    return { cells: [
-      cell(st.name, `<b>${esc(st.name)}</b>`),
-      cell(s.roles[st.id], `<span class="pill ${s.roles[st.id]}" style="font-size:12px;padding:3px 9px">${s.roles[st.id] === 'C' ? 'Coureur' : 'Observateur'}</span>`),
-      cell(pa ? pa.name : null, pa ? esc(pa.name) : '—'),
-      cell(d, d != null ? d + ' m' : '—'),
-      ...Array.from({ length: s.reps }, (_, i) => {
-        const x = vals[i];
-        return cell(x == null ? null : x, `<button class="vb ${x === 1 ? 'y' : x === 0 ? 'n' : ''}" data-act="fracVal" data-id="${st.id}" data-i="${i}">${x === 1 ? '✓' : x === 0 ? '✗' : '·'}</button>`, 'c');
-      }),
-      cell(done ? ok / done : null, done ? `<b>${ok}/${done}</b>` : '—', 'c'),
-      cell('', done ? `<button class="btn sm danger" data-act="clearOne" data-id="${st.id}" title="Effacer les validations de cet élève">🗑</button>` : '', 'c')
-    ] };
-  });
+  // Séance en cours (validation ✓/✗) : cartes des élèves (ou binômes) qui courent
+  let section3;
+  if (lap) section3 = lapSection(C, s, rows);
+  else {
+    const runG = s.runGroup, obsG = runG === 'A' ? 'B' : 'A', serie = Math.min(s.curSerie || 0, S - 1);
+    const units = rows.map((r, k) => ({ k, run: r[runG], obs: r[obsG] })).filter(u => u.run.length);
+    const short = id => { const p = byId.get(id).name.split(' '); return p.length > 1 ? p.slice(1).join(' ') + ' ' + p[0].charAt(0) + '.' : p[0]; };
+    const vbtn = (id, k, m, title) => {
+      const x = ((s.valid || {})[id] || [])[k];
+      return { ok: x !== 0, h: `<button class="vb sm ${x === 0 ? 'n' : 'y'} ${duo ? 'm' + m : ''}" data-act="fracVal" data-id="${id}" data-k="${k}" title="${title}">${x === 0 ? '✗' : '✓'}</button>` };
+    };
+    const card = u => {
+      const L = u.run.length;
+      const runners = u.run.map((id, m) => {
+        const d = fracDist(vOf(byId.get(id)), s.work, s.pct);
+        return `<div class="vr">${duo ? `<span class="mk m${m}">${m + 1}</span>` : ''}<span class="gn">${esc(byId.get(id).name)}</span><span class="obj">${d != null ? d + ' m' : '? m'}</span></div>`;
+      }).join('');
+      let ok = 0, n = 0, cells = '';
+      if (duo) {
+        for (let i = 0; i < s.reps; i++) { const id = u.run[i % L], b = vbtn(id, Math.floor(i / L), i % L, esc(byId.get(id).name) + ' — course ' + (Math.floor(i / L) + 1)); n++; if (b.ok) ok++; cells += b.h; }
+      } else {
+        for (let sr = 0; sr < S; sr++) {
+          if (S > 1) cells += `<span class="ser">S${sr + 1}</span>`;
+          for (let i = 0; i < s.reps; i++) { const b = vbtn(u.run[0], sr * s.reps + i, 0, 'Série ' + (sr + 1) + ' — course ' + (i + 1)); n++; if (b.ok) ok++; cells += b.h; }
+        }
+      }
+      const obs = u.obs.length ? u.obs.map(id => `<button class="ob ${s.obsOk[id] === false ? 'bad' : 'good'}" data-act="obsToggle" data-id="${id}" title="Touchez pour changer : vert = bien, orange = à revoir">${esc(short(id))}</button>`).join('') : '<span class="hint" style="margin:0">sans observateur</span>';
+      return `<div class="vcard"><div class="vtop"><span class="vn">${duo ? 'Binôme ' : 'N° '}${u.k + 1}</span><span class="vs">${ok}/${n}</span>
+          <button class="vx" data-act="clearUnit" data-ids="${u.run.join(',')}" title="Remettre toutes les courses à ✓">↺</button></div>
+        ${runners}<div class="vcells">${cells}</div><div class="vo"><span>👁</span>${obs}</div></div>`;
+    };
+    const mine = live && live.kind === 'frac' && live.sid === s.id;
+    section3 = `
+  <section class="card" id="livecard">
+    <div class="row sp" style="margin-top:0"><h3 style="margin:0"><span class="step">3</span>Séance en cours</h3>
+      <div class="row" style="margin:0"><button class="btn danger sm" data-act="clearAll">🗑 Effacer les validations</button><button class="btn pri sm" data-act="exportSession">📊 Export Excel</button></div></div>
+    <div class="row"><b>Groupe qui court :</b><div class="seg lg">${['A', 'B'].map(v => `<button class="${runG === v ? 'on ' + v : ''}" data-act="setRunGroup" data-v="${v}">Groupe ${v}${s.ran && s.ran[v] ? ' ✓' : ''}</button>`).join('')}</div></div>
+    ${S > 1 ? `<div class="row"><b>Série :</b><div class="seg">${Array.from({ length: S }, (_, i) => `<button class="${serie === i ? 'on' : ''}" data-act="setSerie" data-v="${i}" ${mine ? 'disabled' : ''}>Série ${i + 1}</button>`).join('')}</div></div>` : ''}
+    ${mine ? viewFracLive(s) : `
+      <div class="row"><button class="btn go big" data-act="fracGo" ${live ? 'disabled' : ''}>▶ Lancer — groupe ${runG}${S > 1 ? ' · série ' + (serie + 1) : ''} (${duo ? s.reps + ' relais de 18"' : s.reps + ' × ' + fmtDur(s.work) + ' / ' + fmtDur(s.rest)})</button><button class="btn" data-act="testSound">🔊 Tester le son</button></div>
+      <p class="hint">Uniquement des bips, sans annonce vocale : un bip à chaque ${duo ? 'changement de coureur' : 'départ et à chaque fin des ' + fmtDur(s.work)}, 3 bips courts avant le départ, 3 bips longs à la fin.</p>
+      ${live ? '<p class="hint">Un chrono est déjà en cours dans une autre séance.</p>' : ''}`}
+    <p class="hint">Chaque course est validée par défaut (✓) : touchez une case pour la passer en ✗ si l'objectif n'est pas atteint. 👁 Observateur : vert = travail bien fait, orange = à revoir (touchez pour changer).${duo ? ' Dans un binôme, les cases alternent entre le coureur ① et le coureur ②.' : ''}</p>
+    ${units.length ? `<div class="vcards">${units.map(card).join('')}</div>` : '<div class="empty">Aucun élève dans ce groupe.</div>'}
+  </section>`;
+  }
 
   return `
   <div class="sesshead"><button class="btn" data-act="back">← Séances</button><h2>🔁 Séance fractionnée — ${fmtDate(s.date)}</h2><button class="btn danger" data-act="delSession" data-id="${s.id}">Supprimer</button></div>
@@ -1302,84 +1784,115 @@ function viewFrac(C, s) {
       <div>
         <label class="lbl" style="margin-top:0">Date</label><input type="date" value="${esc(s.date)}" data-chg="sessDate">
         <label class="lbl">Temps de travail</label><div class="chips">${DURS.map(d => `<button class="chip ${s.work === d ? 'on' : ''}" data-act="fracSet" data-k="work" data-v="${d}">${fmtDur(d)}</button>`).join('')}</div>
-        <label class="lbl">Temps de récupération</label><div class="chips">${RESTS.map(d => `<button class="chip ${s.rest === d ? 'on' : ''}" data-act="fracSet" data-k="rest" data-v="${d}">${fmtDur(d)}</button>`).join('')}</div>
+        <label class="lbl">Temps de récupération</label>
+        ${duo ? '<p class="hint" style="margin:0">En 18" : relais en binôme, la récupération est la course du partenaire (18").</p>'
+          : `<div class="chips">${RESTS.map(d => `<button class="chip ${s.rest === d ? 'on' : ''}" data-act="fracSet" data-k="rest" data-v="${d}">${fmtDur(d)}</button>`).join('')}</div>`}
         <div class="row" style="gap:24px">
-          <div><label class="lbl">Répétitions</label><div class="stepper"><button class="btn" data-act="fracReps" data-v="-1">−</button><b>${s.reps}</b><button class="btn" data-act="fracReps" data-v="1">＋</button></div></div>
+          <div><label class="lbl">${duo ? 'Relais (total binôme)' : 'Répétitions'}</label><div class="stepper"><button class="btn" data-act="fracReps" data-v="${duo ? -2 : -1}">−</button><b>${s.reps}</b><button class="btn" data-act="fracReps" data-v="${duo ? 2 : 1}">＋</button></div></div>
+          ${!duo && !lap ? `<div><label class="lbl">Séries</label><div class="stepper"><button class="btn" data-act="fracSeries" data-v="-1">−</button><b>${S}</b><button class="btn" data-act="fracSeries" data-v="1">＋</button></div></div>` : ''}
           <div><label class="lbl">Intensité</label><select data-chg="fracPct">${[70, 75, 80, 85, 90, 95, 100, 105, 110, 115, 120].map(p => `<option value="${p}" ${s.pct === p ? 'selected' : ''}>${p} % VMA</option>`).join('')}</select></div>
         </div>
+        ${lap ? lapLenChips(s) : ''}
       </div>
       ${recap}
     </div>
   </section>
 
   <section class="card">
-    <div class="row sp" style="margin-top:0"><h3 style="margin:0"><span class="step">2</span>Coureurs, observateurs et binômes</h3>
-      <div class="row" style="margin:0"><button class="btn sm" data-act="fracSwap">⇄ Inverser les rôles</button><button class="btn sm" data-act="resetPairs">↺ Répartition par défaut</button></div></div>
-    <p class="hint">Par défaut : 1re moitié de la classe (ordre alphabétique) court, 2e moitié observe. Le 1er observateur observe le 1er coureur, et ainsi de suite.</p>
-    ${pairsHTML(C, s, { A: 'Groupe A · coureurs', B: 'Groupe B · observateurs' })}
-    <label class="lbl" style="margin-top:16px">VMA et distances à parcourir (${s.pct} % VMA)</label>
+    <div class="row sp" style="margin-top:0"><h3 style="margin:0"><span class="step">2</span>${duo ? 'Binômes de course et binômes observateurs' : 'Coureurs et observateurs'}</h3>
+      <div class="row" style="margin:0">${duo ? '<button class="btn sm" data-act="autoDuos">🤝 Former les binômes par VMA</button>' : ''}<button class="btn sm" data-act="resetPairs">↺ Répartition par défaut</button></div></div>
+    <p class="hint">Par défaut : 1re moitié de la classe (ordre alphabétique) en groupe A, 2e moitié en groupe B.${duo ? ' En 18", les élèves de même VMA sont associés par 2 dans chaque groupe.' : ' Le 1er observateur observe le 1er coureur, et ainsi de suite.'}</p>
+    ${duo ? duosHTML(C, s, rows) : pairsHTML(C, s, { A: 'Groupe A · coureurs', B: 'Groupe B · observateurs' })}
+    <label class="lbl" style="margin-top:16px">VMA et distances à parcourir en ${fmtDur(s.work)} (${s.pct} % VMA)</label>
     <p class="hint" style="margin-top:0">VMA du dernier test (grisée) ; saisissez une valeur pour la remplacer dans cette séance.</p>
-    ${present.length ? sortTable('dist-' + s.id, ['Nom Prénom', 'Rôle', 'VMA', ...DURS.map(fmtDur)], distRows) : ''}
+    ${present.length ? distTable : ''}
   </section>
+  ${section3}`;
+}
 
-  <section class="card" id="livecard">
-    <h3><span class="step">3</span>Chrono & signaux sonores</h3>
-    ${live && live.kind === 'frac' && live.sid === s.id ? viewFracLive(s) : `
-      <p class="hint">Un bip à chaque changement (début et fin de chaque temps de travail), sans annonce vocale : le temps de travail d'un élève peut être le temps de récupération de son binôme. 3 bips courts avant le départ, 3 bips longs à la fin.</p>
-      <div class="row"><button class="btn go big" data-act="fracGo" ${live ? 'disabled' : ''}>▶ Lancer la série (${s.reps} × ${fmtDur(s.work)} / ${fmtDur(s.rest)})</button><button class="btn" data-act="testSound">🔊 Tester le son</button></div>
-      ${live ? '<p class="hint">Un chrono est déjà en cours dans une autre séance.</p>' : ''}`}
-  </section>
-
+/* ----- Épreuve d'endurance 3e et Biathlon 6e ----- */
+function viewLapSession(C, s) {
+  syncOrder(C, s);
+  if (!s.runGroup) s.runGroup = 'A';
+  if (!s.obsOk) s.obsOk = {};
+  const rows = fracRows(s), byId = new Map(C.students.map(st => [st.id, st]));
+  const present = [...s.order.A, ...s.order.B].filter(id => byId.get(id));
+  const e3 = s.type === 'endu3';
+  const objs = e3
+    ? [{ label: "3' VMA+1", val: v => v == null ? '—' : `<b>${Math.round((v + 1) / 3.6 * 180)} m</b>` }, { label: "9' VMA−1", val: v => v == null ? '—' : `<b>${Math.round((v - 1) / 3.6 * 540)} m</b>` }]
+    : [{ label: '900 m à VMA', val: v => v ? `<b>${fmtT(900 / (v / 3.6))}</b>` : '—' }, { label: 'TB si ≤', val: (v, st) => `<b>${fmtT(BIATH_BAREME[st.sexe === 'F' ? 'F' : 'G'][0])}</b>` }];
+  const info = e3
+    ? `<div class="note"><p>🏁 <b>Course 1 : 3' à VMA+1</b>, puis <b>course 2 : 9' à VMA−1</b>. Lancez chaque course séparément.</p>
+        <p>Distance visée = (VMA ± 1) ÷ 3,6 × durée. Notes : régularité au tour, vitesse par rapport à la vitesse visée, continuité (marches).</p></div>`
+    : `<div class="note"><p>🎯 <b>${BIATH_TOURS} tours de ${BIATH_LAP} m (900 m)</b>, puis <b>2 lancers de vortex</b> : 1 tour de pénalité par lancer raté, puis arrivée.</p>
+        <p><b>Barème filles</b> : TB ≤ 5'20 · S ≤ 6'40 · F ≤ 8'20 · I au-delà.<br><b>Barème garçons</b> : TB ≤ 5'00 · S ≤ 6'20 · F ≤ 8'00 · I au-delà.</p>
+        <p class="hint">Autres notes : régularité sur les 9 tours, vitesse sur 900 m par rapport à la VMA, continuité (marches).</p></div>`;
+  return `
+  <div class="sesshead"><button class="btn" data-act="back">← Séances</button><h2>${e3 ? '🏁 Épreuve d\'endurance 3e' : '🎯 Biathlon 6e'} — ${fmtDate(s.date)}</h2><button class="btn danger" data-act="delSession" data-id="${s.id}">Supprimer</button></div>
   <section class="card">
-    <div class="row sp"><h3 style="margin:0"><span class="step">4</span>Validation des objectifs</h3>
-      <div class="row" style="margin:0"><button class="btn danger" data-act="clearAll">🗑 Effacer toutes les validations</button><button class="btn pri" data-act="exportSession">📊 Export Excel</button></div></div>
-    <p class="hint">Après chaque course, touchez la case : · → ✓ objectif atteint → ✗ non atteint → ·</p>
-    ${present.length ? sortTable('val-' + s.id, ['Nom Prénom', 'Rôle', 'Binôme', 'Objectif', ...Array.from({ length: s.reps }, (_, i) => ({ t: 'R' + (i + 1), cls: 'c' })), { t: 'Réussite', cls: 'c' }, { t: '', nosort: true }], valRows)
-      : '<div class="empty">Choisissez d\'abord les coureurs et observateurs.</div>'}
-  </section>`;
+    <h3><span class="step">1</span>Paramètres</h3>
+    <div class="grid2">
+      <div><label class="lbl" style="margin-top:0">Date</label><input type="date" value="${esc(s.date)}" data-chg="sessDate">${e3 ? lapLenChips(s) : ''}</div>
+      ${info}
+    </div>
+  </section>
+  <section class="card">
+    <div class="row sp" style="margin-top:0"><h3 style="margin:0"><span class="step">2</span>Coureurs et observateurs</h3><button class="btn sm" data-act="resetPairs">↺ Répartition par défaut</button></div>
+    <p class="hint">Par défaut : 1re moitié de la classe (ordre alphabétique) court, 2e moitié observe. Le 1er observateur observe le 1er coureur, et ainsi de suite.</p>
+    ${pairsHTML(C, s, { A: 'Groupe A · court en 1er', B: 'Groupe B · observe en 1er' })}
+    <label class="lbl" style="margin-top:16px">VMA et objectifs</label>
+    <p class="hint" style="margin-top:0">VMA du dernier test (grisée) ; saisissez une valeur pour la remplacer dans cette épreuve.</p>
+    ${present.length ? pairTable(C, s, rows, objs, false) : ''}
+  </section>
+  ${lapSection(C, s, rows)}`;
 }
 function viewFracLive(s) {
-  return `<div class="live" id="live">
-    <div class="row sp" style="margin:0"><span class="phase" id="lv-phase">PRÊTS</span><b id="lv-rep">Répétition 1 / ${s.reps}</b></div>
-    <div class="bigtime" id="lv-time">—</div>
-    <div class="bar"><i id="lv-bar"></i></div>
-    <div class="liveact">
-      <button class="btn" data-act="fracPause" id="lv-pause">⏸ Pause</button>
-      <button class="btn danger" data-act="fracStop">■ Arrêter</button>
-    </div>
-    <p class="hint">Temps total écoulé : <span id="lv-tot">0:00</span></p>
+  return `<div class="live compact" id="live">
+    <div class="lc-time" id="lv-time">—</div>
+    <div class="lc-info"><div class="phase" id="lv-phase">PRÊTS</div><div id="lv-rep"></div><div>Temps à réaliser : <b>${fmtDur(s.work)}</b></div></div>
+    <div class="liveact"><button class="btn" data-act="fracPause" id="lv-pause">⏸ Pause</button><button class="btn danger" data-act="fracStop">■ Arrêter</button></div>
+    <div class="bar lc-bar"><i id="lv-bar"></i></div>
   </div>`;
 }
 function fracEvents(s) {
   // Uniquement des bips, aucune annonce vocale
   const W = s.work, R = s.rest, N = s.reps;
   const ev = [{ t: -3, snd: 'beep' }, { t: -2, snd: 'beep' }, { t: -1, snd: 'beep' }];
+  if (isDuo(s)) {
+    for (let i = 0; i < N; i++) ev.push({ t: i * W, snd: 'bip' });
+    ev.push({ t: N * W, snd: 'bipEnd' });
+    return ev;
+  }
   for (let i = 0; i < N; i++) {
     const st = i * (W + R);
     ev.push({ t: st, snd: 'bip' }, { t: st + W, snd: i < N - 1 ? 'bip' : 'bipEnd' });
   }
   return ev;
 }
+const fracEnd = s => isDuo(s) ? s.reps * s.work + 3 : (s.reps - 1) * (s.work + s.rest) + s.work + 3;
 function fracTick(e) {
   const g = id => document.getElementById(id);
   if (!g('lv-time') || !live || live.kind !== 'frac') return;
   const { s } = currentVMASession(); if (!s) return;
-  const W = s.work, R = s.rest, N = s.reps, cyc = W + R, box = g('live');
-  if (live.tl.paused) g('lv-phase').textContent = 'PAUSE';
-  if (e < 0) {
-    g('lv-time').textContent = e > -3.5 ? String(Math.ceil(-e)) : 'Prêts…';
-    if (!live.tl.paused) g('lv-phase').textContent = 'PRÊTS';
-    box.className = 'live'; return;
+  const W = s.work, R = s.rest, N = s.reps, box = g('live');
+  const set = (ph, rep, time, pct, cls) => {
+    g('lv-phase').textContent = live.tl.paused ? 'PAUSE' : ph;
+    g('lv-rep').textContent = rep; g('lv-time').textContent = time;
+    g('lv-bar').style.width = Math.max(0, Math.min(100, pct)) + '%';
+    box.className = 'live compact ' + cls;
+  };
+  const rem = r => r >= 60 ? fmtT(Math.ceil(r)) : String(Math.ceil(r));
+  if (e < 0) return set('PRÊTS', live.duo ? N + ' relais' : N + ' répétitions', e > -3.5 ? String(Math.ceil(-e)) : '…', 0, '');
+  if (live.duo) {
+    const i = Math.floor(e / W);
+    if (i >= N) return set('TERMINÉ', '', '0', 100, '');
+    const within = e - i * W;
+    return set('COURSE ' + (i + 1) + ' / ' + N, 'Coureur ' + (i % 2 + 1) + ' du binôme', rem(W - within), within / W * 100, i % 2 ? 'rest' : 'work');
   }
-  let i = Math.floor(e / cyc), within = e - i * cyc;
-  if (i >= N || (i === N - 1 && within >= W)) { g('lv-time').textContent = '0'; g('lv-phase').textContent = 'TERMINÉ'; box.className = 'live'; g('lv-bar').style.width = '100%'; return; }
-  const work = within < W, rem = work ? W - within : cyc - within;
-  if (!live.tl.paused) g('lv-phase').textContent = work ? '🏃 COURSE' : '😮‍💨 RÉCUPÉRATION';
-  g('lv-rep').textContent = 'Répétition ' + (work ? i + 1 : i + 2) + ' / ' + N;
-  g('lv-time').textContent = rem >= 60 ? fmtT(Math.ceil(rem)) : String(Math.ceil(rem));
-  g('lv-bar').style.width = ((work ? within / W : (within - W) / R) * 100) + '%';
-  g('lv-tot').textContent = fmtT(e);
-  box.className = 'live ' + (work ? 'work' : 'rest');
+  const cyc = W + R, i = Math.floor(e / cyc), within = e - i * cyc;
+  if (i >= N || (i === N - 1 && within >= W)) return set('TERMINÉ', '', '0', 100, '');
+  const work = within < W;
+  return set(work ? 'COURSE' : 'RÉCUPÉRATION', 'Répétition ' + (work ? i + 1 : i + 2) + ' / ' + N, rem(work ? W - within : cyc - within), (work ? within / W : (within - W) / R) * 100, work ? 'work' : 'rest');
 }
 
 /* =====================================================================
@@ -1462,9 +1975,13 @@ const ACT = {
   createSession(el) {
     const C = curClass(), u = clsUI(C.name), date = ($('#newDate') && $('#newDate').value) || todayISO();
     const base = { id: uid(), date, createdAt: Date.now() };
-    const s = el.dataset.v === 'vma'
+    const t = el.dataset.v;
+    const lapData = { roles: {}, partner: {}, vmaOv: {}, status: {}, laps: {}, walk: {}, extra: {}, obsOk: {}, runGroup: 'A' };
+    const s = t === 'vma'
       ? Object.assign(base, { type: 'vma', track: 150, groups: {}, startGroup: 'A', results: {}, runs: {}, status: {} })
-      : Object.assign(base, { type: 'frac', work: 18, rest: 18, reps: 6, pct: 100, roles: {}, partner: {}, vmaOv: {}, valid: {}, status: {} });
+      : t === 'endu3' ? Object.assign(base, lapData, { type: 'endu3', lapLen: 100, viewRun: 0 })
+      : t === 'biath' ? Object.assign(base, lapData, { type: 'biath', throws: {}, final: {} })
+      : Object.assign(base, lapData, { type: 'frac', work: 18, rest: 18, reps: 20, series: 1, pct: 100, lapLen: 100, valid: {} });
     syncOrder(C, s);
     C.sessions.push(s); u.sid = s.id; u.newOpen = false; ui.sel = null;
     commit(); window.scrollTo(0, 0);
@@ -1481,8 +1998,10 @@ const ACT = {
   clearAll() {
     const s = curSession();
     if (live && live.sid === s.id) { toast('Arrêtez d\'abord le chrono'); return; }
-    if (!confirm(s.type === 'vma' ? 'Effacer TOUS les résultats de ce test VMA ?' : 'Effacer TOUTES les validations de cette séance ?')) return;
-    if (s.type === 'vma') { s.results = {}; s.runs = {}; } else s.valid = {};
+    if (!confirm(s.type === 'vma' ? 'Effacer TOUS les résultats de ce test VMA ?' : isLap(s) ? 'Effacer TOUS les temps et résultats de cette séance ?' : 'Effacer TOUTES les validations de cette séance ?')) return;
+    if (s.type === 'vma') { s.results = {}; s.runs = {}; }
+    else if (isLap(s)) { s.laps = {}; s.walk = {}; s.extra = {}; s.throws = {}; s.final = {}; }
+    else s.valid = {};
     commit(); toast('Résultats effacés');
   },
   setAB(el) {
@@ -1491,6 +2010,7 @@ const ACT = {
     const o = g === 'A' ? 'B' : 'A';
     s.order[o] = s.order[o].filter(x => x !== id);
     s.order[g].push(id);
+    if (s.duoNum) delete s.duoNum[id];
     syncOrder(curClass(), s); commit();
   },
   setStatus(el) {
@@ -1587,38 +2107,153 @@ const ACT = {
   },
   exportSession() {
     const C = curClass(), s = curSession(), T = buildSheetTables();
-    const key = s.type === 'vma' ? 'Résultats VMA' : 'Résultats Fractionné';
-    const rows = [T[key][0]].concat(T[key].slice(1).filter(r => r[0] === C.name && r[s.type === 'vma' ? 3 : 2] === fmtDate(s.date)));
+    const lap = isLap(s);
+    const key = s.type === 'vma' ? 'Résultats VMA' : lap ? 'Résultats Courses' : 'Résultats Fractionné';
+    const di = s.type === 'vma' || lap ? 3 : 2;
+    const rows = [T[key][0]].concat(T[key].slice(1).filter(r => r[0] === C.name && r[di] === fmtDate(s.date)));
     // tri alphabétique
     rows.splice(1, rows.length, ...rows.slice(1).sort((a, b) => String(a[1]).localeCompare(String(b[1]), 'fr')));
-    exportXLSX(`${s.type === 'vma' ? 'TestVMA' : 'Fractionne'}_${C.name}_${s.date}`, [{ name: s.type === 'vma' ? 'Test VMA' : 'Fractionné', rows }]);
+    const nm = { vma: ['TestVMA', 'Test VMA'], frac: ['Fractionne', 'Fractionné'], endu3: ['Endurance3e', 'Endurance 3e'], biath: ['Biathlon6e', 'Biathlon 6e'] }[s.type];
+    exportXLSX(`${nm[0]}_${C.name}_${s.date}`, [{ name: nm[1], rows }]);
   },
   exportClass() {
     const C = curClass(), T = buildSheetTables();
     exportXLSX('Endurance_' + C.name + '_' + todayISO(), Object.keys(T).map(k => ({ name: k, rows: [T[k][0]].concat(T[k].slice(1).filter(r => r[0] === C.name)) })));
   },
   /* --- Fractionné --- */
-  fracSet(el) { curSession()[el.dataset.k] = +el.dataset.v; commit(); },
-  fracReps(el) { const s = curSession(); s.reps = Math.max(1, Math.min(30, s.reps + +el.dataset.v)); commit(); },
-  fracSwap() {
+  fracSet(el) {
+    const s = curSession(), k = el.dataset.k, v = +el.dataset.v, old = s[k];
+    s[k] = v;
+    if (k === 'work' && v !== old) {
+      if (v === 18) { s.rest = 18; s.reps = 20; }                         // relais en binôme : 18" / 18" × 20
+      else if (v === 36) { s.rest = 24; s.reps = 6; s.series = 2; }       // 36" / 24" × 6, 2 séries
+      else { if (!RESTS.includes(s.rest) || s.rest < 90) s.rest = 90; s.reps = 3; if (!s.lapLen) s.lapLen = 100; }
+      s.curSerie = 0; s.viewRun = 0;
+    }
+    commit();
+  },
+  fracReps(el) { const s = curSession(); s.reps = Math.max(1, Math.min(40, s.reps + +el.dataset.v)); commit(); },
+  fracSeries(el) { const s = curSession(); s.series = Math.max(1, Math.min(4, (s.series || 1) + +el.dataset.v)); s.curSerie = 0; commit(); },
+  setSerie(el) { curSession().curSerie = +el.dataset.v; commit(); },
+  setViewRun(el) { curSession().viewRun = +el.dataset.v; commit(); },
+  setLapLen(el) { curSession().lapLen = +el.dataset.v; commit(); },
+  /* --- Courses chronométrées au tour --- */
+  lapGo() {
+    if (live) { toast('Un chrono est déjà en cours'); return; }
+    const C = curClass(), s = curSession();
+    const mode = s.type === 'frac' ? 'reps' : s.type === 'endu3' ? 'single' : 'open';
+    const run = s.type === 'endu3' ? (s.viewRun || 0) : 0, g = s.runGroup || 'A';
+    const runners = s.order[g].slice();
+    if (!runners.length) { toast('Aucun élève dans le groupe ' + g); return; }
+    const used = runners.filter(id => lapsOf(s, id, run).length || (s.type === 'biath' && (s.final || {})[id] != null));
+    if (used.length && !confirm(`${used.length} élève(s) du groupe ${g} ont déjà des temps pour cette course. Les effacer et recommencer ?`)) return;
+    used.forEach(id => {
+      if (s.laps[id]) { if (mode === 'reps') delete s.laps[id]; else delete s.laps[id][run]; }
+      if (s.walk && s.walk[id]) { if (mode === 'reps') delete s.walk[id]; else delete s.walk[id][run]; }
+      if (s.extra && s.extra[id]) { if (mode === 'reps') delete s.extra[id]; else delete s.extra[id][run]; }
+      if (s.final) delete s.final[id];
+      if (s.throws) delete s.throws[id];
+    });
+    commit({ render: false });
+    live = { kind: 'lap', cls: C.name, sid: s.id, mode, run, runners, tl: null };
+    const end = mode === 'reps' ? fracEnd(s) : mode === 'single' ? lapRuns(s)[run].dur + 2 : null;
+    live.tl = new Timeline(lapEvents(s, mode, run), { lead: 6, end, onTick: lapTick, onEnd: () => {
+      live = null; keepAwake(false); render(); toast('🏁 Temps écoulé : saisissez les distances supplémentaires (+ m)', 5000);
+    } });
+    live.tl.start(); keepAwake(true); render();
+  },
+  printLap(el) { printLapFiches(curClass(), curSession(), el.dataset.v); },
+  lapStop() {
+    if (!live || !live.tl) return;
+    if (!confirm(live.mode === 'open' ? 'Terminer l\'épreuve ?' : 'Arrêter le chrono ?')) return;
+    live.tl.stop(); live = null; keepAwake(false); render();
+  },
+  lapTap(el) {
+    const s = curSession(), id = el.dataset.id, now = lapNow();
+    if (!now || live.sid !== s.id) { toast('Lancez le chrono pour enregistrer les tours'); return; }
+    if (!now.running) { toast(now.t < 0 ? 'Le départ n\'est pas encore donné' : 'Le temps de course est terminé'); return; }
+    if (!live.runners.includes(id)) { toast('Cet élève ne fait pas partie du groupe en course'); return; }
+    const t = Math.round(now.t * 10) / 10;
+    s.laps = s.laps || {};
+    const m = s.laps[id] || (s.laps[id] = {}), arr = m[now.r] || (m[now.r] = []);
+    if (arr.length && t - arr[arr.length - 1] < 3) { toast('Tour déjà enregistré il y a moins de 3 s'); return; }
+    if (s.type === 'biath') {
+      s.final = s.final || {};
+      if (s.final[id] != null) return;
+      if (arr.length >= BIATH_TOURS) {
+        s.final[id] = t;
+        if (live.runners.every(x => s.final[x] != null)) {
+          live.tl.stop(); live = null; keepAwake(false);
+          commit(); toast('🏁 Tous les élèves sont arrivés', 4000); return;
+        }
+      } else arr.push(t);
+    } else arr.push(t);
+    commit();
+  },
+  walk(el) {
+    const s = curSession(), id = el.dataset.id, now = lapNow();
+    const r = now && live.sid === s.id ? now.r : (s.viewRun || 0);
+    s.walk = s.walk || {};
+    const m = s.walk[id] || (s.walk[id] = {});
+    m[r] = (m[r] || 0) + 1;
+    commit();
+  },
+  lapUndo(el) {
+    const s = curSession(), id = el.dataset.id, now = lapNow();
+    const r = now && live.sid === s.id ? now.r : (s.viewRun || 0);
+    if (s.type === 'biath' && s.final && s.final[id] != null) { delete s.final[id]; commit(); return; }
+    const arr = lapsOf(s, id, r);
+    if (arr.length) { arr.pop(); commit(); return; }
+    const w = sub(s.walk, id, r);
+    if (w) { s.walk[id][r] = w - 1; commit(); }
+  },
+  throwToggle(el) {
+    const s = curSession(), id = el.dataset.id, i = +el.dataset.i;
+    s.throws = s.throws || {};
+    const th = s.throws[id] || (s.throws[id] = [1, 1]);
+    th[i] = th[i] ? 0 : 1;
+    commit();
+  },
+  lapClear(el) {
+    const C = curClass(), s = curSession(), id = el.dataset.id, st = C.students.find(x => x.id === id);
+    if (live && live.sid === s.id) { toast('Arrêtez d\'abord le chrono'); return; }
+    if (!confirm(`Effacer les temps et résultats de ${st.name} ?`)) return;
+    ['laps', 'walk', 'extra', 'throws', 'final'].forEach(k => { if (s[k]) delete s[k][id]; });
+    commit();
+  },
+  setRunGroup(el) { curSession().runGroup = el.dataset.v; commit(); },
+  autoDuos() { const C = curClass(), s = curSession(); autoDuos(C, s); commit(); toast('Binômes formés par VMA'); },
+  obsToggle(el) {
+    const s = curSession(), id = el.dataset.id; s.obsOk = s.obsOk || {};
+    if (s.obsOk[id] === false) delete s.obsOk[id]; else s.obsOk[id] = false;
+    commit();
+  },
+  clearUnit(el) {
     const s = curSession();
-    s.order = { A: s.order.B, B: s.order.A }; ui.sel = null;
-    syncOrder(curClass(), s); commit(); toast('Rôles inversés : les observateurs deviennent coureurs');
+    el.dataset.ids.split(',').forEach(id => delete s.valid[id]);
+    commit();
   },
   fracVal(el) {
-    const s = curSession(), id = el.dataset.id, i = +el.dataset.i;
+    // validé par défaut : ✓ ⇄ ✗
+    const s = curSession(), id = el.dataset.id, k = +el.dataset.k;
     const arr = s.valid[id] || (s.valid[id] = []);
-    while (arr.length <= i) arr.push(null);
-    arr[i] = arr[i] == null ? 1 : arr[i] === 1 ? 0 : null;
+    while (arr.length <= k) arr.push(null);
+    arr[k] = arr[k] === 0 ? null : 0;
     commit();
   },
   fracGo() {
     if (live) { toast('Un chrono est déjà en cours'); return; }
     const C = curClass(), s = curSession();
-    unlockSpeech();
-    live = { kind: 'frac', cls: C.name, sid: s.id, tl: null };
-    const end = (s.reps - 1) * (s.work + s.rest) + s.work + 3;
-    live.tl = new Timeline(fracEvents(s), { lead: 6, end, onTick: fracTick, onEnd: () => { live = null; keepAwake(false); render(); toast('🏁 Série terminée'); } });
+    s.ran = s.ran || {}; s.ran[s.runGroup || 'A'] = true;
+    commit({ render: false });
+    live = { kind: 'frac', cls: C.name, sid: s.id, tl: null, duo: isDuo(s) };
+    const end = fracEnd(s);
+    live.tl = new Timeline(fracEvents(s), { lead: 6, end, onTick: fracTick, onEnd: () => {
+      live = null; keepAwake(false);
+      const S = nSeries(s), cur = s.curSerie || 0;
+      if (cur < S - 1) { s.curSerie = cur + 1; commit(); toast(`🏁 Série ${cur + 1} terminée — prêt pour la série ${cur + 2}`, 4000); }
+      else { render(); toast('🏁 Série terminée'); }
+    } });
     live.tl.start(); keepAwake(true); render();
   },
   fracPause() {
@@ -1662,7 +2297,16 @@ const CHG = {
   setStatus(el) {
     const s = curSession();
     if (el.value) s.status[el.dataset.id] = el.value; else delete s.status[el.dataset.id];
+    if (s.duoNum) delete s.duoNum[el.dataset.id];
     syncOrder(curClass(), s); commit();
+  },
+  duoNum(el) { const s = curSession(); s.duoNum[el.dataset.id] = +el.value; commit(); },
+  extraDist(el) {
+    const s = curSession(), id = el.dataset.id, r = +el.dataset.r, v = parseNum(el.value);
+    s.extra = s.extra || {};
+    const m = s.extra[id] || (s.extra[id] = {});
+    if (v == null || v <= 0) delete m[r]; else m[r] = Math.round(v);
+    commit();
   }
 };
 
