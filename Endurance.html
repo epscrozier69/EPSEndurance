@@ -220,6 +220,7 @@ table.ct.fit{table-layout:fixed}
 .vr{display:flex;align-items:center;gap:6px;min-width:0}
 .vrn{width:100%;border:0;background:#f8f9fb;border-radius:8px;padding:5px 6px;cursor:pointer;text-align:left;color:var(--ink);min-height:34px}
 .vrn:hover{background:#eef2ff}.vrn:active{background:#fee2e2}
+.vrn .gn{white-space:normal!important;overflow:visible!important;overflow-wrap:anywhere;line-height:1.2}
 .vr .gn{flex:1;min-width:0;font-weight:800;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .vr .obj{font-weight:900;font-size:13px;color:#c2410c;white-space:nowrap}
 .mk{flex:0 0 auto;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:900;color:#fff}
@@ -264,12 +265,13 @@ table.ct.fit{table-layout:fixed}
 .lname{display:flex;align-items:center;gap:6px;width:100%;border:0;border-radius:9px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;font-weight:900;font-size:15px;padding:10px;min-height:46px;cursor:pointer;text-align:left}
 .lname:active{transform:scale(.98)}
 .lcard.done .lname{background:#94a3b8}
-.lname .gn{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lname .gn{flex:1;min-width:0;white-space:normal;overflow-wrap:anywhere;line-height:1.2;font-size:14px}
 .lname .ln{font-size:11px;background:rgba(255,255,255,.25);border-radius:999px;padding:1px 7px}
 .lmain{font-size:13px}
 .lmain .tap{font-size:11px;color:var(--muted)}
 .lacts{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
 .lacts .btn.sm{min-height:30px;padding:2px 8px}
+.lacts .btn.walk{min-height:40px;padding:4px 14px;font-size:18px;font-weight:900;border-width:2px;border-color:#f59e0b;background:#fffbeb}
 .xd{display:inline-flex;align-items:center;gap:3px;font-weight:800;font-size:13px}
 .xd .vin{width:58px;min-height:30px!important;padding:2px 6px!important}
 .thr{width:32px;height:30px;border-radius:8px;border:0;font-weight:900;color:#fff;cursor:pointer;margin-right:3px}
@@ -286,6 +288,14 @@ input.vin[class*="vc"]{font-weight:900}
 input.vin[class*="vc"]::placeholder{color:inherit;opacity:.9}
 .pc .gv{font-size:14px;font-weight:900}
 .vbase{font-weight:900;font-size:14px;min-width:24px;text-align:right}
+.pc.extra{background:#f5f3ff;border:1px dashed #c4b5fd}.pc.extra small{color:#6d28d9;font-weight:700;white-space:nowrap}
+.xsel{min-height:32px!important;padding:2px 6px!important;font-size:12px;font-weight:700;border-style:dashed!important;color:#6d28d9;max-width:100%}
+/* glisser-déposer des noms */
+[data-drag]{cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
+[data-drag]::before{content:'⠿';color:#98a2b3;margin-right:4px;font-size:12px}
+.pc.dragging{opacity:.35}
+.dropover{outline:3px solid #7c3aed;outline-offset:-2px;border-radius:9px;background:#f5f3ff!important}
+.dragghost{position:fixed;z-index:200;pointer-events:none;background:#1e1b4b;color:#fff;font-weight:800;padding:8px 14px;border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.3);transform:translate(-50%,-130%);white-space:nowrap}
 .varr{color:#98a2b3;margin:0 4px;font-size:12px;font-weight:700}
 .vbtn{border:1px dashed transparent;background:transparent;border-radius:8px;padding:4px 8px;cursor:pointer;min-height:32px;min-width:44px;text-align:center}
 .vbtn:hover{border-color:#c7d2fe;background:#f5f7ff}
@@ -469,7 +479,7 @@ const classOrder = (a, b) => (parseInt(b) || 0) - (parseInt(a) || 0) || a.locale
 const LS_STATE = 'eps_endurance_state_v1';
 const LS_CFG = 'eps_endurance_cfg_v1';
 const DURS = [18, 36, 90, 120, 180];   // temps de travail
-const RESTS = [18, 24, 90, 180];  // temps de récupération
+const RESTS = [18, 24, 90, 120, 180];  // temps de récupération
 const STATUS = { ABS: 'Absent', DP: 'Dispensé ponctuel', DISP: 'Dispensé' };
 
 // Test VMA (Léger-Boucher) : départ 7 km/h, +1 km/h toutes les 2 min, dernier palier 18 km/h, plots tous les 50 m
@@ -1303,9 +1313,16 @@ function syncOrder(C, s) {
   });
   // chaque groupe reste trié par ordre alphabétique : le n-ième de B observe le n-ième de A
   const rank = new Map(sortedStudents(C).map((st, i) => [st.id, i]));
-  ['A', 'B'].forEach(g => s.order[g].sort((a, b) => rank.get(a) - rank.get(b)));
+  if (!s.manualOrder) ['A', 'B'].forEach(g => s.order[g].sort((a, b) => rank.get(a) - rank.get(b)));
   const pair = {}, n = Math.min(s.order.A.length, s.order.B.length);
   for (let i = 0; i < n; i++) { pair[s.order.A[i]] = s.order.B[i]; pair[s.order.B[i]] = s.order.A[i]; }
+  // observateur ajouté à la main pour un élève sans binôme (il observe alors 2 coureurs)
+  s.extraObs = s.extraObs || {};
+  Object.keys(s.extraObs).forEach(r => {
+    const o = s.extraObs[r], gr = s.order.A.includes(r) ? 'A' : s.order.B.includes(r) ? 'B' : null;
+    const go = s.order.A.includes(o) ? 'A' : s.order.B.includes(o) ? 'B' : null;
+    if (!gr || !go || gr === go || pair[r]) delete s.extraObs[r]; else pair[r] = o;
+  });
   if (s.type === 'vma') {
     s.groups = {}; s.order.A.forEach(id => s.groups[id] = 'A'); s.order.B.forEach(id => s.groups[id] = 'B'); s.pair = pair;
   } else {
@@ -1323,10 +1340,17 @@ function pairsHTML(C, s, lab) {
     const st = byId.get(id);
     const v = s.type === 'vma' ? (s.results[id] ? resPerf(s.results[id]).vma : null) : fracVMA(C, s, id);
     const vh = s.type === 'vma' ? (v != null ? `<span class="gv ${vmaCls(v)}">${fmtVMA(v)}</span>` : '') : `<span class="pvma">${vmaInput(C, s, id)}</span>`;
-    return `<div class="pc"><span class="sx ${st.sexe}">${esc(st.sexe || '?')}</span><span class="gn">${esc(st.name)}</span>${vh}
+    return `<div class="pc" data-drop="${id}"><span class="sx ${st.sexe}">${esc(st.sexe || '?')}</span><span class="gn" data-drag="${id}" title="Faire glisser sur un autre élève pour les échanger">${esc(st.name)}</span>${vh}
       <div class="seg ab">${['A', 'B'].map(x => `<button class="${g === x ? 'on ' + x : ''}" data-act="setAB" data-id="${id}" data-v="${x}">${x}</button>`).join('')}</div>${statusSel(id)}</div>`;
   };
-  const rows = Array.from({ length: n }, (_, i) => `<div class="prow"><span class="pn">${i + 1}</span>${item(s.order.A[i], 'A')}${item(s.order.B[i], 'B')}</div>`).join('');
+  // case vide en face d'un élève sans binôme : choisir un observateur de l'autre groupe (qui observera 2 coureurs)
+  const extra = (runner, g) => {
+    if (!runner) return `<div class="pc empty">— sans binôme —</div>`;
+    const o = (s.extraObs || {})[runner];
+    if (o && byId.get(o)) return `<div class="pc extra"><span class="gn">👁 ${esc(byId.get(o).name)}</span><small>observe 2 coureurs</small><button class="btn sm ghost" data-act="extraObsDel" data-id="${runner}" title="Retirer">✕</button></div>`;
+    return extraSel(C, s, runner, g);
+  };
+  const rows = Array.from({ length: n }, (_, i) => `<div class="prow"><span class="pn">${i + 1}</span>${s.order.A[i] ? item(s.order.A[i], 'A') : `<div data-slot="A">${extra(s.order.B[i], 'A')}</div>`}${s.order.B[i] ? item(s.order.B[i], 'B') : `<div data-slot="B">${extra(s.order.A[i], 'B')}</div>`}</div>`).join('');
   const statused = sortedStudents(C).filter(st => s.status[st.id]);
   return `
   <div class="pairs">
@@ -1385,7 +1409,7 @@ function viewVMA(C, s) {
   </section>
 
   <section class="card">
-    <div class="row sp" style="margin-top:0"><h3 style="margin:0"><span class="step">2</span>Coureurs et observateurs</h3><button class="btn sm" data-act="resetPairs">↺ Répartition par défaut</button></div>
+    <div class="row sp" style="margin-top:0"><h3 style="margin:0"><span class="step">2</span>Coureurs et observateurs</h3><div class="row" style="margin:0"><button class="btn sm" data-act="randomObs" title="Mélange les observateurs (groupe B) entre les coureurs du groupe A">🎲 Observateurs au hasard</button><button class="btn sm" data-act="resetPairs">↺ Répartition par défaut</button></div></div>
     <p class="hint">Par défaut : 1re moitié de la classe (ordre alphabétique) en groupe A, 2e moitié en groupe B. Sur chaque ligne, les deux élèves forment un binôme : l'un court, l'autre l'observe, puis on inverse.</p>
     ${pairsHTML(C, s, { A: 'Groupe A' + (s.startGroup === 'A' ? ' · court en 1er' : ' · observe en 1er'), B: 'Groupe B' + (s.startGroup === 'B' ? ' · court en 1er' : ' · observe en 1er') })}
   </section>
@@ -1595,7 +1619,19 @@ function duoRows(s) {
 }
 function fracRows(s) {
   if (isDuo(s)) return duoRows(s);
-  return Array.from({ length: Math.max(s.order.A.length, s.order.B.length) }, (_, i) => ({ A: s.order.A[i] ? [s.order.A[i]] : [], B: s.order.B[i] ? [s.order.B[i]] : [] }));
+  const ex = s.extraObs || {};
+  return Array.from({ length: Math.max(s.order.A.length, s.order.B.length) }, (_, i) => {
+    const a = s.order.A[i], b = s.order.B[i];
+    return {
+      A: a ? [a] : (b && ex[b] ? [ex[b]] : []), B: b ? [b] : (a && ex[a] ? [ex[a]] : []),
+      extra: !a && b && ex[b] ? 'A' : !b && a && ex[a] ? 'B' : null, lone: !a ? b : !b ? a : null
+    };
+  });
+}
+// Menu « ajouter un observateur » pour un élève sans binôme : élèves de l'autre groupe
+function extraSel(C, s, runner, g) {
+  const byId = new Map(C.students.map(st => [st.id, st]));
+  return `<select class="xsel" data-chg="extraObs" data-id="${runner}"><option value="">＋ Ajouter un observateur…</option>${s.order[g].map(id => `<option value="${id}">${esc(byId.get(id).name)}</option>`).join('')}</select>`;
 }
 // Membres du binôme de course de l'élève (lui compris)
 function duoOf(s, id) {
@@ -1675,7 +1711,7 @@ function lapRuns(s) {
   if (s.type === 'biath') return [{ dur: null, delta: 0, label: '900 m + 2 lancers' }];
   return Array.from({ length: s.reps }, (_, i) => ({ dur: s.work, delta: 0, label: 'Course ' + (i + 1) }));
 }
-const lapLen = s => s.type === 'biath' ? BIATH_LAP : (s.lapLen || 100);
+const lapLen = s => s.type === 'biath' ? BIATH_LAP : ([100, 150].includes(s.lapLen) ? s.lapLen : 100);   // piste de 100 m ou 150 m
 const lapsOf = (s, id, r) => ((s.laps || {})[id] || {})[r] || [];
 const splitsOf = cum => cum.map((t, i) => t - (i ? cum[i - 1] : 0));
 const sub = (o, id, r) => ((o || {})[id] || {})[r];
@@ -1816,7 +1852,7 @@ function lapSection(C, s, rows) {
   const now = mine ? lapNow() : null;
   const r = now ? now.r : Math.min(s.viewRun || 0, runs.length - 1);
   const short = id => { const p = byId.get(id).name.split(' '); return p.length > 1 ? p.slice(1).join(' ') + ' ' + p[0].charAt(0) + '.' : p[0]; };
-  const units = rows.map((row, k) => ({ k, id: row[runG][0], obs: row[obsG] })).filter(u => u.id);
+  const units = rows.map((row, k) => ({ k, id: row.extra === runG ? null : row[runG][0], obs: row[obsG] })).filter(u => u.id);
   const card = u => {
     const id = u.id, st = byId.get(id), cum = lapsOf(s, id, r), ev = lapEval(C, s, id, r), walk = sub(s.walk, id, r) || 0;
     const last = cum.length ? fmtT(splitsOf(cum).slice(-1)[0]) : '';
@@ -1837,7 +1873,7 @@ function lapSection(C, s, rows) {
     return `<div class="lcard ${cls}">
       <button class="lname" data-act="lapTap" data-id="${id}"><span class="gn">${esc(st.name)}</span><span class="ln">${u.k + 1}</span></button>
       <div class="lmain">${main}</div>
-      <div class="lacts"><button class="btn sm" data-act="walk" data-id="${id}" title="L'élève a marché">🚶 ${walk}</button><button class="btn sm" data-act="lapUndo" data-id="${id}" title="Annuler le dernier enregistrement">↺</button>${extra}</div>
+      <div class="lacts"><button class="btn sm walk" data-act="walk" data-id="${id}" title="L'élève a marché">🚶 ${walk}</button><button class="btn sm" data-act="lapUndo" data-id="${id}" title="Annuler le dernier enregistrement">↺</button>${extra}</div>
       <div class="vo"><span>👁</span>${obs}</div></div>`;
   };
   const runSel = s.type === 'endu3' || (s.type === 'frac' && runs.length > 1)
@@ -1945,8 +1981,16 @@ function pairTable(C, s, rows, objs, duo) {
     };
   };
   const nc = 2 + objs.length;
-  const td = ids => {
-    if (!ids.length) return `<td colspan="${nc}" class="c" style="color:#667085;font-style:italic">— sans binôme —</td>`;
+  const td = (ids, r, side) => {
+    if (!ids.length) {
+      // élève sans binôme : menu pour lui ajouter un observateur de l'autre groupe
+      const inner = !duo && r && r.lone ? extraSel(C, s, r.lone, side) : '<span style="color:#667085;font-style:italic">— sans binôme —</span>';
+      return `<td colspan="${nc}" class="c">${inner}</td>`;
+    }
+    if (r && r.extra === side) {
+      const o = byId.get(ids[0]);
+      return `<td colspan="${nc}"><div class="dl"><span class="gn">👁 ${esc(o.name)}</span><small class="hint" style="margin:0 6px">observe 2 coureurs</small><button class="btn sm ghost" data-act="extraObsDel" data-id="${r.lone}" title="Retirer">✕</button></div></td>`;
+    }
     const es = ids.map(entry);
     return `<td>${es.map(e => e.n).join('')}</td><td>${es.map(e => e.v).join('')}</td>` + objs.map((_, j) => `<td class="c">${es.map(e => e.o[j]).join('')}</td>`).join('');
   };
@@ -1954,9 +1998,9 @@ function pairTable(C, s, rows, objs, duo) {
   const head = side => `<th>${side}</th><th>VMA</th>` + objs.map(o => `<th class="c">${o.label}</th>`).join('');
   return `<div class="tw"><table class="ct fit"><colgroup>${cols}</colgroup>
     <thead><tr><th class="c">N°</th>${head(duo ? 'Binôme qui court (gr. A)' : 'Coureur (gr. A)')}${head(duo ? 'Binôme qui observe (gr. B)' : 'Observateur (gr. B)')}</tr></thead>
-    <tbody>${rows.map((r, i) => `<tr><td class="c"><b>${i + 1}</b></td>${td(r.A)}${td(r.B)}</tr>`).join('')}</tbody></table></div>`;
+    <tbody>${rows.map((r, i) => `<tr><td class="c"><b>${i + 1}</b></td>${td(r.A, r, 'A')}${td(r.B, r, 'B')}</tr>`).join('')}</tbody></table></div>`;
 }
-const lapLenChips = s => `<label class="lbl">Longueur du tour</label><div class="chips">${[100, 150, 200, 250, 400].map(d => `<button class="chip ${lapLen(s) === d ? 'on' : ''}" data-act="setLapLen" data-v="${d}">${d} m</button>`).join('')}</div>`;
+const lapLenChips = s => `<label class="lbl">Longueur du tour</label><div class="chips">${[100, 150].map(d => `<button class="chip ${lapLen(s) === d ? 'on' : ''}" data-act="setLapLen" data-v="${d}">${d} m</button>`).join('')}</div>`;
 
 /* ----- Séance fractionnée ----- */
 function viewFrac(C, s) {
@@ -1996,7 +2040,7 @@ function viewFrac(C, s) {
   if (lap) section3 = lapSection(C, s, rows);
   else {
     const runG = s.runGroup, obsG = runG === 'A' ? 'B' : 'A', serie = Math.min(s.curSerie || 0, S - 1);
-    const units = rows.map((r, k) => ({ k, run: r[runG], obs: r[obsG] })).filter(u => u.run.length);
+    const units = rows.map((r, k) => ({ k, run: r.extra === runG ? [] : r[runG], obs: r[obsG] })).filter(u => u.run.length);
     const short = id => { const p = byId.get(id).name.split(' '); return p.length > 1 ? p.slice(1).join(' ') + ' ' + p[0].charAt(0) + '.' : p[0]; };
     // case = numéro de course (C1, C2…) ; rouge et barrée si non validée
     const vbtn = (id, k, m, title, num) => {
@@ -2070,7 +2114,7 @@ function viewFrac(C, s) {
   ${lap ? `
   <section class="card">
     <div class="row sp" style="margin-top:0"><h3 style="margin:0"><span class="step">2</span>Coureurs et observateurs</h3>
-      <div class="row" style="margin:0"><button class="btn sm" data-act="resetPairs">↺ Répartition par défaut</button></div></div>
+      <div class="row" style="margin:0"><button class="btn sm" data-act="randomObs" title="Mélange les observateurs (groupe B) entre les coureurs du groupe A">🎲 Observateurs au hasard</button><button class="btn sm" data-act="resetPairs">↺ Répartition par défaut</button></div></div>
     <p class="hint">Par défaut : 1re moitié de la classe (ordre alphabétique) en groupe A, 2e moitié en groupe B. Le 1er observateur observe le 1er coureur, et ainsi de suite.</p>
     ${pairsHTML(C, s, { A: 'Groupe A · coureurs', B: 'Groupe B · observateurs' })}
     <label class="lbl" style="margin-top:16px">VMA et distances à parcourir en ${fmtDur(s.work)} (${s.pct} % VMA)</label>
@@ -2117,7 +2161,7 @@ function fracShortSections(C, s, rows, section4) {
 
   <section class="card">
     <div class="row sp" style="margin-top:0"><h3 style="margin:0"><span class="step">3</span>${duo ? 'Binômes constitués' : 'Binômes coureur / observateur'}</h3>
-      <div class="row" style="margin:0">${duo ? '<button class="btn sm" data-act="autoDuos">🤝 Former les binômes par VMA</button>' : ''}<button class="btn sm" data-act="resetPairs">↺ Répartition par défaut</button></div></div>
+      <div class="row" style="margin:0">${duo ? '<button class="btn sm" data-act="autoDuos">🤝 Former les binômes par VMA</button>' : '<button class="btn sm" data-act="randomObs" title="Mélange les observateurs (groupe B) entre les coureurs du groupe A">🎲 Observateurs au hasard</button>'}<button class="btn sm" data-act="resetPairs">↺ Répartition par défaut</button></div></div>
     <p class="hint">Par défaut : 1re moitié de la classe (ordre alphabétique) en groupe A, 2e moitié en groupe B.${duo ? ' En 18", les élèves de même VMA sont associés par 2 dans chaque groupe ; le binôme n° 1 du groupe B observe le binôme n° 1 du groupe A.' : ' Le 1er observateur observe le 1er coureur, et ainsi de suite.'}</p>
     ${duo ? duosHTML(C, s, rows) : pairsHTML(C, s, { A: 'Groupe A · coureurs', B: 'Groupe B · observateurs' })}
   </section>
@@ -2156,7 +2200,7 @@ function viewLapSession(C, s) {
     </div>
   </section>
   <section class="card">
-    <div class="row sp" style="margin-top:0"><h3 style="margin:0"><span class="step">2</span>Coureurs et observateurs</h3><button class="btn sm" data-act="resetPairs">↺ Répartition par défaut</button></div>
+    <div class="row sp" style="margin-top:0"><h3 style="margin:0"><span class="step">2</span>Coureurs et observateurs</h3><div class="row" style="margin:0"><button class="btn sm" data-act="randomObs" title="Mélange les observateurs (groupe B) entre les coureurs du groupe A">🎲 Observateurs au hasard</button><button class="btn sm" data-act="resetPairs">↺ Répartition par défaut</button></div></div>
     <p class="hint">Par défaut : 1re moitié de la classe (ordre alphabétique) court, 2e moitié observe. Le 1er observateur observe le 1er coureur, et ainsi de suite.</p>
     ${pairsHTML(C, s, { A: 'Groupe A · court en 1er', B: 'Groupe B · observe en 1er' })}
     <label class="lbl" style="margin-top:16px">VMA et objectifs</label>
@@ -2332,6 +2376,15 @@ const ACT = {
     const inp = sec.querySelector(`input[data-chg="fracVma"][data-id="${id}"]`);
     if (inp) { inp.focus(); try { inp.select(); } catch (e) {} }
   },
+  // Observateurs au hasard : les groupes restent les mêmes, l'ordre du groupe B est mélangé
+  randomObs() {
+    const C = curClass(), s = curSession();
+    const b = s.order.B.slice();
+    for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; }
+    s.order.B = b; s.manualOrder = true; s.extraObs = {};
+    syncOrder(C, s); commit(); toast('🎲 Observateurs tirés au hasard');
+  },
+  extraObsDel(el) { const s = curSession(); if (s.extraObs) delete s.extraObs[el.dataset.id]; syncOrder(curClass(), s); commit(); },
   setAB(el) {
     const s = curSession(), id = el.dataset.id, g = el.dataset.v;
     if (s.order[g].includes(id)) return;
@@ -2348,7 +2401,7 @@ const ACT = {
   resetPairs() {
     const C = curClass(), s = curSession();
     if (!confirm('Revenir à la répartition par défaut (1re moitié / 2e moitié de la classe) ?')) return;
-    defaultOrder(C, s); ui.sel = null; syncOrder(C, s); commit();
+    defaultOrder(C, s); ui.sel = null; s.manualOrder = false; s.extraObs = {}; syncOrder(C, s); commit();
   },
   back() { clsUI(ui.tab).sid = null; render(); },
   delSession(el) {
@@ -2687,6 +2740,12 @@ const CHG = {
     }
     commit();
   },
+  // observateur ajouté pour un élève sans binôme (vide = retirer)
+  extraObs(el) {
+    const s = curSession(); s.extraObs = s.extraObs || {};
+    if (el.value) s.extraObs[el.dataset.id] = el.value; else delete s.extraObs[el.dataset.id];
+    syncOrder(curClass(), s); commit();
+  },
   duoNum(el) { const s = curSession(); s.duoNum[el.dataset.id] = +el.value; commit(); },
   extraDist(el) {
     const s = curSession(), id = el.dataset.id, r = +el.dataset.r, v = parseNum(el.value);
@@ -2707,6 +2766,62 @@ document.addEventListener('change', e => {
   const el = e.target.closest('[data-chg]');
   if (el && CHG[el.dataset.chg]) CHG[el.dataset.chg](el, e);
 });
+/* Glisser-déposer d'un nom (souris ou doigt) dans le tableau coureurs / observateurs :
+   déposé sur un autre élève → les deux échangent leur place (et leur groupe s'ils sont dans des colonnes différentes) ;
+   déposé sur une case « sans binôme » → l'élève y est déplacé. */
+function dragMove(s, id, target) {
+  const pos = x => { for (const g of ['A', 'B']) { const i = s.order[g].indexOf(x); if (i >= 0) return [g, i]; } return null; };
+  const pa = pos(id); if (!pa) return false;
+  if (target.id) {
+    const pb = pos(target.id); if (!pb || target.id === id) return false;
+    s.order[pa[0]][pa[1]] = target.id; s.order[pb[0]][pb[1]] = id;
+  } else if (target.slot) {
+    s.order[pa[0]].splice(pa[1], 1); s.order[target.slot].push(id);
+  } else return false;
+  s.manualOrder = true;
+  if (s.extraObs) { delete s.extraObs[id]; if (target.id) delete s.extraObs[target.id]; }
+  return true;
+}
+let drag = null;
+const dragEnd = () => {
+  if (!drag) return;
+  if (drag.ghost) drag.ghost.remove();
+  if (drag.src) drag.src.classList.remove('dragging');
+  document.querySelectorAll('.dropover').forEach(x => x.classList.remove('dropover'));
+  drag = null;
+};
+const dropAt = (x, y) => { const el = document.elementFromPoint(x, y); return el ? el.closest('[data-drop],[data-slot]') : null; };
+document.addEventListener('pointerdown', e => {
+  const h = e.target.closest('[data-drag]');
+  if (!h || (e.button != null && e.button > 0)) return;
+  drag = { id: h.dataset.drag, x: e.clientX, y: e.clientY, started: false, src: h.closest('.pc'), name: h.textContent };
+});
+document.addEventListener('pointermove', e => {
+  if (!drag) return;
+  if (!drag.started) {
+    if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 6) return;
+    drag.started = true;
+    drag.ghost = document.createElement('div'); drag.ghost.className = 'dragghost'; drag.ghost.textContent = drag.name;
+    document.body.appendChild(drag.ghost);
+    if (drag.src) drag.src.classList.add('dragging');
+  }
+  e.preventDefault();
+  drag.ghost.style.left = e.clientX + 'px'; drag.ghost.style.top = e.clientY + 'px';
+  document.querySelectorAll('.dropover').forEach(x => x.classList.remove('dropover'));
+  const t = dropAt(e.clientX, e.clientY);
+  if (t && t.dataset.drop !== drag.id) t.classList.add('dropover');
+}, { passive: false });
+document.addEventListener('pointerup', e => {
+  if (!drag) return;
+  const d = drag, t = d.started ? dropAt(e.clientX, e.clientY) : null;
+  dragEnd();
+  if (!t) return;
+  const s = curSession(); if (!s || !s.order) return;
+  if (dragMove(s, d.id, t.dataset.drop ? { id: t.dataset.drop } : { slot: t.dataset.slot })) {
+    syncOrder(curClass(), s); commit(); toast('Binômes modifiés');
+  }
+});
+document.addEventListener('pointercancel', dragEnd);
 // Case « vitesse visée » ouverte puis quittée sans rien saisir : on la referme
 document.addEventListener('focusout', e => {
   const t = e.target;
