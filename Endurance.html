@@ -2873,8 +2873,14 @@ window.addEventListener('offline', () => { if (cfg.scriptUrl) setSync('err', 'Pa
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js').catch(() => {});
-    /* garde tout de suite une copie de la page ouverte, quel que soit son nom */
-    try { caches.open('eps-endurance-v1').then(c => c.add(location.pathname)).catch(() => {}); } catch (e) {}
+    /* garde une copie de la page ouverte, quel que soit son nom, puis prévient une fois que c'est prêt */
+    navigator.serviceWorker.ready.then(() => caches.open('eps-endurance-v2'))
+      .then(c => c.add(location.pathname).then(() => c.match(location.pathname)))
+      .then(r => {
+        if (!r) return;
+        let done = false; try { done = localStorage.getItem('eps_offline_ok') === '2'; } catch (e) {}
+        if (!done) { toast('✈ Mode hors ligne prêt sur cet appareil', 4000); try { localStorage.setItem('eps_offline_ok', '2'); } catch (e) {} }
+      }).catch(() => {});
   });
 }
 

@@ -2,7 +2,7 @@
    Pages de l'appli : réseau d'abord (pour recevoir les mises à jour), copie locale si pas de réseau.
    Bibliothèque Excel : copie locale d'abord.
    Google (synchronisation, import) : jamais mis en cache. */
-const CACHE = 'eps-endurance-v1';
+const CACHE = 'eps-endurance-v2';
 const CORE = ['Endurance.html', 'manifest.json', 'icon.png'];
 const LIBS = ['https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'];
 
@@ -26,15 +26,21 @@ function anyPage() {
   }));
 }
 
+/* Réseau d'abord, mais sans attendre plus de 4 s (Wi-Fi sans internet : la requête peut rester bloquée) */
 function networkFirst(req) {
-  return fetch(req).then(res => {
+  const fromCache = () => caches.match(req, { ignoreSearch: true })
+    .then(r => r || (req.mode === 'navigate'
+      ? caches.match('Endurance.html', { ignoreSearch: true }).then(h => h || anyPage())
+      : undefined));
+  const net = fetch(req).then(res => {
     if (res && res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); }
     return res;
-  }).catch(() => caches.match(req, { ignoreSearch: true })
-    .then(r => r || (req.mode === 'navigate'
-      ? caches.match('Endurance.html').then(h => h || anyPage())
-      : undefined))
-    .then(r => r || Response.error()));
+  });
+  net.catch(() => {});
+  const timeout = new Promise((_, ko) => setTimeout(ko, 4000));
+  return Promise.race([net, timeout])
+    .catch(() => fromCache().then(r => r || net))
+    .catch(() => Response.error());
 }
 
 function cacheFirst(req) {
