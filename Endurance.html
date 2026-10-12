@@ -7,6 +7,9 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Endurance">
 <meta name="theme-color" content="#4338ca">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" type="image/png" href="icon.png">
 <title>EPS Joliot Curie - Endurance</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
 <style>
@@ -608,7 +611,7 @@ function setSync(st, msg) {
   b.title = msg || '';
   b.textContent = st === 'busy' ? '⟳ Synchronisation…'
     : st === 'ok' ? '☁ Synchronisé ' + (lastSync ? new Date(lastSync).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '')
-    : st === 'err' ? '⚠ Non synchronisé'
+    : st === 'err' ? (navigator.onLine === false ? '📴 Hors ligne · enregistré sur l\'appareil' : '⚠ Non synchronisé')
     : st === 'pending' ? '💾 Enregistré · envoi…'
     : '💾 Enregistré (appareil)';
 }
@@ -2864,6 +2867,16 @@ document.addEventListener('visibilitychange', () => {
 window.addEventListener('afterprint', () => { $('#print-root').innerHTML = ''; });
 window.addEventListener('beforeunload', e => { if (live && live.tl) { e.preventDefault(); e.returnValue = ''; } });
 setInterval(() => { if (!live && document.visibilityState === 'visible') pullRemote(); }, 120000);
+window.addEventListener('online', () => { if (cfg.scriptUrl) { if (live) schedulePush(); else pullRemote(); } });
+window.addEventListener('offline', () => { if (cfg.scriptUrl) setSync('err', 'Pas de connexion'); });
+/* Mode hors ligne : copie de l'appli conservée sur l'appareil (sw.js) */
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+    /* garde tout de suite une copie de la page ouverte, quel que soit son nom */
+    try { caches.open('eps-endurance-v1').then(c => c.add(location.pathname)).catch(() => {}); } catch (e) {}
+  });
+}
 
 /* Démarrage : affichage de la version locale puis récupération de la version la plus récente */
 render();

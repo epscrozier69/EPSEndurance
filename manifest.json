@@ -1,0 +1,13 @@
+{
+  "name": "EPS Joliot Curie - Endurance",
+  "short_name": "Endurance",
+  "lang": "fr",
+  "start_url": "Endurance.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f3f5fb",
+  "theme_color": "#4338ca",
+  "icons": [
+    { "src": "icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
