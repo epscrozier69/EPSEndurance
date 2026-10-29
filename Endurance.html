@@ -2356,6 +2356,15 @@ const ACT = {
       : t === 'endu3' ? Object.assign(base, lapData, { type: 'endu3', lapLen: 100, viewRun: 0 })
       : t === 'biath' ? Object.assign(base, lapData, { type: 'biath', throws: {}, final: {} })
       : Object.assign(base, lapData, { type: 'frac', work: 18, rest: 18, reps: 20, series: 2, pct: 100, lapLen: 100, valid: {} });
+    // VMA modifiées : reprises de la séance précédente (sauf pour un élève qui a refait un test VMA depuis)
+    if (s.vmaOv) {
+      const prev = C.sessions.filter(x => x.vmaOv)
+        .sort((a, b) => (b.date || '').localeCompare(a.date || '') || b.createdAt - a.createdAt)[0];
+      if (prev) Object.keys(prev.vmaOv).forEach(id => {
+        const L = latestVMA(C, id);
+        if (!L || (L.date || '') <= (prev.date || '')) s.vmaOv[id] = prev.vmaOv[id];
+      });
+    }
     syncOrder(C, s);
     C.sessions.push(s); u.sid = s.id; u.newOpen = false; ui.sel = null;
     commit(); window.scrollTo(0, 0);
