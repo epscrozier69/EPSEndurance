@@ -251,6 +251,10 @@ table.ct.fit{table-layout:fixed}
 /* ---- Colonne « Nom Prénom » figée dans les tableaux ---- */
 .tw .ct th:first-child,.tw .ct td:first-child{position:sticky;left:0;z-index:2;box-shadow:2px 0 4px rgba(15,23,42,.08)}
 .tw .ct td:first-child{background:#f0f5ff}
+/* ---- Ligne d'en-tête figée dans les tableaux de résultats ---- */
+.resfix .tw{max-height:70vh;overflow:auto}
+.resfix .ct thead th{position:sticky;top:0;z-index:3}
+.resfix .ct thead th:first-child{z-index:4}
 /* ---- Résultats des courses au tour / biathlon : compacts pour tenir en largeur ---- */
 .lapres .ct th,.lapres .ct td{padding:4px 5px;font-size:12px;white-space:nowrap}
 .lapres .ct th .arr{display:none}
@@ -1443,7 +1447,7 @@ function viewVMA(C, s) {
     <div class="row sp"><h3 style="margin:0"><span class="step">5</span>Résultats de la séance</h3>
       <div class="row" style="margin:0"><button class="btn danger" data-act="clearAll" ${Object.keys(s.results).length ? '' : 'disabled'}>🗑 Effacer tous les résultats</button><button class="btn pri" data-act="exportSession">📊 Export Excel</button></div></div>
     <p class="hint">✎ pour corriger ou saisir un temps à la main, 🗑 pour effacer le résultat d'un élève. Tri possible sur chaque colonne.</p>
-    ${sortTable('res-' + s.id, ['Nom Prénom', 'Sexe', 'Groupe', 'VMA (km/h)', 'Palier', 'Vitesse palier', 'Temps', 'Distance', 'Observations', { t: '', nosort: true }], resRows)}
+    <div class="resfix">${sortTable('res-' + s.id, ['Nom Prénom', 'Sexe', 'Groupe', 'VMA (km/h)', 'Palier', 'Vitesse palier', 'Temps', 'Distance', 'Observations', { t: '', nosort: true }], resRows)}</div>
   </section>`;
 }
 
@@ -1946,7 +1950,7 @@ function lapSection(C, s, rows) {
       <li><b>Vitesse</b> (vitesse courue par rapport à la ${s.type === 'endu3' ? 'vitesse visée (VMA ± 1)' : 'VMA'}${s.type === 'biath' ? '' : ' ; bilan = écart moyen'}) : ${nt('TB')} VMA ou + · ${nt('S')} −0,5 à −1 · ${nt('F')} −1,5 à −2,5 · ${nt('I')} au-delà de −2,5</li>
       <li><b>Continuité</b> (nombre de marches${s.type === 'biath' ? '' : ' ; bilan = total des marches de toutes les courses'}) : ${nt('TB')} aucune · ${nt('S')} 1 fois · ${nt('F')} 2 ou 3 fois · ${nt('I')} 4 fois et +</li>
     </ul>
-    <div class="lapres">${table}</div>
+    <div class="lapres resfix">${table}</div>
   </section>`;
 }
 
@@ -2175,7 +2179,7 @@ function fracShortSections(C, s, rows, section4) {
   <section class="card">
     <div class="row sp" style="margin-top:0"><h3 style="margin:0"><span class="step">5</span>Points et notes</h3><button class="btn pri sm" data-act="exportSession">📊 Export Excel</button></div>
     <p class="hint">1 point par course validée (✓). ${bareme}${duo ? ' Les deux élèves d\'un binôme ont les mêmes points.' : ''}</p>
-    ${sortTable('sc-' + s.id, ['Nom Prénom', 'Groupe', ...(duo ? ['Binôme'] : []), duo ? 'Partenaire' : 'Binôme', 'Points', { t: 'Note', cls: 'c' }, { t: 'Observateur', cls: 'c' }], scRows)}
+    <div class="resfix">${sortTable('sc-' + s.id, ['Nom Prénom', 'Groupe', ...(duo ? ['Binôme'] : []), duo ? 'Partenaire' : 'Binôme', 'Points', { t: 'Note', cls: 'c' }, { t: 'Observateur', cls: 'c' }], scRows)}</div>
   </section>`;
 }
 
