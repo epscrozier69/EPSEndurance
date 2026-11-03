@@ -36,6 +36,11 @@ nav.tabs button .n{font-size:11px;opacity:.75;margin-left:6px;font-weight:600}
 main{max-width:1200px;margin:0 auto;padding:16px 16px 70px}
 .card{background:var(--card);border-radius:16px;padding:18px;margin-bottom:16px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(16,24,40,.05),0 6px 18px rgba(16,24,40,.04)}
 .card h2,.card h3{margin:0 0 12px;font-size:18px;font-weight:800;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+nav.stabs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px;padding:2px 0}
+nav.stabs button{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--card);color:#344054;border-radius:12px;padding:7px 12px 7px 7px;font:inherit;font-weight:800;font-size:14px;cursor:pointer}
+nav.stabs button.on{background:var(--pri);border-color:var(--pri);color:#fff}
+nav.stabs .step{background:linear-gradient(135deg,#4f46e5,#db2777);color:#fff;width:24px;height:24px;border-radius:7px;display:inline-grid;place-items:center;font-size:13px}
+nav.stabs button.on .step{background:#fff;color:var(--pri-d)}
 .card h3 .step{background:linear-gradient(135deg,#4f46e5,#db2777);color:#fff;width:26px;height:26px;border-radius:8px;display:inline-grid;place-items:center;font-size:14px}
 .hero{background:linear-gradient(135deg,#eef2ff,#fdf2f8);border-color:#e0e7ff}
 .hero p{margin:4px 0;color:#475467}
@@ -1178,8 +1183,25 @@ function render() {
   const tws = same ? [...document.querySelectorAll('#app .tw')].map(x => [x.scrollLeft, x.scrollTop]) : [], wx = window.scrollX, wy = window.scrollY;
   $('#app').innerHTML = ui.tab === 'general' ? viewGeneral() : viewClass(state.classes[ui.tab]);
   document.querySelectorAll('#app .tw').forEach((x, i) => { if (tws[i]) { x.scrollLeft = tws[i][0]; x.scrollTop = tws[i][1]; } });
+  applyStepTabs(vk);
   window.scrollTo(wx, wy);
   if (live && live.tl) live.tl.onTick(live.tl.elapsed());
+}
+// Sous-onglets de la séance : les sections numérotées (1, 2, 3…) deviennent des onglets, une seule est affichée
+function applyStepTabs(vk) {
+  const secs = [...document.querySelectorAll('#app section.card')].filter(x => x.querySelector('h3 > .step'));
+  if (secs.length < 2) return;
+  const items = secs.map(x => { const h = x.querySelector('h3'), n = h.querySelector('.step').textContent.trim(); return { x, n, t: h.textContent.trim().slice(n.length).trim() }; });
+  ui.stepTab = ui.stepTab || {};
+  // au lancement d'un chrono, on affiche l'onglet de la séance en cours
+  if (live !== render.live) { render.live = live; const L = items.find(it => it.x.id === 'livecard'); if (live && L) ui.stepTab[vk] = L.n; }
+  if (!items.some(it => it.n === ui.stepTab[vk])) ui.stepTab[vk] = items[0].n;
+  const cur = ui.stepTab[vk];
+  items.forEach(it => { it.x.style.display = it.n === cur ? '' : 'none'; });
+  const nav = document.createElement('nav');
+  nav.className = 'stabs';
+  nav.innerHTML = items.map(it => `<button class="${it.n === cur ? 'on' : ''}" data-act="stepTab" data-v="${esc(it.n)}"><span class="step">${esc(it.n)}</span>${esc(it.t)}</button>`).join('');
+  secs[0].parentNode.insertBefore(nav, secs[0]);
 }
 
 /* ---------- Onglet Général ---------- */
@@ -2806,7 +2828,13 @@ const ACT = {
     commit();
     toast(`Chrono remis à 0 — relancez la répétition ${r + 1} quand la récupération est terminée`, 5000);
   },
-  lapResumeCancel() { delete curSession().lapResume; commit(); }
+  lapResumeCancel() { delete curSession().lapResume; commit(); },
+  stepTab(el) {
+    ui.stepTab = ui.stepTab || {}; ui.stepTab[render.view] = el.dataset.v; render();
+    const n = document.querySelector('#app nav.stabs'), hd = document.querySelector('header.top');
+    const top = hd ? hd.getBoundingClientRect().bottom : 0;
+    if (n && n.getBoundingClientRect().top < top) window.scrollBy(0, n.getBoundingClientRect().top - top - 8);
+  }
 };
 
 const CHG = {
