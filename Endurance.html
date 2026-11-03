@@ -257,8 +257,8 @@ table.ct.fit{table-layout:fixed}
 .tw .ct th:first-child,.tw .ct td:first-child{position:sticky;left:0;z-index:2;box-shadow:2px 0 4px rgba(15,23,42,.08)}
 .tw .ct td:first-child{background:#f0f5ff}
 /* ---- Ligne d'en-tête figée dans les tableaux de résultats ---- */
-.resfix .tw{max-height:70vh;overflow:auto}
-.resfix .ct thead th{position:sticky;top:0;z-index:3}
+/* tableau en pleine page (pas de fenêtre) : l'en-tête suit le défilement de la page (voir stickHeads) */
+.resfix .ct thead th{position:relative;z-index:3;will-change:transform}
 .resfix .ct thead th:first-child{z-index:4}
 /* ---- Résultats des courses au tour / biathlon : compacts pour tenir en largeur ---- */
 .lapres .ct th,.lapres .ct td{padding:4px 5px;font-size:12px;white-space:nowrap}
@@ -1185,8 +1185,20 @@ function render() {
   document.querySelectorAll('#app .tw').forEach((x, i) => { if (tws[i]) { x.scrollLeft = tws[i][0]; x.scrollTop = tws[i][1]; } });
   applyStepTabs(vk);
   window.scrollTo(wx, wy);
+  stickHeads();
   if (live && live.tl) live.tl.onTick(live.tl.elapsed());
 }
+// En-tête des tableaux de résultats figé sous la barre du haut pendant le défilement de la page
+function stickHeads() {
+  const hd = document.querySelector('header.top'), top = hd ? hd.getBoundingClientRect().bottom : 0;
+  document.querySelectorAll('#app .resfix .ct > thead').forEach(th => {
+    const r = th.parentNode.getBoundingClientRect(), h = th.offsetHeight;
+    const off = Math.max(0, Math.min(top - r.top, r.height - h * 2));
+    th.querySelectorAll('th').forEach(c => { c.style.transform = off > 0 ? `translateY(${off}px)` : ''; });
+  });
+}
+addEventListener('scroll', stickHeads, { passive: true });
+addEventListener('resize', stickHeads);
 // Sous-onglets de la séance : les sections numérotées (1, 2, 3…) deviennent des onglets, une seule est affichée
 function applyStepTabs(vk) {
   const secs = [...document.querySelectorAll('#app section.card')].filter(x => x.querySelector('h3 > .step'));
