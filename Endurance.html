@@ -307,6 +307,14 @@ input.vin[class*="vc"]::placeholder{color:inherit;opacity:.9}
 .dropover{outline:3px solid #7c3aed;outline-offset:-2px;border-radius:9px;background:#f5f3ff!important}
 .dragghost{position:fixed;z-index:200;pointer-events:none;background:#1e1b4b;color:#fff;font-weight:800;padding:8px 14px;border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.3);transform:translate(-50%,-130%);white-space:nowrap}
 .varr{color:#98a2b3;margin:0 4px;font-size:12px;font-weight:700}
+.ntsel{appearance:none;-webkit-appearance:none;border:0;font:inherit;font-size:12px;font-weight:900;padding:2px 8px;cursor:pointer;text-align:center;text-align-last:center}
+.ntsel option{background:#fff;color:#111;font-weight:700}
+.spl .t1{opacity:.5}
+.tbtn{border:0;background:none;padding:0 1px;font:inherit;color:inherit;cursor:pointer;border-bottom:1px dotted currentColor}
+.tbtn:hover{background:#e0e7ff;border-radius:3px}
+.rskb{margin-left:6px;border:1px solid #16a34a;background:#f0fdf4;color:#15803d;border-radius:999px;font-size:10px;font-weight:800;padding:0 6px;cursor:pointer;vertical-align:middle}
+.rskb.off{border-color:#dc2626;background:#fef2f2;color:#b91c1c}
+.rc.rskip > :not(.rskb){opacity:.4;text-decoration:line-through}
 .vmod{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px}
 .vbtn{border:1px dashed transparent;background:transparent;border-radius:8px;padding:4px 8px;cursor:pointer;min-height:32px;min-width:44px;text-align:center}
 .vbtn:hover{border-color:#c7d2fe;background:#f5f7ff}
@@ -1080,8 +1088,13 @@ function buildSheetTables() {
             const ev = lapEval(C, s, st.id, r); if (!ev) return;
             crs.push([cn, st.name, st.sexe, fmtDate(s.date), name, run.label, fracVMA(C, s, st.id) == null ? '' : fracVMA(C, s, st.id), ev.target == null ? '' : ev.target,
               ev.dist, ev.speed ? Math.round(ev.speed * 10) / 10 : '', ev.cum.map(x => fmtT(x)).join(' '), ev.reg ? ev.reg.g : '', ev.vg || '', ev.walk, ev.cont,
-              ev.t9 ? fmtT(ev.t9) : '', ev.throws ? ev.pen : '', ev.fin != null ? fmtT(ev.fin) : '', ev.tg || '', '']);
+              ev.t9 ? fmtT(ev.t9) : '', ev.throws ? ev.pen : '', ev.fin != null ? fmtT(ev.fin) : '', ev.tg || '', runSkipped(s, st.id, r) ? 'non comptée' : '']);
           });
+          // Ligne « Bilan » : notes finales (proposées ou modifiées à la main), courses non comptées exclues
+          if (s.type !== 'biath') {
+            const S = lapSummary(runs.map((_, r) => runSkipped(s, st.id, r) ? null : lapEval(C, s, st.id, r)));
+            if (S) crs.push([cn, st.name, st.sexe, fmtDate(s.date), name, 'Bilan', '', '', '', '', '', finalNote(s, st.id, 'r', S.rg) || '', finalNote(s, st.id, 'v', S.vg) || '', S.walks, finalNote(s, st.id, 'c', S.cg) || '', '', '', '', '', '']);
+          }
         });
       } else {
         syncOrder(C, s); if (isDuo(s)) syncDuos(C, s);
@@ -1694,14 +1707,27 @@ function lineOf(n, L, t) {
   return best;
 }
 // Régularité : écart (en lignes) entre les lignes des temps de passage de chaque tour
+// (le 1er tour, celui de la mise en route, n'est pas compté)
 function regGrade(cum, L) {
-  if (cum.length < 2) return null;
-  const lines = cum.map((t, i) => Math.round(lineOf(i + 1, L, t) / LINE_STEP));
+  if (cum.length < 3) return null;
+  const lines = cum.map((t, i) => Math.round(lineOf(i + 1, L, t) / LINE_STEP)).slice(1);
   const e = Math.max(...lines) - Math.min(...lines);
   return { g: e <= 1 ? 'TB' : e === 2 ? 'S' : e === 3 ? 'F' : 'I', e };
 }
 // Temps de passage avec la ligne correspondante, ex. « 0:30 (12) »
-const passTxt = (cum, L) => cum.map((t, i) => `${fmtT(t)} <i>(${fmtVMA(lineOf(i + 1, L, t))})</i>`).join(' · ');
+// Temps de passage : seuls les temps sont affichés ; avec id, chaque temps se touche pour être corrigé
+const passTxt = (cum, L, id, r) => cum.map((t, i) => {
+  const tip = `Tour ${i + 1} — ligne ${fmtVMA(lineOf(i + 1, L, t))} km/h${i ? '' : ' — 1er tour non compté dans la régularité'}`;
+  return id != null
+    ? `<button class="tbtn ${i ? '' : 't1'}" data-act="editLap" data-id="${id}" data-r="${r}" data-i="${i}" title="${tip} — toucher pour corriger">${fmtT(t)}</button>`
+    : `<span class="${i ? '' : 't1'}" title="${tip}">${fmtT(t)}</span>`;
+}).join(' · ');
+// Lecture d'un temps saisi : « 1:55 », « 1'55 », « 1 55 » ou en secondes « 115 »
+function parseMS(x) {
+  const m = String(x || '').trim().replace(/[''"]+$/, '').match(/^(\d+)\s*(?:[:'’h.,\s]\s*(\d{1,2}))?$/);
+  if (!m) return null;
+  return m[2] != null ? +m[1] * 60 + +m[2] : +m[1];
+}
 // Vitesse réalisée par rapport à la vitesse visée : ≥ 0 TB · −0,5/−1 S · −1,5 à −2,5 F · au-delà I
 function vmaGrade(diff) {
   const d = Math.round(diff * 2) / 2;
@@ -1817,13 +1843,25 @@ function lapSummary(evs) {
     walks, cg: contGrade(walks), n: done.length
   };
 }
-function lapSummaryCells(evs) {
+// Note finale du bilan : proposée par le calcul, modifiable à la main (TB · S · F · I · /)
+const SUM_NOTES = ['TB', 'S', 'F', 'I', '/'];
+// Course non comptée dans le bilan (élève blessé…) : par défaut toutes les courses comptent
+const runSkipped = (s, id, r) => !!((s.skipRun || {})[id] || {})[r];
+const sumOv = (s, id, k) => ((s.sumOv || {})[id] || {})[k];
+const finalNote = (s, id, k, auto) => sumOv(s, id, k) || auto || null;
+function sumSel(s, id, k, auto, title) {
+  const ov = sumOv(s, id, k), g = ov || auto;
+  return `<select class="nt nt-${g && g !== '/' ? g : '0'} ntsel ${ov ? 'vmod' : ''}" data-chg="sumOv" data-id="${id}" data-k="${k}" title="${esc(title)}${ov ? ' — modifiée à la main (proposée : ' + (auto || '—') + ')' : ' — toucher pour modifier'}">
+    <option value="" ${ov ? '' : 'selected'}>${auto || '—'}${ov ? ' (proposée)' : ''}</option>${SUM_NOTES.map(n => `<option value="${n}" ${ov === n ? 'selected' : ''}>${n}</option>`).join('')}</select>`;
+}
+function lapSummaryCells(evs, s, id) {
   const S = lapSummary(evs), sg = n => (n > 0 ? '+' : n < 0 ? '−' : '') + fmtNum(Math.abs(Math.round(n * 10) / 10), 1);
+  const key = (k, auto) => { const g = finalNote(s, id, k, auto); return g ? SUM_NOTES.indexOf(g) : null; };
   if (!S) return [cell(null, '—', 'c'), cell(null, '—', 'c'), cell(null, '—', 'c')];
   return [
-    cell(S.vg ? ['TB', 'S', 'F', 'I'].indexOf(S.vg) : null, S.vg ? `${nt(S.vg, '', 'Vitesse moyenne par rapport à la vitesse visée')}<div class="sumd">${sg(S.dAvg)} km/h</div>` : '—', 'c'),
-    cell(S.rg ? ['TB', 'S', 'F', 'I'].indexOf(S.rg) : null, S.rg ? `${nt(S.rg, '', 'Régularité moyenne')}<div class="sumd">moy. ${fmtNum(Math.round(S.eAvg * 10) / 10, 1)} ligne${S.eAvg >= 2 ? 's' : ''}</div>` : '—', 'c'),
-    cell(['TB', 'S', 'F', 'I'].indexOf(S.cg), `${nt(S.cg, '', 'Continuité sur toutes les courses')}<div class="sumd">${S.walks} 🚶 / ${S.n} course${S.n > 1 ? 's' : ''}</div>`, 'c')
+    cell(key('v', S.vg), `${sumSel(s, id, 'v', S.vg, 'Vitesse moyenne par rapport à la vitesse visée')}${S.vg ? `<div class="sumd">${sg(S.dAvg)} km/h</div>` : ''}`, 'c'),
+    cell(key('r', S.rg), `${sumSel(s, id, 'r', S.rg, 'Régularité moyenne (1er tour non compté)')}${S.rg ? `<div class="sumd">moy. ${fmtNum(Math.round(S.eAvg * 10) / 10, 1)} ligne${S.eAvg >= 2 ? 's' : ''}</div>` : ''}`, 'c'),
+    cell(key('c', S.cg), `${sumSel(s, id, 'c', S.cg, 'Continuité sur toutes les courses')}<div class="sumd">${S.walks} 🚶 / ${S.n} course${S.n > 1 ? 's' : ''}</div>`, 'c')
   ];
 }
 // Fiche observateur des courses au tour : temps de passage cumulés par ligne de vitesse (16 → 7 km/h)
@@ -1846,7 +1884,7 @@ function lapFicheHTML(C, s, runner, observer) {
   return `<div class="fiche lapf">
     <div class="fh"><h1>${title}</h1><div class="who"><span>Classe : <b>${esc(C.name)}</b></span><span>Date : <b>${fmtDate(s.date)}</b></span><span>Tour : <b>${L} m</b></span></div></div>
     <div class="fh" style="justify-content:flex-start"><div class="who"><span>Coureur : <b>${runner ? esc(runner.name) : '______________________'}</b>${runner && fracVMA(C, s, runner.id) != null ? ` (VMA ${fmtVMA(fracVMA(C, s, runner.id))})` : ''}</span><span>Observateur : <b>${observer ? esc(observer.name) : '______________________'}</b></span></div></div>
-    <p class="cons">À chaque passage de ton coureur, entoure le temps le plus proche dans la colonne du tour. Si les temps entourés restent sur la même ligne (ou à 1 ligne d'écart), la course est régulière.</p>
+    <p class="cons">À chaque passage de ton coureur, entoure le temps le plus proche dans la colonne du tour. Si les temps entourés (à partir du 2e tour) restent sur la même ligne (ou à 1 ligne d'écart), la course est régulière.</p>
     <div class="fbs" style="grid-template-columns:repeat(${perRow},1fr)">${runs.map(block).join('')}</div>
   </div>`;
 }
@@ -1912,7 +1950,7 @@ function lapSection(C, s, rows) {
         cell(ev && ev.reg && ev.reg.e, nt(ev && ev.reg && ev.reg.g, '', 'Régularité'), 'c'),
         cell(ev && ev.vg, nt(ev && ev.vg, '', 'Vitesse / VMA'), 'c'),
         cell(ev && ev.cont, ev ? nt(ev.cont, '', 'Continuité') + ` <span class="hint">${ev.walk} 🚶</span>` : nt(null), 'c'),
-        cell('', ev ? `<span class="spl">${passTxt(ev.cum.slice(0, BIATH_TOURS), BIATH_LAP)}</span>` : '', 'splc'),
+        cell('', ev ? `<span class="spl">${passTxt(ev.cum.slice(0, BIATH_TOURS), BIATH_LAP, st.id, 0)}</span>` : '', 'splc'),
         cell('', ev ? `<button class="btn sm danger" data-act="lapClear" data-id="${st.id}" title="Effacer">🗑</button>` : '')
       ] };
     }).concat(statused.map(st => ({ cells: [cell(st.name, `<b>${esc(st.name)}</b>`), cell(st.sexe), cell(null, '—'), cell(null, `<b>${s.status[st.id]}</b>`), ...Array(8).fill(cell(null, ''))] })));
@@ -1920,10 +1958,11 @@ function lapSection(C, s, rows) {
   } else {
     const rws = present.map(st => {
       const v = fracVMA(C, s, st.id), evs = runs.map((_, i) => lapEval(C, s, st.id, i));
+      const skip = i => runSkipped(s, st.id, i);
       return { cells: [
         cell(st.name, `<b>${esc(st.name)}</b>`), cell(st.sexe), cell(v, v != null ? fmtVMA(v) : '—'),
-        ...evs.map(ev => cell(ev ? ev.dist : null, ev ? `<div class="rc"><b>${ev.dist} m</b> · ${fmtNum(ev.speed, 1)} km/h<div>${nt(ev.reg && ev.reg.g, 'R', 'Régularité')}${nt(ev.vg, 'V', 'Vitesse / VMA visée')}${nt(ev.cont, 'C', 'Continuité (' + ev.walk + ' marche(s))')}</div><div class="spl">${passTxt(ev.cum, L)}</div></div>` : '—')),
-        ...lapSummaryCells(evs),
+        ...evs.map((ev, i) => cell(ev ? ev.dist : null, ev ? `<div class="rc ${skip(i) ? 'rskip' : ''}"><span><b>${ev.dist} m</b> · ${fmtNum(ev.speed, 1)} km/h</span><button class="rskb ${skip(i) ? 'off' : ''}" data-act="skipRun" data-id="${st.id}" data-r="${i}" title="${skip(i) ? 'Course non comptée dans le bilan (blessure…) — toucher pour la recompter' : 'Course comptée dans le bilan — toucher pour ne pas la compter (blessure…)'}">${skip(i) ? '✗ non comptée' : '✓ comptée'}</button><div>${nt(ev.reg && ev.reg.g, 'R', 'Régularité')}${nt(ev.vg, 'V', 'Vitesse / VMA visée')}${nt(ev.cont, 'C', 'Continuité (' + ev.walk + ' marche(s))')}</div><div class="spl">${passTxt(ev.cum, L, st.id, i)}</div></div>` : '—')),
+        ...lapSummaryCells(evs.map((ev, i) => skip(i) ? null : ev), s, st.id),
         cell('', evs.some(Boolean) ? `<button class="btn sm danger" data-act="lapClear" data-id="${st.id}" title="Effacer">🗑</button>` : '')
       ] };
     }).concat(statused.map(st => ({ cells: [cell(st.name, `<b>${esc(st.name)}</b>`), cell(st.sexe), cell(null, `<b>${s.status[st.id]}</b>`), ...runs.map(() => cell(null, '')), cell(null, ''), cell(null, ''), cell(null, ''), cell(null, '')] })));
@@ -1948,8 +1987,8 @@ function lapSection(C, s, rows) {
     <ul class="bareme">
       ${s.type === 'biath'
         ? `<li><b>Temps final</b> — filles : TB ≤ 5'20 · S ≤ 6'40 · F ≤ 8'20 · I au-delà ; garçons : TB ≤ 5'00 · S ≤ 6'20 · F ≤ 8'00 · I au-delà</li>`
-        : `<li class="hint" style="list-style:none;margin-left:-18px">Dans chaque course : R = régularité · V = vitesse · C = continuité. Les colonnes « Bilan » regroupent toutes les courses.</li>`}
-      <li><b>Régularité</b> (écart entre les lignes où tombent les temps de passage, 1 ligne = ${fmtNum(LINE_STEP, 1)} km/h${s.type === 'biath' ? '' : ' ; bilan = moyenne des courses'}) : ${nt('TB')} ≤ 1 ligne · ${nt('S')} 2 lignes · ${nt('F')} 3 lignes · ${nt('I')} 4 lignes et +</li>
+        : `<li class="hint" style="list-style:none;margin-left:-18px">Dans chaque course : R = régularité · V = vitesse · C = continuité. Les colonnes « Bilan » regroupent toutes les courses comptées (bouton « ✓ comptée » pour retirer une course, ex. blessure) ; chaque note finale peut être changée à la main (TB · S · F · I · /), elle est alors soulignée.</li>`}
+      <li><b>Régularité</b> (écart entre les lignes où tombent les temps de passage, 1 ligne = ${fmtNum(LINE_STEP, 1)} km/h, 1er tour non compté${s.type === 'biath' ? '' : ' ; bilan = moyenne des courses'}) : ${nt('TB')} ≤ 1 ligne · ${nt('S')} 2 lignes · ${nt('F')} 3 lignes · ${nt('I')} 4 lignes et +</li>
       <li><b>Vitesse</b> (vitesse courue par rapport à la ${s.type === 'endu3' ? 'vitesse visée (VMA ± 1)' : 'VMA'}${s.type === 'biath' ? '' : ' ; bilan = écart moyen'}) : ${nt('TB')} VMA ou + · ${nt('S')} −0,5 à −1 · ${nt('F')} −1,5 à −2,5 · ${nt('I')} au-delà de −2,5</li>
       <li><b>Continuité</b> (nombre de marches${s.type === 'biath' ? '' : ' ; bilan = total des marches de toutes les courses'}) : ${nt('TB')} aucune · ${nt('S')} 1 fois · ${nt('F')} 2 ou 3 fois · ${nt('I')} 4 fois et +</li>
     </ul>
@@ -2627,7 +2666,7 @@ const ACT = {
     const C = curClass(), s = curSession(), id = el.dataset.id, st = C.students.find(x => x.id === id);
     if (live && live.sid === s.id) { toast('Arrêtez d\'abord le chrono'); return; }
     if (!confirm(`Effacer les temps et résultats de ${st.name} ?`)) return;
-    ['laps', 'walk', 'extra', 'throws', 'final'].forEach(k => { if (s[k]) delete s[k][id]; });
+    ['laps', 'walk', 'extra', 'throws', 'final', 'skipRun', 'sumOv'].forEach(k => { if (s[k]) delete s[k][id]; });
     commit();
   },
   setRunGroup(el) { curSession().runGroup = el.dataset.v; commit(); },
@@ -2776,6 +2815,42 @@ const CHG = {
     s.extra = s.extra || {};
     const m = s.extra[id] || (s.extra[id] = {});
     if (v == null || v <= 0) delete m[r]; else m[r] = Math.round(v);
+    commit();
+  },
+  // Correction manuelle d'un temps de passage (vide = supprimer ce passage)
+  editLap(el) {
+    const C = curClass(), s = curSession(), id = el.dataset.id, r = +el.dataset.r, i = +el.dataset.i;
+    if (live && live.sid === s.id) { toast('Arrêtez d\'abord le chrono'); return; }
+    const cum = lapsOf(s, id, r); if (i >= cum.length) return;
+    const st = C.students.find(x => x.id === id);
+    const x = prompt(`${st ? st.name + ' — ' : ''}tour ${i + 1} : temps de passage (ex. 1:55)\nLaisser vide pour supprimer ce passage.`, fmtT(cum[i]));
+    if (x == null) return;
+    if (!x.trim()) {
+      if (!confirm(`Supprimer le passage du tour ${i + 1} ?`)) return;
+      cum.splice(i, 1);
+    } else {
+      const t = parseMS(x);
+      if (t == null || t <= 0) { toast('Temps non reconnu (ex. 1:55)'); return; }
+      if ((i > 0 && t <= cum[i - 1]) || (i < cum.length - 1 && t >= cum[i + 1])) { toast('Le temps doit rester entre celui du tour précédent et du tour suivant'); return; }
+      cum[i] = t;
+    }
+    commit(); toast('Temps corrigé');
+  },
+  skipRun(el) {
+    const s = curSession(), id = el.dataset.id, r = el.dataset.r;
+    s.skipRun = s.skipRun || {};
+    const m = s.skipRun[id] || (s.skipRun[id] = {});
+    if (m[r]) delete m[r]; else m[r] = true;
+    if (!Object.keys(m).length) delete s.skipRun[id];
+    commit();
+  },
+  // Note finale du bilan modifiée à la main (vide = revenir à la note proposée)
+  sumOv(el) {
+    const s = curSession(), id = el.dataset.id, k = el.dataset.k;
+    s.sumOv = s.sumOv || {};
+    const m = s.sumOv[id] || (s.sumOv[id] = {});
+    if (el.value) m[k] = el.value; else delete m[k];
+    if (!Object.keys(m).length) delete s.sumOv[id];
     commit();
   }
 };
