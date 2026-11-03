@@ -312,7 +312,7 @@ input.vin[class*="vc"]::placeholder{color:inherit;opacity:.9}
 .spl .t1{opacity:.5}
 .tbtn{border:0;background:none;padding:0 1px;font:inherit;color:inherit;cursor:pointer;border-bottom:1px dotted currentColor}
 .tbtn:hover{background:#e0e7ff;border-radius:3px}
-.rskb{margin-left:6px;border:1px solid #16a34a;background:#f0fdf4;color:#15803d;border-radius:999px;font-size:10px;font-weight:800;padding:0 6px;cursor:pointer;vertical-align:middle}
+.rskb{margin-left:6px;border:1px solid #16a34a;background:#f0fdf4;color:#15803d;border-radius:999px;font-size:12px;font-weight:900;line-height:18px;width:22px;height:20px;padding:0;cursor:pointer;vertical-align:middle}
 .rskb.off{border-color:#dc2626;background:#fef2f2;color:#b91c1c}
 .rc.rskip > :not(.rskb){opacity:.4;text-decoration:line-through}
 .vmod{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px}
@@ -1063,7 +1063,7 @@ function recapRows(C) {
 function buildSheetTables() {
   const vma = [['Classe', 'Nom Prénom', 'Sexe', 'Date', 'Groupe', 'Piste (m)', 'Palier', 'Vitesse palier (km/h)', 'Temps (s)', 'Temps', 'Distance (m)', 'VMA (km/h)', 'Retards', 'Éliminé', 'Statut']];
   const frac = [['Classe', 'Nom Prénom', 'Date', 'Rôle', 'Binôme', 'Travail (s)', 'Récup (s)', 'Répétitions', '% VMA', 'Vitesse visée (km/h)', 'VMA du test', 'Objectif (m)', 'Réussites', 'Échecs', 'Détail', 'Travail d\'observateur', 'Séries', 'Points', 'Points max', 'Note']];
-  const crs = [['Classe', 'Nom Prénom', 'Sexe', 'Date', 'Épreuve', 'Course', 'VMA (km/h)', 'Vitesse visée (km/h)', 'Distance (m)', 'Vitesse (km/h)', 'Temps de passage', 'Régularité', 'Note vitesse', 'Marches', 'Continuité', 'Temps 900 m', 'Lancers ratés', 'Temps final', 'Note temps', 'Statut']];
+  const crs = [['Classe', 'Nom Prénom', 'Sexe', 'Date', 'Épreuve', 'Course', 'VMA (km/h)', 'Vitesse visée (km/h)', 'Distance (m)', 'Vitesse (km/h)', 'Temps de passage', 'Régularité', 'Note vitesse', 'Marches', 'Continuité', 'Temps 900 m', 'Lancers ratés', 'Temps final', 'Note temps', 'Statut', 'Note observateur']];
   const syn = [['Classe', 'Nom Prénom', 'Sexe', 'VMA (km/h)', 'Date du test', 'Palier', 'Vitesse palier (km/h)', 'Temps', 'Distance (m)', 'Historique VMA', 'Réussite fractionné (%)']];
   state.classOrder.forEach(cn => {
     const C = state.classes[cn]; if (!C) return;
@@ -1093,7 +1093,7 @@ function buildSheetTables() {
           // Ligne « Bilan » : notes finales (proposées ou modifiées à la main), courses non comptées exclues
           if (s.type !== 'biath') {
             const S = lapSummary(runs.map((_, r) => runSkipped(s, st.id, r) ? null : lapEval(C, s, st.id, r)));
-            if (S) crs.push([cn, st.name, st.sexe, fmtDate(s.date), name, 'Bilan', '', '', '', '', '', finalNote(s, st.id, 'r', S.rg) || '', finalNote(s, st.id, 'v', S.vg) || '', S.walks, finalNote(s, st.id, 'c', S.cg) || '', '', '', '', '', '']);
+            if (S) crs.push([cn, st.name, st.sexe, fmtDate(s.date), name, 'Bilan', '', '', '', '', '', finalNote(s, st.id, 'r', S.rg) || '', finalNote(s, st.id, 'v', S.vg) || '', S.walks, finalNote(s, st.id, 'c', S.cg) || '', '', '', '', '', '', obsGrade(s, st.id)]);
           }
         });
       } else {
@@ -1113,6 +1113,7 @@ function buildSheetTables() {
     });
     recapRows(C).forEach(({ st, L, F, hist }) => syn.push([cn, st.name, st.sexe, L ? L.vma : '', L ? fmtDate(L.date) : '', L && L.p != null ? L.p : '', L && L.v != null ? L.v : '', L && L.t != null ? fmtT(L.t) : '', L && L.d != null ? L.d : '', hist.map(fmtVMA).join(' → '), F.pct == null ? '' : F.pct]));
   });
+  crs.forEach(row => { while (row.length < crs[0].length) row.push(''); });
   return { 'Résultats VMA': vma, 'Résultats Fractionné': frac, 'Résultats Courses': crs, 'Synthèse classes': syn };
 }
 function exportXLSX(filename, sheets) {
@@ -1961,12 +1962,13 @@ function lapSection(C, s, rows) {
       const skip = i => runSkipped(s, st.id, i);
       return { cells: [
         cell(st.name, `<b>${esc(st.name)}</b>`), cell(st.sexe), cell(v, v != null ? fmtVMA(v) : '—'),
-        ...evs.map((ev, i) => cell(ev ? ev.dist : null, ev ? `<div class="rc ${skip(i) ? 'rskip' : ''}"><span><b>${ev.dist} m</b> · ${fmtNum(ev.speed, 1)} km/h</span><button class="rskb ${skip(i) ? 'off' : ''}" data-act="skipRun" data-id="${st.id}" data-r="${i}" title="${skip(i) ? 'Course non comptée dans le bilan (blessure…) — toucher pour la recompter' : 'Course comptée dans le bilan — toucher pour ne pas la compter (blessure…)'}">${skip(i) ? '✗ non comptée' : '✓ comptée'}</button><div>${nt(ev.reg && ev.reg.g, 'R', 'Régularité')}${nt(ev.vg, 'V', 'Vitesse / VMA visée')}${nt(ev.cont, 'C', 'Continuité (' + ev.walk + ' marche(s))')}</div><div class="spl">${passTxt(ev.cum, L, st.id, i)}</div></div>` : '—')),
+        ...evs.map((ev, i) => cell(ev ? ev.dist : null, ev ? `<div class="rc ${skip(i) ? 'rskip' : ''}"><span><b>${ev.dist} m</b> · ${fmtNum(ev.speed, 1)} km/h</span><button class="rskb ${skip(i) ? 'off' : ''}" data-act="skipRun" data-id="${st.id}" data-r="${i}" title="${skip(i) ? 'Course non comptée dans le bilan (blessure…) — toucher pour la recompter' : 'Course comptée dans le bilan — toucher pour ne pas la compter (blessure…)'}">${skip(i) ? '✗' : '✓'}</button><div>${nt(ev.reg && ev.reg.g, 'R', 'Régularité')}${nt(ev.vg, 'V', 'Vitesse / VMA visée')}${nt(ev.cont, 'C', 'Continuité (' + ev.walk + ' marche(s))')}</div><div class="spl">${passTxt(ev.cum, L, st.id, i)}</div></div>` : '—')),
         ...lapSummaryCells(evs.map((ev, i) => skip(i) ? null : ev), s, st.id),
+        cell(['TB', 'S', 'F', 'I'].indexOf(obsGrade(s, st.id)), `<button class="nt nt-${obsGrade(s, st.id)} ntsel" data-act="obsToggle" data-id="${st.id}" title="Travail d'observateur — toucher pour changer : TB → S → F → I">${obsGrade(s, st.id)}</button>`, 'c'),
         cell('', evs.some(Boolean) ? `<button class="btn sm danger" data-act="lapClear" data-id="${st.id}" title="Effacer">🗑</button>` : '')
       ] };
-    }).concat(statused.map(st => ({ cells: [cell(st.name, `<b>${esc(st.name)}</b>`), cell(st.sexe), cell(null, `<b>${s.status[st.id]}</b>`), ...runs.map(() => cell(null, '')), cell(null, ''), cell(null, ''), cell(null, ''), cell(null, '')] })));
-    table = sortTable('lap-' + s.id, ['Nom Prénom', 'Sexe', 'VMA', ...runs.map(x => x.label), { t: 'Bilan vitesse', cls: 'c sumh' }, { t: 'Bilan régularité', cls: 'c sumh' }, { t: 'Bilan continuité', cls: 'c sumh' }, { t: '', nosort: true }], rws);
+    }).concat(statused.map(st => ({ cells: [cell(st.name, `<b>${esc(st.name)}</b>`), cell(st.sexe), cell(null, `<b>${s.status[st.id]}</b>`), ...runs.map(() => cell(null, '')), cell(null, ''), cell(null, ''), cell(null, ''), cell(null, ''), cell(null, '')] })));
+    table = sortTable('lap-' + s.id, ['Nom Prénom', 'Sexe', 'VMA', ...runs.map(x => x.label), { t: 'Bilan vitesse', cls: 'c sumh' }, { t: 'Bilan régularité', cls: 'c sumh' }, { t: 'Bilan continuité', cls: 'c sumh' }, { t: 'Bilan observateur', cls: 'c sumh' }, { t: '', nosort: true }], rws);
   }
 
   return `
@@ -1987,7 +1989,7 @@ function lapSection(C, s, rows) {
     <ul class="bareme">
       ${s.type === 'biath'
         ? `<li><b>Temps final</b> — filles : TB ≤ 5'20 · S ≤ 6'40 · F ≤ 8'20 · I au-delà ; garçons : TB ≤ 5'00 · S ≤ 6'20 · F ≤ 8'00 · I au-delà</li>`
-        : `<li class="hint" style="list-style:none;margin-left:-18px">Dans chaque course : R = régularité · V = vitesse · C = continuité. Les colonnes « Bilan » regroupent toutes les courses comptées (bouton « ✓ comptée » pour retirer une course, ex. blessure) ; chaque note finale peut être changée à la main (TB · S · F · I · /), elle est alors soulignée.</li>`}
+        : `<li class="hint" style="list-style:none;margin-left:-18px">Dans chaque course : R = régularité · V = vitesse · C = continuité. Les colonnes « Bilan » regroupent toutes les courses comptées (toucher ✓ pour retirer une course, ex. blessure : elle passe à ✗) ; chaque note finale peut être changée à la main (TB · S · F · I · /), elle est alors soulignée.</li>`}
       <li><b>Régularité</b> (écart entre les lignes où tombent les temps de passage, 1 ligne = ${fmtNum(LINE_STEP, 1)} km/h, 1er tour non compté${s.type === 'biath' ? '' : ' ; bilan = moyenne des courses'}) : ${nt('TB')} ≤ 1 ligne · ${nt('S')} 2 lignes · ${nt('F')} 3 lignes · ${nt('I')} 4 lignes et +</li>
       <li><b>Vitesse</b> (vitesse courue par rapport à la ${s.type === 'endu3' ? 'vitesse visée (VMA ± 1)' : 'VMA'}${s.type === 'biath' ? '' : ' ; bilan = écart moyen'}) : ${nt('TB')} VMA ou + · ${nt('S')} −0,5 à −1 · ${nt('F')} −1,5 à −2,5 · ${nt('I')} au-delà de −2,5</li>
       <li><b>Continuité</b> (nombre de marches${s.type === 'biath' ? '' : ' ; bilan = total des marches de toutes les courses'}) : ${nt('TB')} aucune · ${nt('S')} 1 fois · ${nt('F')} 2 ou 3 fois · ${nt('I')} 4 fois et +</li>
@@ -2817,6 +2819,17 @@ const CHG = {
     if (v == null || v <= 0) delete m[r]; else m[r] = Math.round(v);
     commit();
   },
+  // Note finale du bilan modifiée à la main (vide = revenir à la note proposée)
+  sumOv(el) {
+    const s = curSession(), id = el.dataset.id, k = el.dataset.k;
+    s.sumOv = s.sumOv || {};
+    const m = s.sumOv[id] || (s.sumOv[id] = {});
+    if (el.value) m[k] = el.value; else delete m[k];
+    if (!Object.keys(m).length) delete s.sumOv[id];
+    commit();
+  }
+};
+const ACT_LAP = {
   // Correction manuelle d'un temps de passage (vide = supprimer ce passage)
   editLap(el) {
     const C = curClass(), s = curSession(), id = el.dataset.id, r = +el.dataset.r, i = +el.dataset.i;
@@ -2836,6 +2849,7 @@ const CHG = {
     }
     commit(); toast('Temps corrigé');
   },
+  // Course comptée / non comptée dans le bilan (blessure…)
   skipRun(el) {
     const s = curSession(), id = el.dataset.id, r = el.dataset.r;
     s.skipRun = s.skipRun || {};
@@ -2843,17 +2857,9 @@ const CHG = {
     if (m[r]) delete m[r]; else m[r] = true;
     if (!Object.keys(m).length) delete s.skipRun[id];
     commit();
-  },
-  // Note finale du bilan modifiée à la main (vide = revenir à la note proposée)
-  sumOv(el) {
-    const s = curSession(), id = el.dataset.id, k = el.dataset.k;
-    s.sumOv = s.sumOv || {};
-    const m = s.sumOv[id] || (s.sumOv[id] = {});
-    if (el.value) m[k] = el.value; else delete m[k];
-    if (!Object.keys(m).length) delete s.sumOv[id];
-    commit();
   }
 };
+Object.assign(ACT, ACT_LAP);
 
 document.addEventListener('click', e => {
   const el = e.target.closest('[data-act]');
