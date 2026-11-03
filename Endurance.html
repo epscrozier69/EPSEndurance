@@ -942,11 +942,12 @@ class Timeline {
   constructor(events, o) {
     this.events = events.slice().sort((a, b) => a.t - b.t);
     this.lead = o.lead || 5; this.end = o.end; this.onTick = o.onTick; this.onEnd = o.onEnd;
+    this.from = o.from || 0;   // départ en cours de séance (reprise d'une répétition) : le chrono démarre à « from »
     this.paused = false; this.done = false; this.gen = 0;
   }
   start() {
     Snd.init(); if (!Snd.ready) return;
-    this.base = Snd.now() + this.lead;
+    this.base = Snd.now() + this.lead - this.from;
     this.h = Snd.handle();
     this.timer = setInterval(() => this.loop(), 80);
     this.loop();
@@ -1172,7 +1173,12 @@ function render() {
   if (ui.tab !== 'general' && !state.classes[ui.tab]) ui.tab = 'general';
   $('#tabs').innerHTML = `<button class="${ui.tab === 'general' ? 'on' : ''}" data-act="tab" data-id="general">⚙️ Général</button>` +
     state.classOrder.filter(c => state.classes[c]).map(c => `<button class="${ui.tab === c ? 'on' : ''}" data-act="tab" data-id="${esc(c)}">${esc(c)}<span class="n">${state.classes[c].students.length}</span></button>`).join('');
+  // On garde la position de défilement de la page et de chaque tableau (pas de saut après une modification)
+  const vk = ui.tab + '|' + (state.classes[ui.tab] ? clsUI(ui.tab).sid : ''), same = render.view === vk; render.view = vk;
+  const tws = same ? [...document.querySelectorAll('#app .tw')].map(x => [x.scrollLeft, x.scrollTop]) : [], wx = window.scrollX, wy = window.scrollY;
   $('#app').innerHTML = ui.tab === 'general' ? viewGeneral() : viewClass(state.classes[ui.tab]);
+  document.querySelectorAll('#app .tw').forEach((x, i) => { if (tws[i]) { x.scrollLeft = tws[i][0]; x.scrollTop = tws[i][1]; } });
+  window.scrollTo(wx, wy);
   if (live && live.tl) live.tl.onTick(live.tl.elapsed());
 }
 
@@ -1769,7 +1775,10 @@ function lapEval(C, s, id, r) {
   } else {
     res.extra = sub(s.extra, id, r) || 0;
     res.dist = cum.length * L + res.extra;
-    res.speed = res.dist / run.dur * 3.6;
+    // Vitesse calculée sur les tours complets (temps du dernier passage), pour ne pas pénaliser
+    // le dernier tour inachevé ; si la distance totale ÷ durée donne mieux, on la garde
+    const full = cum.length ? cum.length * L / cum[cum.length - 1] * 3.6 : 0;
+    res.speed = Math.max(full, res.dist / run.dur * 3.6);
     res.reg = regGrade(cum, L);
   }
   res.target = vma == null ? null : vma + run.delta;
@@ -1782,12 +1791,16 @@ function lapNow() {
   const { s } = currentVMASession(); if (!s) return null;
   const e = live.tl.elapsed();
   if (live.mode === 'reps') {
-    const W = s.work, cyc = W + s.rest, i = Math.floor(Math.max(0, e) / cyc), w = e - i * cyc;
+    const W = s.work, cyc = W + s.rest, f0 = live.from || 0;
+    if (e < f0) return { r: live.rep0 || 0, t: e - f0, running: false };
+    const i = Math.floor(Math.max(0, e) / cyc), w = e - i * cyc;
     return { r: Math.min(i, s.reps - 1), t: w, running: e >= 0 && i < s.reps && w < W };
   }
   if (live.mode === 'single') return { r: live.run, t: e, running: e >= 0 && e < lapRuns(s)[live.run].dur };
   return { r: 0, t: e, running: e >= 0 };
 }
+// Fractionné au tour remis à 0 : répétition à relancer pour le groupe en course
+const resumeOf = s => s.type === 'frac' && s.lapResume && s.lapResume.g === (s.runGroup || 'A') && s.lapResume.r < s.reps ? s.lapResume : null;
 function lapEvents(s, mode, run) {
   if (mode === 'reps') return fracEvents(s);
   const ev = [{ t: -3, snd: 'beep' }, { t: -2, snd: 'beep' }, { t: -1, snd: 'beep' }, { t: 0, snd: mode === 'open' ? 'long' : 'bip' }];
@@ -1805,7 +1818,8 @@ function lapTick(e) {
     g('lv-bar').style.width = Math.max(0, Math.min(100, pct)) + '%';
     box.className = 'live compact ' + cls;
   };
-  if (e < 0) return set('PRÊTS', '', e > -3.5 ? String(Math.ceil(-e)) : '…', 0, '');
+  const f0 = live.from || 0;
+  if (e < f0) return set('PRÊTS', f0 ? 'Répétition ' + (live.rep0 + 1) + ' / ' + s.reps : '', e > f0 - 3.5 ? String(Math.ceil(f0 - e)) : '…', 0, '');
   if (live.mode === 'open') return set('COURSE', 'Temps écoulé', fmtT(Math.floor(e)), 0, 'work');
   if (live.mode === 'single') {
     const run = lapRuns(s)[live.run];
@@ -1823,7 +1837,7 @@ function viewLapLive(s) {
   return `<div class="live compact" id="live">
     <div class="lc-time" id="lv-time">—</div>
     <div class="lc-info"><div class="phase" id="lv-phase">PRÊTS</div><div id="lv-rep"></div>${timed ? `<div>Temps à réaliser : <b>${fmtDur(dur)}</b></div>` : ''}</div>
-    <div class="liveact">${timed ? '<button class="btn" data-act="fracPause" id="lv-pause">⏸ Pause</button>' : ''}<button class="btn danger" data-act="lapStop">■ ${timed ? 'Arrêter' : 'Terminer'}</button></div>
+    <div class="liveact">${timed ? '<button class="btn" data-act="fracPause" id="lv-pause">⏸ Pause</button>' : ''}${live.mode === 'reps' ? '<button class="btn" data-act="lapReset" title="Effacer la répétition en cours ; vous la relancerez à la main après la récupération">↺ Remettre à 0</button>' : ''}<button class="btn danger" data-act="lapStop">■ ${timed ? 'Arrêter' : 'Terminer'}</button></div>
     <div class="bar lc-bar"><i id="lv-bar"></i></div>
   </div>`;
 }
@@ -1977,7 +1991,8 @@ function lapSection(C, s, rows) {
       <div class="row" style="margin:0">${['A', 'B'].map(g => `<button class="btn sm" data-act="printLap" data-v="${g}" ${s.order[g].length ? '' : 'disabled'}>🖨 Fiches coureurs ${g}</button>`).join('')}<button class="btn sm" data-act="printLap" data-v="">🖨 Fiche vierge</button></div></div>
     <div class="row"><b>Groupe qui court :</b><div class="seg lg">${['A', 'B'].map(v => `<button class="${runG === v ? 'on ' + v : ''}" data-act="setRunGroup" data-v="${v}" ${mine ? 'disabled' : ''}>Groupe ${v}</button>`).join('')}</div></div>
     ${runSel}
-    ${mine ? viewLapLive(s) : `<div class="row"><button class="btn go big" data-act="lapGo" ${live ? 'disabled' : ''}>${goLabel}</button><button class="btn" data-act="testSound">🔊 Tester le son</button></div>
+    ${mine ? viewLapLive(s) : resumeOf(s) ? `<div class="row"><button class="btn go big" data-act="lapGo" ${live ? 'disabled' : ''}>▶ Relancer la répétition ${resumeOf(s).r + 1} / ${s.reps} — groupe ${runG}</button><button class="btn" data-act="lapResumeCancel" title="Oublier la reprise : le prochain lancement repartira de la répétition 1">Recommencer à la répétition 1</button><button class="btn" data-act="testSound">🔊 Tester le son</button></div>
+    <p class="hint">Chrono remis à 0 : relancez quand la récupération est terminée. Les répétitions déjà courues sont conservées.</p>` : `<div class="row"><button class="btn go big" data-act="lapGo" ${live ? 'disabled' : ''}>${goLabel}</button><button class="btn" data-act="testSound">🔊 Tester le son</button></div>
       ${live ? '<p class="hint">Un chrono est déjà en cours dans une autre séance.</p>' : ''}`}
     <p class="hint">${help} 🚶 : l'élève a marché. ↺ : annuler le dernier enregistrement. 👁 Observateur (touchez pour changer) : vert fluo TB → vert S → orange F → rouge I.</p>
     ${units.length ? `<div class="vcards">${units.map(card).join('')}</div>` : '<div class="empty">Aucun élève dans ce groupe.</div>'}
@@ -2267,7 +2282,7 @@ function viewFracLive(s) {
   return `<div class="live compact" id="live">
     <div class="lc-time" id="lv-time">—</div>
     <div class="lc-info"><div class="phase" id="lv-phase">PRÊTS</div><div id="lv-rep"></div><div>Temps à réaliser : <b>${fmtDur(s.work)}</b></div></div>
-    <div class="liveact"><button class="btn" data-act="fracPause" id="lv-pause">⏸ Pause</button><button class="btn danger" data-act="fracStop">■ Arrêter</button></div>
+    <div class="liveact"><button class="btn" data-act="fracPause" id="lv-pause">⏸ Pause</button><button class="btn" data-act="fracReset" title="Remettre le chrono à 0 ; vous relancerez ce passage à la main">↺ Remettre à 0</button><button class="btn danger" data-act="fracStop">■ Arrêter</button></div>
     <div class="bar lc-bar"><i id="lv-bar"></i></div>
   </div>`;
 }
@@ -2595,6 +2610,19 @@ const ACT = {
     const run = s.type === 'endu3' ? (s.viewRun || 0) : 0, g = s.runGroup || 'A';
     const runners = s.order[g].slice();
     if (!runners.length) { toast('Aucun élève dans le groupe ' + g); return; }
+    // Reprise après une remise à 0 : on repart de la répétition interrompue, sans rien effacer d'autre
+    const R = resumeOf(s);
+    if (R) {
+      delete s.lapResume; commit({ render: false });
+      const cyc = s.work + s.rest, from = R.r * cyc;
+      live = { kind: 'lap', cls: C.name, sid: s.id, mode, run, runners, tl: null, from, rep0: R.r };
+      const ev = fracEvents(s).filter(x => x.t >= from).concat([{ t: from - 3, snd: 'beep' }, { t: from - 2, snd: 'beep' }, { t: from - 1, snd: 'beep' }]);
+      live.tl = new Timeline(ev, { lead: 6, from, end: fracEnd(s), onTick: lapTick, onEnd: () => {
+        live = null; keepAwake(false); render(); toast('🏁 Temps écoulé : saisissez les distances supplémentaires (+ m)', 5000);
+      } });
+      live.tl.start(); keepAwake(true); render();
+      return;
+    }
     const used = runners.filter(id => lapsOf(s, id, run).length || (s.type === 'biath' && (s.final || {})[id] != null));
     if (used.length && !confirm(`${used.length} élève(s) du groupe ${g} ont déjà des temps pour cette course. Les effacer et recommencer ?`)) return;
     used.forEach(id => {
@@ -2604,6 +2632,7 @@ const ACT = {
       if (s.final) delete s.final[id];
       if (s.throws) delete s.throws[id];
     });
+    delete s.lapResume;
     commit({ render: false });
     live = { kind: 'lap', cls: C.name, sid: s.id, mode, run, runners, tl: null };
     const end = mode === 'reps' ? fracEnd(s) : mode === 'single' ? lapRuns(s)[run].dur + 2 : null;
@@ -2756,7 +2785,28 @@ const ACT = {
   fracStop() {
     if (!confirm('Arrêter le chrono ?')) return;
     live.tl.stop(); live = null; keepAwake(false); render();
-  }
+  },
+  /* --- Remise à 0 du chrono en cours : on arrête et on relance le même départ --- */
+  // Fractionné en binômes : chrono remis à 0, le même passage se relance à la main
+  fracReset() {
+    if (!live || !live.tl || !confirm('Remettre le chrono à 0 ?\nVous relancerez ce passage à la main, après la récupération.')) return;
+    live.tl.stop(); live = null; keepAwake(false); render();
+    toast('Chrono remis à 0 — relancez quand la récupération est terminée', 4000);
+  },
+  // Fractionné au tour : la répétition en cours est effacée et sera relancée à la main
+  lapReset() {
+    if (!live || !live.tl || live.mode !== 'reps') return;
+    const s = curSession(), now = lapNow();
+    // pendant une récupération, la répétition déjà courue est gardée : on reprendra à la suivante
+    const inRest = now && !now.running && now.t >= s.work, r = now ? Math.min(now.r + (inRest ? 1 : 0), s.reps - 1) : 0;
+    if (!confirm(`Remettre le chrono à 0 ?\n${inRest ? '' : `Les tours de la répétition ${r + 1} seront effacés. `}Vous relancerez la répétition ${r + 1} à la main, après la récupération.`)) return;
+    live.runners.forEach(id => ['laps', 'walk', 'extra'].forEach(k => { if (s[k] && s[k][id]) delete s[k][id][r]; }));
+    live.tl.stop(); live = null; keepAwake(false);
+    s.lapResume = { g: s.runGroup || 'A', r };
+    commit();
+    toast(`Chrono remis à 0 — relancez la répétition ${r + 1} quand la récupération est terminée`, 5000);
+  },
+  lapResumeCancel() { delete curSession().lapResume; commit(); }
 };
 
 const CHG = {
