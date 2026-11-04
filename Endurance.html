@@ -293,8 +293,7 @@ table.ct.fit{table-layout:fixed}
 .thr.y{background:#2563eb}.thr.n{background:#e11d48}
 .nt{display:inline-block;border-radius:6px;padding:1px 6px;font-size:11px;font-weight:900;color:#fff;margin:1px 2px 1px 0;white-space:nowrap}
 .nt-TB{background:#39ff14;color:#0b3d02}.nt-S{background:#16a34a}.nt-F{background:#f97316}.nt-I{background:#dc2626}.nt-0{background:#cbd5e1;color:#475467}
-.ntk{display:inline-block;min-width:20px;text-align:center;font-size:17px;font-weight:900;line-height:1.25}
-.nk-TB{color:#39ff14;-webkit-text-stroke:.5px #0b3d02}.nk-S{color:#16a34a}.nk-F{color:#f97316}.nk-I{color:#dc2626}.nk-0{color:#98a2b3}
+.ntk{min-width:24px;padding:3px 6px;font-size:13px;line-height:1.2;text-align:center}
 .rc{font-size:13px;white-space:normal;min-width:140px}
 .spl{font-size:11px;color:#475467;white-space:normal}
 .ser{font-size:10px;font-weight:900;color:#667085;align-self:center;margin:0 2px 0 4px}
@@ -1788,8 +1787,8 @@ function timeGrade(t, sexe) {
   const b = BIATH_BAREME[sexe === 'F' ? 'F' : 'G'], x = Math.floor(t);
   return x <= b[0] ? 'TB' : x <= b[1] ? 'S' : x <= b[2] ? 'F' : 'I';
 }
-// Note d'une compétence dans une course : la lettre V, R ou C prend la couleur de la note
-const ntk = (g, k, title) => `<span class="ntk nk-${g || '0'}" title="${esc(title)} : ${g || '—'}">${k}</span>`;
+// Note d'une compétence dans une course : lettre V, R ou C dans un cadre à la couleur de la note, comme les bilans
+const ntk = (g, k, title) => `<span class="nt nt-${g || '0'} ntk" title="${esc(title)} : ${g || '—'}">${k}</span>`;
 const nt = (g, letter, title) => `<span class="nt nt-${g || '0'}" title="${esc(title)}">${letter ? letter + ' ' : ''}${g || '—'}</span>`;
 
 /* ----- Courses chronométrées au tour ----- */
@@ -2045,7 +2044,7 @@ function lapSection(C, s, rows) {
     <ul class="bareme">
       ${s.type === 'biath'
         ? `<li><b>Temps final</b> — filles : TB ≤ 5'20 · S ≤ 6'40 · F ≤ 8'20 · I au-delà ; garçons : TB ≤ 5'00 · S ≤ 6'20 · F ≤ 8'00 · I au-delà</li>`
-        : `<li class="hint" style="list-style:none;margin-left:-18px">Dans chaque course : V = vitesse · R = régularité · C = continuité ; la couleur de la lettre donne la note (vert fluo TB · vert S · orange F · rouge I). Les colonnes « Bilan » regroupent toutes les courses comptées (toucher ✓ pour retirer une course, ex. blessure : elle passe à ✗) ; chaque note finale peut être changée à la main (TB · S · F · I · /), elle est alors soulignée.</li>`}
+        : `<li class="hint" style="list-style:none;margin-left:-18px">Dans chaque course : V = vitesse · R = régularité · C = continuité ; la couleur du cadre donne la note (vert fluo TB · vert S · orange F · rouge I). Les colonnes « Bilan » regroupent toutes les courses comptées (toucher ✓ pour retirer une course, ex. blessure : elle passe à ✗) ; chaque note finale peut être changée à la main (TB · S · F · I · /), elle est alors soulignée.</li>`}
       <li><b>Régularité</b> (écart entre les lignes où tombent les temps de passage, 1 ligne = ${fmtNum(LINE_STEP, 1)} km/h, 1er tour non compté${s.type === 'biath' ? '' : ' ; bilan = moyenne des courses'}) : ${nt('TB')} ≤ 1 ligne · ${nt('S')} 2 lignes · ${nt('F')} 3 lignes · ${nt('I')} 4 lignes et +</li>
       <li><b>Vitesse</b> (vitesse courue par rapport à la ${s.type === 'endu3' ? 'vitesse visée (VMA ± 1)' : 'VMA'}${s.type === 'biath' ? '' : ' ; bilan = écart moyen'}) : ${nt('TB')} VMA ou + · ${nt('S')} −0,5 à −1 · ${nt('F')} −1,5 à −2,5 · ${nt('I')} au-delà de −2,5</li>
       <li><b>Continuité</b> (nombre de marches${s.type === 'biath' ? '' : ' ; bilan = total des marches de toutes les courses'}) : ${nt('TB')} aucune · ${nt('S')} 1 fois · ${nt('F')} 2 ou 3 fois · ${nt('I')} 4 fois et +</li>
