@@ -1811,9 +1811,9 @@ function lapTrend(cum, L) {
   const b = sp.reduce((a, v, i) => a + (i - mx) * (v - my), 0) / sp.reduce((a, _, i) => a + (i - mx) ** 2, 0);
   const y0 = my - b * mx, y1 = my + b * mx, gain = y1 - y0;
   const dir = gain >= LINE_STEP ? '↗ accélère' : gain <= -LINE_STEP ? '↘ ralentit' : '→ stable';
-  // Échelle d'au moins 2 km/h : une petite variation reste une courbe presque plate
+  // Échelle d'au moins 4 km/h : une petite variation reste presque plate, et les courbes se comparent d'un élève à l'autre
   let lo = Math.min(...sp, y0, y1), hi = Math.max(...sp, y0, y1);
-  if (hi - lo < 2) { const m = (hi + lo) / 2; lo = m - 1; hi = m + 1; }
+  if (hi - lo < 4) { const m = (hi + lo) / 2; lo = m - 2; hi = m + 2; }
   const W = 92, H = 26, P = 3, X = i => (P + i * (W - 2 * P) / (n - 1)).toFixed(1), Y = v => (H - P - (v - lo) / (hi - lo) * (H - 2 * P)).toFixed(1);
   const kmh = v => fmtNum(Math.round(v * 10) / 10, 1);
   return `<div class="trd" title="Vitesse à chaque tour (1er tour non compté) : ${sp.map(kmh).join(' · ')} km/h"><svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true"><line x1="${X(0)}" y1="${Y(y0)}" x2="${X(n - 1)}" y2="${Y(y1)}" stroke="#98a2b3" stroke-width="1.5" stroke-dasharray="3 3"/><polyline points="${sp.map((v, i) => X(i) + ',' + Y(v)).join(' ')}" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg><span>${dir}</span></div>`;
@@ -2067,7 +2067,7 @@ function lapSection(C, s, rows) {
       <li><b>Vitesse</b> (vitesse courue par rapport à la ${s.type === 'endu3' ? 'vitesse visée (VMA ± 1)' : 'VMA'}${s.type === 'biath' ? '' : ' ; bilan = écart moyen'}) : ${nt('TB')} VMA ou + · ${nt('S')} −0,5 à −1 · ${nt('F')} −1,5 à −2,5 · ${nt('I')} au-delà de −2,5</li>
       <li><b>Régularité</b> (écart entre les lignes où tombent les temps de passage, 1 ligne = ${fmtNum(LINE_STEP, 1)} km/h, 1er tour non compté${s.type === 'biath' ? '' : ' ; bilan = moyenne des courses'}) : ${nt('TB')} ≤ 1 ligne · ${nt('S')} 2 lignes · ${nt('F')} 3 lignes · ${nt('I')} 4 lignes et +</li>
       <li><b>Continuité</b> (nombre de marches${s.type === 'biath' ? '' : ' ; bilan = total des marches de toutes les courses'}) : ${nt('TB')} aucune · ${nt('S')} 1 fois · ${nt('F')} 2 ou 3 fois · ${nt('I')} 4 fois et +</li>
-      <li><b>Tendance</b> (courbe de la vitesse à chaque tour, 1er tour non compté ; en pointillé, la tendance) : ↗ accélère ou ↘ ralentit si l'écart atteint 0,5 km/h sur la course, sinon → stable</li>
+      <li><b>Courbe</b> (vitesse à chaque tour, 1er tour non compté ; en pointillé, la tendance) : plate = allure régulière, en dents de scie = allure irrégulière · ↗ accélère ou ↘ ralentit si l'écart atteint 0,5 km/h sur la course, sinon → stable</li>
     </ul>
     <div class="lapres resfix">${table}</div>
   </section>`;
