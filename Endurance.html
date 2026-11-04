@@ -321,8 +321,10 @@ input.vin[class*="vc"]::placeholder{color:inherit;opacity:.9}
 .tbtn:hover{background:#e0e7ff;border-radius:3px}
 .tadd{border:1px dashed #98a2b3;background:#fff;color:#475467;border-radius:6px;min-width:24px;height:20px;margin-left:4px;padding:0 5px;font:inherit;font-weight:700;line-height:1;cursor:pointer}
 .tadd:hover{background:#e0e7ff}
-.trd{display:flex;align-items:center;gap:5px;margin-top:3px;font-size:10.5px;font-weight:700;color:#475467;white-space:nowrap}
-.trd svg{display:block;flex:0 0 auto}
+.spw{display:inline-flex;align-items:flex-start}
+.pgr{display:inline-grid;grid-template-columns:repeat(var(--n),1fr);justify-items:center}
+.pgr>.tbtn,.pgr>span{margin:0 3px;white-space:nowrap}
+.pcv{grid-column:1/-1;display:block;width:0;min-width:100%;margin-top:2px}
 .rskb{margin-left:6px;border:1px solid #16a34a;background:#f0fdf4;color:#15803d;border-radius:999px;font-size:12px;font-weight:900;line-height:18px;width:22px;height:20px;padding:0;cursor:pointer;vertical-align:middle}
 .rskb.off{border-color:#dc2626;background:#fef2f2;color:#b91c1c}
 .rc.rskip > :not(.rskb){opacity:.4;text-decoration:line-through}
@@ -1764,12 +1766,17 @@ function regGrade(cum, L) {
 // Temps de passage avec la ligne correspondante, ex. « 0:30 (12) »
 // Temps de passage : seuls les temps sont affichés ; avec id, chaque temps se touche pour être corrigé
 // max : nombre de tours au-delà duquel on ne propose plus d'ajouter un temps
-const passTxt = (cum, L, id, r, max) => cum.map((t, i) => {
-  const tip = `Tour ${i + 1} — ligne ${fmtVMA(lineOf(i + 1, L, t))} km/h${i ? '' : ' — 1er tour non compté dans la régularité'}`;
-  return id != null
-    ? `<button class="tbtn ${i ? '' : 't1'}" data-act="editLap" data-id="${id}" data-r="${r}" data-i="${i}" title="${tip} — toucher pour corriger">${fmtT(t)}</button>`
-    : `<span class="${i ? '' : 't1'}" title="${tip}">${fmtT(t)}</span>`;
-}).join(' · ') + (id != null && !(cum.length >= max) ? `<button class="tadd" data-act="addLap" data-id="${id}" data-r="${r}" title="Ajouter un temps de passage oublié">+</button>` : '');
+const passTxt = (cum, L, id, r, max) => {
+  const add = id != null && !(cum.length >= max) ? `<button class="tadd" data-act="addLap" data-id="${id}" data-r="${r}" title="Ajouter un temps de passage oublié">+</button>` : '';
+  if (!cum.length) return add;
+  const times = cum.map((t, i) => {
+    const tip = `Tour ${i + 1} — ligne ${fmtVMA(lineOf(i + 1, L, t))} km/h${i ? '' : ' — 1er tour non compté dans la régularité'}`;
+    return id != null
+      ? `<button class="tbtn ${i ? '' : 't1'}" data-act="editLap" data-id="${id}" data-r="${r}" data-i="${i}" title="${tip} — toucher pour corriger">${fmtT(t)}</button>`
+      : `<span class="${i ? '' : 't1'}" title="${tip}">${fmtT(t)}</span>`;
+  }).join('');
+  return `<div class="spw"><div class="pgr" style="--n:${cum.length}">${times}${lapCurve(cum, L)}</div>${add}</div>`;
+};
 // Lecture d'un temps saisi : « 1:55 », « 1'55 », « 1 55 » ou en secondes « 115 »
 function parseMS(x) {
   const m = String(x || '').trim().replace(/[''"]+$/, '').match(/^(\d+)\s*(?:[:'’h.,\s]\s*(\d{1,2}))?$/);
@@ -1803,20 +1810,19 @@ function lapRuns(s) {
 const lapLen = s => s.type === 'biath' ? BIATH_LAP : ([100, 150].includes(s.lapLen) ? s.lapLen : 100);   // piste de 100 m ou 150 m
 const lapsOf = (s, id, r) => ((s.laps || {})[id] || {})[r] || [];
 const splitsOf = cum => cum.map((t, i) => t - (i ? cum[i - 1] : 0));
-// Tendance d'une course : vitesse à chaque tour (1er tour non compté, comme la régularité) et droite de tendance
-function lapTrend(cum, L) {
-  const sp = splitsOf(cum).slice(1).map(d => d > 0 ? L / d * 3.6 : null);
-  if (sp.length < 2 || sp.some(v => v == null)) return '';
-  const n = sp.length, mx = (n - 1) / 2, my = sp.reduce((a, v) => a + v, 0) / n;
-  const b = sp.reduce((a, v, i) => a + (i - mx) * (v - my), 0) / sp.reduce((a, _, i) => a + (i - mx) ** 2, 0);
-  const y0 = my - b * mx, y1 = my + b * mx, gain = y1 - y0;
-  const dir = gain >= LINE_STEP ? '↗ accélère' : gain <= -LINE_STEP ? '↘ ralentit' : '→ stable';
-  // Échelle d'au moins 4 km/h : une petite variation reste presque plate, et les courbes se comparent d'un élève à l'autre
-  let lo = Math.min(...sp, y0, y1), hi = Math.max(...sp, y0, y1);
-  if (hi - lo < 4) { const m = (hi + lo) / 2; lo = m - 2; hi = m + 2; }
-  const W = 92, H = 26, P = 3, X = i => (P + i * (W - 2 * P) / (n - 1)).toFixed(1), Y = v => (H - P - (v - lo) / (hi - lo) * (H - 2 * P)).toFixed(1);
-  const kmh = v => fmtNum(Math.round(v * 10) / 10, 1);
-  return `<div class="trd" title="Vitesse à chaque tour (1er tour non compté) : ${sp.map(kmh).join(' · ')} km/h"><svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true"><line x1="${X(0)}" y1="${Y(y0)}" x2="${X(n - 1)}" y2="${Y(y1)}" stroke="#98a2b3" stroke-width="1.5" stroke-dasharray="3 3"/><polyline points="${sp.map((v, i) => X(i) + ',' + Y(v)).join(' ')}" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg><span>${dir}</span></div>`;
+// Courbe d'une course : un point par temps de passage, à la hauteur de sa ligne sur la fiche (la mesure de la note R), placé sous ce temps ; en pointillé, la tendance sans le 1er tour
+function lapCurve(cum, L) {
+  const sp = cum.map((t, i) => lineOf(i + 1, L, t)), n = sp.length;
+  if (n < 2) return '';
+  const tr = sp.slice(1), m = tr.length, mx = (m - 1) / 2, my = tr.reduce((a, v) => a + v, 0) / m;
+  const b = m < 2 ? 0 : tr.reduce((a, v, i) => a + (i - mx) * (v - my), 0) / tr.reduce((a, _, i) => a + (i - mx) ** 2, 0);
+  const y0 = my - b * mx, y1 = my + b * mx;
+  // Échelle d'au moins 3 km/h (6 lignes) : un écart d'une ligne reste petit, et les courbes se comparent d'un élève à l'autre
+  let lo = Math.min(...sp), hi = Math.max(...sp);
+  if (hi - lo < 3) { const c = (hi + lo) / 2; lo = c - 1.5; hi = c + 1.5; }
+  const H = 28, P = 4, X = i => i + 0.5, Y = v => (H - P - (v - lo) / (hi - lo) * (H - 2 * P)).toFixed(1);
+  const ve = 'vector-effect="non-scaling-stroke"';
+  return `<svg class="pcv" height="${H}" viewBox="0 0 ${n} ${H}" preserveAspectRatio="none" role="img"><title>Ligne à chaque passage : ${sp.map(fmtVMA).join(' · ')} km/h</title>${m >= 2 ? `<line x1="${X(1)}" y1="${Y(y0)}" x2="${X(n - 1)}" y2="${Y(y1)}" stroke="#98a2b3" stroke-width="1.5" stroke-dasharray="3 3" ${ve}/>` : ''}<polyline points="${sp.map((v, i) => X(i) + ',' + Y(v)).join(' ')}" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linejoin="round" ${ve}/><path d="${sp.map((v, i) => `M${X(i)} ${Y(v)}h0`).join('')}" fill="none" stroke="#4f46e5" stroke-width="6" stroke-linecap="round" ${ve}/></svg>`;
 }
 const sub = (o, id, r) => ((o || {})[id] || {})[r];
 function lapEval(C, s, id, r) {
@@ -2024,18 +2030,18 @@ function lapSection(C, s, rows) {
         cell(ev && ev.reg && ev.reg.e, ntk(ev && ev.reg && ev.reg.g, (ev && ev.reg && ev.reg.g) || '—', 'Régularité'), 'c'),
         cell(ev && ev.cont, ev ? ntk(ev.cont, ev.cont, 'Continuité') + ` <span class="hint">${ev.walk} 🚶</span>` : ntk(null, '—', 'Continuité'), 'c'),
         cell(['TB', 'S', 'F', 'I'].indexOf(obsGrade(s, st.id)), `<button class="nt nt-${obsGrade(s, st.id)} ntsel" data-act="obsToggle" data-id="${st.id}" title="Travail d'observateur — toucher pour changer : TB → S → F → I">${obsGrade(s, st.id)}</button>`, 'c'),
-        cell('', `<span class="spl">${passTxt(ev ? ev.cum.slice(0, BIATH_TOURS) : [], BIATH_LAP, st.id, 0, BIATH_TOURS)}</span>${ev ? lapTrend(ev.cum.slice(0, BIATH_TOURS), BIATH_LAP) : ''}`, 'splc'),
+        cell('', `<div class="spl">${passTxt(ev ? ev.cum.slice(0, BIATH_TOURS) : [], BIATH_LAP, st.id, 0, BIATH_TOURS)}</div>`, 'splc'),
         cell('', ev ? `<button class="btn sm danger" data-act="lapClear" data-id="${st.id}" title="Effacer">🗑</button>` : '')
       ] };
     }).concat(statused.map(st => ({ cells: [cell(st.name, `<b>${esc(st.name)}</b>`), cell(st.sexe), cell(null, '—'), cell(null, `<b>${s.status[st.id]}</b>`), ...Array(9).fill(cell(null, ''))] })));
-    table = sortTable('lap-' + s.id, ['Nom Prénom', 'S.', 'VMA', 'Final', { t: 'Note', cls: 'c' }, '900 m', 'Lancers', { t: 'Vit.', cls: 'c' }, { t: 'Rég.', cls: 'c' }, { t: 'Cont.', cls: 'c' }, { t: 'Obs.', cls: 'c' }, { t: 'Temps de passage et tendance', nosort: true }, { t: '', nosort: true }], rws);
+    table = sortTable('lap-' + s.id, ['Nom Prénom', 'S.', 'VMA', 'Final', { t: 'Note', cls: 'c' }, '900 m', 'Lancers', { t: 'Vit.', cls: 'c' }, { t: 'Rég.', cls: 'c' }, { t: 'Cont.', cls: 'c' }, { t: 'Obs.', cls: 'c' }, { t: 'Temps de passage et courbe', nosort: true }, { t: '', nosort: true }], rws);
   } else {
     const rws = present.map(st => {
       const v = fracVMA(C, s, st.id), evs = runs.map((_, i) => lapEval(C, s, st.id, i));
       const skip = i => runSkipped(s, st.id, i);
       return { cells: [
         cell(st.name, `<b>${esc(st.name)}</b>`), cell(st.sexe), cell(v, v != null ? fmtVMA(v) : '—'),
-        ...evs.map((ev, i) => cell(ev ? ev.dist : null, ev ? `<div class="rc ${skip(i) ? 'rskip' : ''}"><span><b>${ev.dist} m</b> · ${fmtNum(ev.speed, 1)} km/h</span><button class="rskb ${skip(i) ? 'off' : ''}" data-act="skipRun" data-id="${st.id}" data-r="${i}" title="${skip(i) ? 'Course non comptée dans le bilan (blessure…) — toucher pour la recompter' : 'Course comptée dans le bilan — toucher pour ne pas la compter (blessure…)'}">${skip(i) ? '✗' : '✓'}</button><div>${ntk(ev.vg, 'V', 'Vitesse / VMA visée')}${ntk(ev.reg && ev.reg.g, 'R', 'Régularité')}${ntk(ev.cont, 'C', 'Continuité (' + ev.walk + ' marche(s))')}</div><div class="spl">${passTxt(ev.cum, L, st.id, i)}</div>${lapTrend(ev.cum, L)}</div>` : `<div class="spl">— ${passTxt([], L, st.id, i)}</div>`)),
+        ...evs.map((ev, i) => cell(ev ? ev.dist : null, ev ? `<div class="rc ${skip(i) ? 'rskip' : ''}"><span><b>${ev.dist} m</b> · ${fmtNum(ev.speed, 1)} km/h</span><button class="rskb ${skip(i) ? 'off' : ''}" data-act="skipRun" data-id="${st.id}" data-r="${i}" title="${skip(i) ? 'Course non comptée dans le bilan (blessure…) — toucher pour la recompter' : 'Course comptée dans le bilan — toucher pour ne pas la compter (blessure…)'}">${skip(i) ? '✗' : '✓'}</button><div>${ntk(ev.vg, 'V', 'Vitesse / VMA visée')}${ntk(ev.reg && ev.reg.g, 'R', 'Régularité')}${ntk(ev.cont, 'C', 'Continuité (' + ev.walk + ' marche(s))')}</div><div class="spl">${passTxt(ev.cum, L, st.id, i)}</div></div>` : `<div class="spl">— ${passTxt([], L, st.id, i)}</div>`)),
         ...lapSummaryCells(evs.map((ev, i) => skip(i) ? null : ev), s, st.id),
         cell(['TB', 'S', 'F', 'I'].indexOf(obsGrade(s, st.id)), `<button class="nt nt-${obsGrade(s, st.id)} ntsel" data-act="obsToggle" data-id="${st.id}" title="Travail d'observateur — toucher pour changer : TB → S → F → I">${obsGrade(s, st.id)}</button>`, 'c'),
         cell('', evs.some(Boolean) ? `<button class="btn sm danger" data-act="lapClear" data-id="${st.id}" title="Effacer">🗑</button>` : '')
@@ -2067,7 +2073,7 @@ function lapSection(C, s, rows) {
       <li><b>Vitesse</b> (vitesse courue par rapport à la ${s.type === 'endu3' ? 'vitesse visée (VMA ± 1)' : 'VMA'}${s.type === 'biath' ? '' : ' ; bilan = écart moyen'}) : ${nt('TB')} VMA ou + · ${nt('S')} −0,5 à −1 · ${nt('F')} −1,5 à −2,5 · ${nt('I')} au-delà de −2,5</li>
       <li><b>Régularité</b> (écart entre les lignes où tombent les temps de passage, 1 ligne = ${fmtNum(LINE_STEP, 1)} km/h, 1er tour non compté${s.type === 'biath' ? '' : ' ; bilan = moyenne des courses'}) : ${nt('TB')} ≤ 1 ligne · ${nt('S')} 2 lignes · ${nt('F')} 3 lignes · ${nt('I')} 4 lignes et +</li>
       <li><b>Continuité</b> (nombre de marches${s.type === 'biath' ? '' : ' ; bilan = total des marches de toutes les courses'}) : ${nt('TB')} aucune · ${nt('S')} 1 fois · ${nt('F')} 2 ou 3 fois · ${nt('I')} 4 fois et +</li>
-      <li><b>Courbe</b> (vitesse à chaque tour, 1er tour non compté ; en pointillé, la tendance) : plate = allure régulière, en dents de scie = allure irrégulière · ↗ accélère ou ↘ ralentit si l'écart atteint 0,5 km/h sur la course, sinon → stable</li>
+      <li><b>Courbe</b> (ligne de la fiche à chaque passage, point sous chaque temps, plus haut = ligne plus rapide ; en pointillé, la tendance sans le 1er tour) : plus elle est plate, meilleure est la régularité</li>
     </ul>
     <div class="lapres resfix">${table}</div>
   </section>`;
