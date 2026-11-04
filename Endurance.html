@@ -1810,19 +1810,16 @@ function lapRuns(s) {
 const lapLen = s => s.type === 'biath' ? BIATH_LAP : ([100, 150].includes(s.lapLen) ? s.lapLen : 100);   // piste de 100 m ou 150 m
 const lapsOf = (s, id, r) => ((s.laps || {})[id] || {})[r] || [];
 const splitsOf = cum => cum.map((t, i) => t - (i ? cum[i - 1] : 0));
-// Courbe d'une course : un point par temps de passage, à la hauteur de sa ligne sur la fiche (la mesure de la note R), placé sous ce temps ; en pointillé, la tendance sans le 1er tour
+// Courbe d'une course : tous les temps reliés comme sur la fiche (un point par temps, à la hauteur de sa ligne).
+// Le 1er tour, non compté dans la note R, est en gris. Même échelle pour tous : 1 ligne d'écart = 4 px
 function lapCurve(cum, L) {
-  const sp = cum.map((t, i) => lineOf(i + 1, L, t)), n = sp.length;
+  const v = cum.map((t, i) => lineOf(i + 1, L, t)), n = v.length;
   if (n < 2) return '';
-  const tr = sp.slice(1), m = tr.length, mx = (m - 1) / 2, my = tr.reduce((a, v) => a + v, 0) / m;
-  const b = m < 2 ? 0 : tr.reduce((a, v, i) => a + (i - mx) * (v - my), 0) / tr.reduce((a, _, i) => a + (i - mx) ** 2, 0);
-  const y0 = my - b * mx, y1 = my + b * mx;
-  // Échelle d'au moins 3 km/h (6 lignes) : un écart d'une ligne reste petit, et les courbes se comparent d'un élève à l'autre
-  let lo = Math.min(...sp), hi = Math.max(...sp);
-  if (hi - lo < 3) { const c = (hi + lo) / 2; lo = c - 1.5; hi = c + 1.5; }
-  const H = 28, P = 4, X = i => i + 0.5, Y = v => (H - P - (v - lo) / (hi - lo) * (H - 2 * P)).toFixed(1);
-  const ve = 'vector-effect="non-scaling-stroke"';
-  return `<svg class="pcv" height="${H}" viewBox="0 0 ${n} ${H}" preserveAspectRatio="none" role="img"><title>Ligne à chaque passage : ${sp.map(fmtVMA).join(' · ')} km/h</title>${m >= 2 ? `<line x1="${X(1)}" y1="${Y(y0)}" x2="${X(n - 1)}" y2="${Y(y1)}" stroke="#98a2b3" stroke-width="1.5" stroke-dasharray="3 3" ${ve}/>` : ''}<polyline points="${sp.map((v, i) => X(i) + ',' + Y(v)).join(' ')}" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linejoin="round" ${ve}/><path d="${sp.map((v, i) => `M${X(i)} ${Y(v)}h0`).join('')}" fill="none" stroke="#4f46e5" stroke-width="6" stroke-linecap="round" ${ve}/></svg>`;
+  const lo = Math.min(...v), hi = Math.max(...v), S = 4 / LINE_STEP, P = 4, H = Math.max(20, (hi - lo) * S + 2 * P);
+  const X = i => i + 0.5, Y = x => (H / 2 - (x - (hi + lo) / 2) * S).toFixed(1), ve = 'vector-effect="non-scaling-stroke"';
+  const dots = (a, c) => `<path d="${a.map(i => `M${X(i)} ${Y(v[i])}h0`).join('')}" fill="none" stroke="${c}" stroke-width="6" stroke-linecap="round" ${ve}/>`;
+  const rest = v.map((_, i) => i).slice(1);
+  return `<svg class="pcv" height="${H}" viewBox="0 0 ${n} ${H}" preserveAspectRatio="none" role="img"><title>Ligne à chaque passage : ${v.map(fmtVMA).join(' · ')} km/h</title><line x1="${X(0)}" y1="${Y(v[0])}" x2="${X(1)}" y2="${Y(v[1])}" stroke="#98a2b3" stroke-width="2" stroke-dasharray="3 3" ${ve}/><polyline points="${rest.map(i => X(i) + ',' + Y(v[i])).join(' ')}" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linejoin="round" ${ve}/>${dots([0], '#98a2b3')}${dots(rest, '#4f46e5')}</svg>`;
 }
 const sub = (o, id, r) => ((o || {})[id] || {})[r];
 function lapEval(C, s, id, r) {
@@ -2073,7 +2070,7 @@ function lapSection(C, s, rows) {
       <li><b>Vitesse</b> (vitesse courue par rapport à la ${s.type === 'endu3' ? 'vitesse visée (VMA ± 1)' : 'VMA'}${s.type === 'biath' ? '' : ' ; bilan = écart moyen'}) : ${nt('TB')} VMA ou + · ${nt('S')} −0,5 à −1 · ${nt('F')} −1,5 à −2,5 · ${nt('I')} au-delà de −2,5</li>
       <li><b>Régularité</b> (écart entre les lignes où tombent les temps de passage, 1 ligne = ${fmtNum(LINE_STEP, 1)} km/h, 1er tour non compté${s.type === 'biath' ? '' : ' ; bilan = moyenne des courses'}) : ${nt('TB')} ≤ 1 ligne · ${nt('S')} 2 lignes · ${nt('F')} 3 lignes · ${nt('I')} 4 lignes et +</li>
       <li><b>Continuité</b> (nombre de marches${s.type === 'biath' ? '' : ' ; bilan = total des marches de toutes les courses'}) : ${nt('TB')} aucune · ${nt('S')} 1 fois · ${nt('F')} 2 ou 3 fois · ${nt('I')} 4 fois et +</li>
-      <li><b>Courbe</b> (ligne de la fiche à chaque passage, point sous chaque temps, plus haut = ligne plus rapide ; en pointillé, la tendance sans le 1er tour) : plus elle est plate, meilleure est la régularité</li>
+      <li><b>Courbe</b> : tous les temps reliés comme sur la fiche, un point sous chaque temps, plus haut = ligne plus rapide, même échelle pour tous. Le 1er tour est en gris : il n'est pas compté dans la note de régularité, qui se lit sur la partie violette</li>
     </ul>
     <div class="lapres resfix">${table}</div>
   </section>`;
