@@ -1305,8 +1305,8 @@ function viewSessions(C, u) {
         <button class="bigchoice" data-act="createSession" data-v="vma"><span class="e">⏱️</span><b>Test VMA</b><span class="hint">Léger-Boucher : bande son, groupes A/B, fiches observateurs, résultats.</span></button>
         <button class="bigchoice" data-act="createSession" data-v="frac"><span class="e">🔁</span><b>Séance fractionnée</b><span class="hint">18" en relais par binôme, 36" en séries, 1'30 à 3' chronométrées au tour.${hasVMA ? '' : ' <br>⚠ Aucun test VMA encore : VMA à saisir.'}</span></button>
         ${lvl === 3 ? `<button class="bigchoice" data-act="createSession" data-v="endu3"><span class="e">🏁</span><b>Épreuve d'endurance 3e</b><span class="hint">Course de 3' à VMA+1 puis 9' à VMA−1, temps au tour et notes.</span></button>` : ''}
-        ${lvl === 6 ? `<button class="bigchoice" data-act="createSession" data-v="biath"><span class="e">🎯</span><b>Biathlon 6e</b><span class="hint">900 m (9 tours) + 2 lancers de vortex, pénalités et barème F / G.</span></button>
-        <button class="bigchoice" data-act="createSession" data-v="tours9"><span class="e">🏃</span><b>9 tours 6e</b><span class="hint">900 m (9 tours de 100 m) chronométrés au tour, comme le biathlon mais sans lancers.</span></button>` : ''}
+        ${lvl === 6 ? `<button class="bigchoice" data-act="createSession" data-v="tours9"><span class="e">🏃</span><b>9 tours 6e</b><span class="hint">900 m (9 tours de 100 m) chronométrés au tour, comme le biathlon mais sans lancers.</span></button>
+        <button class="bigchoice" data-act="createSession" data-v="biath"><span class="e">🎯</span><b>Biathlon 6e</b><span class="hint">900 m (9 tours) + 2 lancers de vortex, pénalités et barème F / G.</span></button>` : ''}
       </div></div>` : ''}
     <div class="sessions" style="margin-top:14px">
       ${list.length ? list.map(s => {
