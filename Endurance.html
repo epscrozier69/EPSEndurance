@@ -273,7 +273,7 @@ table.ct.fit{table-layout:fixed}
 .lapres .rc{min-width:120px}
 .lapres .btn.sm{min-height:28px;padding:2px 7px}
 /* ---- Courses chronométrées au tour ---- */
-.sess .ic.endu3{background:#fce7f3}.sess .ic.biath{background:#ede9fe}
+.sess .ic.endu3{background:#fce7f3}.sess .ic.biath{background:#ede9fe}.sess .ic.tours9{background:#dcfce7}
 .lcard{border:1px solid var(--line);border-radius:12px;padding:6px;background:#fff;display:flex;flex-direction:column;gap:4px;box-shadow:0 1px 2px rgba(16,24,40,.05)}
 .lcard.throw{border-color:#f59e0b;background:#fffbeb}
 .lcard.done{background:#eef2ff;border-color:#c7d2fe}
@@ -1093,7 +1093,7 @@ function buildSheetTables() {
       } else if (isLap(s)) {
         syncOrder(C, s);
         const runs = lapRuns(s);
-        const name = s.type === 'biath' ? 'Biathlon 6e' : s.type === 'endu3' ? 'Endurance 3e' : `Fractionné ${s.reps} × ${fmtDur(s.work)}`;
+        const name = s.type === 'biath' ? 'Biathlon 6e' : s.type === 'tours9' ? '9 tours 6e' : s.type === 'endu3' ? 'Endurance 3e' : `Fractionné ${s.reps} × ${fmtDur(s.work)}`;
         sortedStudents(C).forEach(st => {
           const stt = (s.status || {})[st.id];
           if (stt) { crs.push([cn, st.name, st.sexe, fmtDate(s.date), name, '', '', '', '', '', '', '', '', '', '', '', '', '', '', stt]); return; }
@@ -1102,10 +1102,10 @@ function buildSheetTables() {
             const ev = lapEval(C, s, st.id, r); if (!ev) return;
             crs.push([cn, st.name, st.sexe, fmtDate(s.date), name, run.label, fracVMA(C, s, st.id) == null ? '' : fracVMA(C, s, st.id), ev.target == null ? '' : ev.target,
               ev.dist, ev.speed ? Math.round(ev.speed * 10) / 10 : '', ev.cum.map(x => fmtT(x)).join(' '), ev.reg ? ev.reg.g : '', ev.vg || '', ev.walk, ev.cont,
-              ev.t9 ? fmtT(ev.t9) : '', ev.throws ? ev.pen : '', ev.fin != null ? fmtT(ev.fin) : '', ev.tg || '', runSkipped(s, st.id, r) ? 'non comptée' : '', s.type === 'biath' ? obsGrade(s, st.id) : '']);
+              ev.t9 ? fmtT(ev.t9) : '', ev.throws ? ev.pen : '', ev.fin != null ? fmtT(ev.fin) : '', ev.tg || '', runSkipped(s, st.id, r) ? 'non comptée' : '', isNine(s) ? obsGrade(s, st.id) : '']);
           });
           // Ligne « Bilan » : notes finales (proposées ou modifiées à la main), courses non comptées exclues
-          if (s.type !== 'biath') {
+          if (!isNine(s)) {
             const S = lapSummary(runs.map((_, r) => runSkipped(s, st.id, r) ? null : lapEval(C, s, st.id, r)));
             if (S) crs.push([cn, st.name, st.sexe, fmtDate(s.date), name, 'Bilan', '', '', '', '', '', finalNote(s, st.id, 'r', S.rg) || '', finalNote(s, st.id, 'v', S.vg) || '', S.walks, finalNote(s, st.id, 'c', S.cg) || '', '', '', '', '', '', obsGrade(s, st.id)]);
           }
@@ -1305,15 +1305,17 @@ function viewSessions(C, u) {
         <button class="bigchoice" data-act="createSession" data-v="vma"><span class="e">⏱️</span><b>Test VMA</b><span class="hint">Léger-Boucher : bande son, groupes A/B, fiches observateurs, résultats.</span></button>
         <button class="bigchoice" data-act="createSession" data-v="frac"><span class="e">🔁</span><b>Séance fractionnée</b><span class="hint">18" en relais par binôme, 36" en séries, 1'30 à 3' chronométrées au tour.${hasVMA ? '' : ' <br>⚠ Aucun test VMA encore : VMA à saisir.'}</span></button>
         ${lvl === 3 ? `<button class="bigchoice" data-act="createSession" data-v="endu3"><span class="e">🏁</span><b>Épreuve d'endurance 3e</b><span class="hint">Course de 3' à VMA+1 puis 9' à VMA−1, temps au tour et notes.</span></button>` : ''}
-        ${lvl === 6 ? `<button class="bigchoice" data-act="createSession" data-v="biath"><span class="e">🎯</span><b>Biathlon 6e</b><span class="hint">900 m (9 tours) + 2 lancers de vortex, pénalités et barème F / G.</span></button>` : ''}
+        ${lvl === 6 ? `<button class="bigchoice" data-act="createSession" data-v="biath"><span class="e">🎯</span><b>Biathlon 6e</b><span class="hint">900 m (9 tours) + 2 lancers de vortex, pénalités et barème F / G.</span></button>
+        <button class="bigchoice" data-act="createSession" data-v="tours9"><span class="e">🏃</span><b>9 tours 6e</b><span class="hint">900 m (9 tours de 100 m) chronométrés au tour, comme le biathlon mais sans lancers.</span></button>` : ''}
       </div></div>` : ''}
     <div class="sessions" style="margin-top:14px">
       ${list.length ? list.map(s => {
-        const T = { vma: ['⏱️', 'Test VMA'], frac: ['🔁', 'Séance fractionnée'], endu3: ['🏁', 'Épreuve d\'endurance 3e'], biath: ['🎯', 'Biathlon 6e'] }[s.type] || ['•', s.type];
+        const T = { vma: ['⏱️', 'Test VMA'], frac: ['🔁', 'Séance fractionnée'], endu3: ['🏁', 'Épreuve d\'endurance 3e'], biath: ['🎯', 'Biathlon 6e'], tours9: ['🏃', '9 tours 6e'] }[s.type] || ['•', s.type];
         const nRun = Object.keys(s.laps || {}).length;
         const sum = s.type === 'vma' ? `${Object.keys(s.results).length} résultat(s) · piste ${s.track} m`
           : s.type === 'frac' ? `${s.reps} × ${fmtDur(s.work)}${isDuo(s) ? ' en relais' : ' / ' + fmtDur(s.rest)}${nSeries(s) > 1 ? ' · ' + nSeries(s) + ' séries' : ''} · ${s.pct} % VMA`
           : s.type === 'endu3' ? `3' à VMA+1 · 9' à VMA−1 · ${nRun} élève(s) chronométré(s)`
+          : s.type === 'tours9' ? `900 m · ${Object.values(s.laps || {}).filter(m => (m[0] || []).length >= BIATH_TOURS).length} arrivée(s)`
           : `900 m + 2 lancers · ${Object.keys(s.final || {}).length} arrivée(s)`;
         return `<div class="sess"><div class="ic ${s.type}">${T[0]}</div>
           <div class="info"><b>${T[1]}</b> — ${fmtDate(s.date)}<div class="hint">${sum}</div></div>
@@ -1639,7 +1641,9 @@ function setFracStep(s, i) {
   const steps = fracSteps(s), st = steps[Math.max(0, Math.min(i, steps.length - 1))];
   s.step = steps.indexOf(st); s.runGroup = st.g; s.curSerie = st.sr;
 }
-const isLap = s => s.type === 'endu3' || s.type === 'biath' || (s.type === 'frac' && s.work >= 90);
+// 9 tours 6e : la course du biathlon (900 m), sans lancers ni temps final
+const isNine = s => s.type === 'biath' || s.type === 'tours9';
+const isLap = s => s.type === 'endu3' || isNine(s) || (s.type === 'frac' && s.work >= 90);
 const nSeries = s => (s.type === 'frac' && !isLap(s)) ? (s.series || 1) : 1;
 const groupOf = (s, id) => s.order ? (s.order.A.includes(id) ? 'A' : s.order.B.includes(id) ? 'B' : null) : null;
 function autoDuos(C, s) {
@@ -1805,9 +1809,10 @@ const nt = (g, letter, title) => `<span class="nt nt-${g || '0'}" title="${esc(t
 function lapRuns(s) {
   if (s.type === 'endu3') return [{ dur: 180, delta: 1, label: "Course 1 : 3' à VMA+1" }, { dur: 540, delta: -1, label: "Course 2 : 9' à VMA−1" }];
   if (s.type === 'biath') return [{ dur: null, delta: 0, label: '900 m + 2 lancers' }];
+  if (s.type === 'tours9') return [{ dur: null, delta: 0, label: '900 m (9 tours)' }];
   return Array.from({ length: s.reps }, (_, i) => ({ dur: s.work, delta: 0, label: 'Course ' + (i + 1) }));
 }
-const lapLen = s => s.type === 'biath' ? BIATH_LAP : ([100, 150].includes(s.lapLen) ? s.lapLen : 100);   // piste de 100 m ou 150 m
+const lapLen = s => isNine(s) ? BIATH_LAP : ([100, 150].includes(s.lapLen) ? s.lapLen : 100);   // piste de 100 m ou 150 m
 const lapsOf = (s, id, r) => ((s.laps || {})[id] || {})[r] || [];
 const splitsOf = cum => cum.map((t, i) => t - (i ? cum[i - 1] : 0));
 // Courbe d'une course : tous les temps reliés comme sur la fiche (un point par temps, à la hauteur de sa ligne).
@@ -1828,10 +1833,13 @@ function lapEval(C, s, id, r) {
   const walk = sub(s.walk, id, r) || 0, fin = s.type === 'biath' ? (s.final || {})[id] : null;
   if (!cum.length && !walk && fin == null) return null;
   const vma = fracVMA(C, s, id), res = { cum, splits: splitsOf(cum), walk, cont: contGrade(walk) };
-  if (s.type === 'biath') {
-    const t9 = cum.length >= BIATH_TOURS ? cum[BIATH_TOURS - 1] : null, th = (s.throws || {})[id] || [1, 1];
-    Object.assign(res, { t9, throws: th, pen: th.filter(x => x === 0).length, fin: fin == null ? null : fin,
-      dist: t9 ? BIATH_TOURS * L : cum.length * L, speed: t9 ? BIATH_TOURS * L / t9 * 3.6 : null, tg: fin != null ? timeGrade(fin, st.sexe) : null });
+  if (isNine(s)) {
+    const t9 = cum.length >= BIATH_TOURS ? cum[BIATH_TOURS - 1] : null;
+    Object.assign(res, { t9, dist: t9 ? BIATH_TOURS * L : cum.length * L, speed: t9 ? BIATH_TOURS * L / t9 * 3.6 : null });
+    if (s.type === 'biath') {
+      const th = (s.throws || {})[id] || [1, 1];
+      Object.assign(res, { throws: th, pen: th.filter(x => x === 0).length, fin: fin == null ? null : fin, tg: fin != null ? timeGrade(fin, st.sexe) : null });
+    }
     res.reg = regGrade(cum.slice(0, BIATH_TOURS), L);
   } else {
     res.extra = sub(s.extra, id, r) || 0;
@@ -1942,7 +1950,7 @@ function lapSummaryCells(evs, s, id) {
 }
 // Fiche observateur des courses au tour : temps de passage cumulés par ligne de vitesse (16 → 7 km/h)
 function lapFicheHTML(C, s, runner, observer) {
-  const runs = lapRuns(s), L = lapLen(s), biath = s.type === 'biath';
+  const runs = lapRuns(s), L = lapLen(s), biath = isNine(s);
   const nLaps = run => biath ? BIATH_TOURS : Math.max(1, Math.floor(SPEED_ROWS[0] / 3.6 * run.dur / L + 1e-9));
   const maxL = Math.max(...runs.map(nLaps));
   const perRow = Math.max(1, Math.min(runs.length, Math.floor(44 / (maxL + 1.4))));
@@ -1954,9 +1962,9 @@ function lapFicheHTML(C, s, runner, observer) {
         <tr><th>Tour</th>${Array.from({ length: n }, (_, i) => `<th>${i + 1}</th>`).join('')}</tr>
         <tr><th>VMA</th>${Array.from({ length: n }, (_, i) => `<th>${(i + 1) * L}</th>`).join('')}</tr></thead>
       <tbody>${SPEED_ROWS.map(v => `<tr><th>${fmtVMA(v)}</th>${cells(v)}</tr>`).join('')}</tbody>
-      <tfoot><tr><td colspan="${n + 1}" class="fbf">${biath ? 'Lancer 1 : ✓ ✗ &nbsp;·&nbsp; Lancer 2 : ✓ ✗ &nbsp;·&nbsp; Temps final : ________ &nbsp;·&nbsp; ' : ''}Le coureur a marché : OUI – NON</td></tr></tfoot></table></div>`;
+      <tfoot><tr><td colspan="${n + 1}" class="fbf">${s.type === 'biath' ? 'Lancer 1 : ✓ ✗ &nbsp;·&nbsp; Lancer 2 : ✓ ✗ &nbsp;·&nbsp; Temps final : ________ &nbsp;·&nbsp; ' : ''}Le coureur a marché : OUI – NON</td></tr></tfoot></table></div>`;
   };
-  const title = s.type === 'frac' ? `${s.reps} × ${fmtDur(s.work)}` : s.type === 'endu3' ? "Épreuve d'endurance 3e : 3' à VMA+1 et 9' à VMA−1" : 'Biathlon 6e : 900 m + 2 lancers';
+  const title = s.type === 'frac' ? `${s.reps} × ${fmtDur(s.work)}` : s.type === 'endu3' ? "Épreuve d'endurance 3e : 3' à VMA+1 et 9' à VMA−1" : s.type === 'tours9' ? '9 tours 6e : 900 m' : 'Biathlon 6e : 900 m + 2 lancers';
   return `<div class="fiche lapf">
     <div class="fh"><h1>${title}</h1><div class="who"><span>Classe : <b>${esc(C.name)}</b></span><span>Date : <b>${fmtDate(s.date)}</b></span><span>Tour : <b>${L} m</b></span></div></div>
     <div class="fh" style="justify-content:flex-start"><div class="who"><span>Coureur : <b>${runner ? esc(runner.name) : '______________________'}</b>${runner && fracVMA(C, s, runner.id) != null ? ` (VMA ${fmtVMA(fracVMA(C, s, runner.id))})` : ''}</span><span>Observateur : <b>${observer ? esc(observer.name) : '______________________'}</b></span></div></div>
@@ -1984,7 +1992,8 @@ function lapSection(C, s, rows) {
     const id = u.id, st = byId.get(id), cum = lapsOf(s, id, r), ev = lapEval(C, s, id, r), walk = sub(s.walk, id, r) || 0;
     const last = cum.length ? fmtT(splitsOf(cum).slice(-1)[0]) : '';
     let cls = '', main, extra = '';
-    if (s.type === 'biath') {
+    if (s.type === 'tours9' && cum.length >= BIATH_TOURS) { cls = 'done'; main = `Arrivée : <b>${fmtT(cum[BIATH_TOURS - 1])}</b>`; }
+    else if (isNine(s)) {
       const fin = (s.final || {})[id];
       if (fin != null) { cls = 'done'; main = `Arrivée : <b>${fmtT(fin)}</b> ${nt(timeGrade(fin, st.sexe), '', 'Barème temps')}`; }
       else if (cum.length >= BIATH_TOURS) {
@@ -2005,24 +2014,27 @@ function lapSection(C, s, rows) {
   };
   const runSel = s.type === 'endu3' || (s.type === 'frac' && runs.length > 1)
     ? `<div class="row"><b>${s.type === 'endu3' ? 'Course' : 'Répétition affichée'} :</b><div class="seg">${runs.map((x, i) => `<button class="${r === i ? 'on' : ''}" data-act="setViewRun" data-v="${i}" ${mine ? 'disabled' : ''}>${s.type === 'endu3' ? x.label : 'R' + (i + 1)}</button>`).join('')}</div></div>` : '';
-  const goLabel = s.type === 'biath' ? `▶ Départ — groupe ${runG}` : s.type === 'endu3' ? `▶ Lancer — ${runs[r].label} — groupe ${runG}` : `▶ Lancer — groupe ${runG} (${s.reps} × ${fmtDur(s.work)} / ${fmtDur(s.rest)})`;
+  const goLabel = isNine(s) ? `▶ Départ — groupe ${runG}` : s.type === 'endu3' ? `▶ Lancer — ${runs[r].label} — groupe ${runG}` : `▶ Lancer — groupe ${runG} (${s.reps} × ${fmtDur(s.work)} / ${fmtDur(s.rest)})`;
   const help = s.type === 'biath'
     ? `Touchez le nom de l'élève à chaque passage : ${BIATH_TOURS} tours, puis notez les 2 lancers (✓ réussi / ✗ raté = 1 tour de pénalité), puis touchez le nom à l'arrivée finale.`
+    : s.type === 'tours9' ? `Touchez le nom de l'élève à chaque passage : le ${BIATH_TOURS}e passage est son arrivée.`
     : `Touchez le nom de l'élève à chaque tour (${L} m). À la fin du temps, saisissez la distance supplémentaire parcourue (+ m).`;
 
   // Résultats
   const present = [...s.order.A, ...s.order.B].map(id => byId.get(id)).filter(Boolean);
   const statused = sortedStudents(C).filter(st => s.status[st.id]);
   let table;
-  if (s.type === 'biath') {
+  if (isNine(s)) {
+    const lancers = s.type === 'biath';
     const rws = present.map(st => {
       const ev = lapEval(C, s, st.id, 0), v = fracVMA(C, s, st.id);
       return { cells: [
         cell(st.name, `<b>${esc(st.name)}</b>`), cell(st.sexe), cell(v, v != null ? fmtVMA(v) : '—'),
-        cell(ev && ev.fin, ev && ev.fin != null ? `<b>${fmtT(ev.fin)}</b>` : '—'),
-        cell(ev && ev.tg, ntk(ev && ev.tg, (ev && ev.tg) || '—', 'Barème temps'), 'c'),
-        cell(ev && ev.t9, ev && ev.t9 ? fmtT(ev.t9) : '—'),
-        cell(ev ? ev.pen : null, ev && ev.t9 ? ev.throws.map(x => x ? '✓' : '✗').join(' ') + ` <span class="hint">(${ev.pen} pén.)</span>` : '—'),
+        ...(lancers ? [
+          cell(ev && ev.fin, ev && ev.fin != null ? `<b>${fmtT(ev.fin)}</b>` : '—'),
+          cell(ev && ev.tg, ntk(ev && ev.tg, (ev && ev.tg) || '—', 'Barème temps'), 'c')] : []),
+        cell(ev && ev.t9, ev && ev.t9 ? (lancers ? fmtT(ev.t9) : `<b>${fmtT(ev.t9)}</b>`) : '—'),
+        ...(lancers ? [cell(ev ? ev.pen : null, ev && ev.t9 ? ev.throws.map(x => x ? '✓' : '✗').join(' ') + ` <span class="hint">(${ev.pen} pén.)</span>` : '—')] : []),
         cell(ev && ev.vg, ntk(ev && ev.vg, (ev && ev.vg) || '—', 'Vitesse / VMA'), 'c'),
         cell(ev && ev.reg && ev.reg.e, ntk(ev && ev.reg && ev.reg.g, (ev && ev.reg && ev.reg.g) || '—', 'Régularité'), 'c'),
         cell(ev && ev.cont, ev ? ntk(ev.cont, ev.cont, 'Continuité') + ` <span class="hint">${ev.walk} 🚶</span>` : ntk(null, '—', 'Continuité'), 'c'),
@@ -2030,8 +2042,8 @@ function lapSection(C, s, rows) {
         cell('', `<div class="spl">${passTxt(ev ? ev.cum.slice(0, BIATH_TOURS) : [], BIATH_LAP, st.id, 0, BIATH_TOURS)}</div>`, 'splc'),
         cell('', ev ? `<button class="btn sm danger" data-act="lapClear" data-id="${st.id}" title="Effacer">🗑</button>` : '')
       ] };
-    }).concat(statused.map(st => ({ cells: [cell(st.name, `<b>${esc(st.name)}</b>`), cell(st.sexe), cell(null, '—'), cell(null, `<b>${s.status[st.id]}</b>`), ...Array(9).fill(cell(null, ''))] })));
-    table = sortTable('lap-' + s.id, ['Nom Prénom', 'S.', 'VMA', 'Final', { t: 'Note', cls: 'c' }, '900 m', 'Lancers', { t: 'Vit.', cls: 'c' }, { t: 'Rég.', cls: 'c' }, { t: 'Cont.', cls: 'c' }, { t: 'Obs.', cls: 'c' }, { t: 'Temps de passage et courbe', nosort: true }, { t: '', nosort: true }], rws);
+    }).concat(statused.map(st => ({ cells: [cell(st.name, `<b>${esc(st.name)}</b>`), cell(st.sexe), cell(null, '—'), cell(null, `<b>${s.status[st.id]}</b>`), ...Array(lancers ? 9 : 6).fill(cell(null, ''))] })));
+    table = sortTable('lap-' + s.id, ['Nom Prénom', 'S.', 'VMA', ...(lancers ? ['Final', { t: 'Note', cls: 'c' }] : []), '900 m', ...(lancers ? ['Lancers'] : []), { t: 'Vit.', cls: 'c' }, { t: 'Rég.', cls: 'c' }, { t: 'Cont.', cls: 'c' }, { t: 'Obs.', cls: 'c' }, { t: 'Temps de passage et courbe', nosort: true }, { t: '', nosort: true }], rws);
   } else {
     const rws = present.map(st => {
       const v = fracVMA(C, s, st.id), evs = runs.map((_, i) => lapEval(C, s, st.id, i));
@@ -2066,10 +2078,11 @@ function lapSection(C, s, rows) {
     <ul class="bareme">
       ${s.type === 'biath'
         ? `<li><b>Temps final</b> — filles : TB ≤ 5'20 · S ≤ 6'40 · F ≤ 8'20 · I au-delà ; garçons : TB ≤ 5'00 · S ≤ 6'20 · F ≤ 8'00 · I au-delà</li>`
+        : s.type === 'tours9' ? ''
         : `<li class="hint" style="list-style:none;margin-left:-18px">Dans chaque course : V = vitesse · R = régularité · C = continuité ; la couleur du cadre donne la note (vert fluo TB · vert S · orange F · rouge I). Les colonnes « Bilan » regroupent toutes les courses comptées (toucher ✓ pour retirer une course, ex. blessure : elle passe à ✗) ; chaque note finale peut être changée à la main (TB · S · F · I · /), elle est alors soulignée.</li>`}
-      <li><b>Vitesse</b> (vitesse courue par rapport à la ${s.type === 'endu3' ? 'vitesse visée (VMA ± 1)' : 'VMA'}${s.type === 'biath' ? '' : ' ; bilan = écart moyen'}) : ${nt('TB')} VMA ou + · ${nt('S')} −0,5 à −1 · ${nt('F')} −1,5 à −2,5 · ${nt('I')} au-delà de −2,5</li>
-      <li><b>Régularité</b> (écart entre les lignes où tombent les temps de passage, 1 ligne = ${fmtNum(LINE_STEP, 1)} km/h, 1er tour non compté${s.type === 'biath' ? '' : ' ; bilan = moyenne des courses'}) : ${nt('TB')} ≤ 1 ligne · ${nt('S')} 2 lignes · ${nt('F')} 3 lignes · ${nt('I')} 4 lignes et +</li>
-      <li><b>Continuité</b> (nombre de marches${s.type === 'biath' ? '' : ' ; bilan = total des marches de toutes les courses'}) : ${nt('TB')} aucune · ${nt('S')} 1 fois · ${nt('F')} 2 ou 3 fois · ${nt('I')} 4 fois et +</li>
+      <li><b>Vitesse</b> (vitesse courue par rapport à la ${s.type === 'endu3' ? 'vitesse visée (VMA ± 1)' : 'VMA'}${isNine(s) ? '' : ' ; bilan = écart moyen'}) : ${nt('TB')} VMA ou + · ${nt('S')} −0,5 à −1 · ${nt('F')} −1,5 à −2,5 · ${nt('I')} au-delà de −2,5</li>
+      <li><b>Régularité</b> (écart entre les lignes où tombent les temps de passage, 1 ligne = ${fmtNum(LINE_STEP, 1)} km/h, 1er tour non compté${isNine(s) ? '' : ' ; bilan = moyenne des courses'}) : ${nt('TB')} ≤ 1 ligne · ${nt('S')} 2 lignes · ${nt('F')} 3 lignes · ${nt('I')} 4 lignes et +</li>
+      <li><b>Continuité</b> (nombre de marches${isNine(s) ? '' : ' ; bilan = total des marches de toutes les courses'}) : ${nt('TB')} aucune · ${nt('S')} 1 fois · ${nt('F')} 2 ou 3 fois · ${nt('I')} 4 fois et +</li>
       <li><b>Courbe</b> : tous les temps reliés comme sur la fiche, un point sous chaque temps, plus haut = ligne plus rapide, même échelle pour tous. Le 1er tour est en gris : il n'est pas compté dans la note de régularité, qui se lit sur la partie violette</li>
     </ul>
     <div class="lapres resfix">${table}</div>
@@ -2316,14 +2329,17 @@ function viewLapSession(C, s) {
   const objs = e3
     ? [{ label: "3' VMA+1", val: v => v == null ? '—' : `<b>${Math.round((v + 1) / 3.6 * 180)} m</b>` }, { label: "9' VMA−1", val: v => v == null ? '—' : `<b>${Math.round((v - 1) / 3.6 * 540)} m</b>` }]
     : [{ label: '900 m à VMA', val: v => v ? `<b>${fmtT(900 / (v / 3.6))}</b>` : '—' }];
-  const info = e3
+  const info = s.type === 'tours9'
+    ? `<div class="note"><p>🏃 <b>${BIATH_TOURS} tours de ${BIATH_LAP} m (900 m)</b>, sans lancers : l'arrivée est au ${BIATH_TOURS}e passage.</p>
+        <p class="hint">Notes : vitesse sur 900 m par rapport à la VMA, régularité sur les 9 tours, continuité (marches).</p></div>`
+    : e3
     ? `<div class="note"><p>🏁 <b>Course 1 : 3' à VMA+1</b>, puis <b>course 2 : 9' à VMA−1</b>. Lancez chaque course séparément.</p>
         <p>Distance visée = (VMA ± 1) ÷ 3,6 × durée. Notes : régularité au tour, vitesse par rapport à la vitesse visée, continuité (marches).</p></div>`
     : `<div class="note"><p>🎯 <b>${BIATH_TOURS} tours de ${BIATH_LAP} m (900 m)</b>, puis <b>2 lancers de vortex</b> : 1 tour de pénalité par lancer raté, puis arrivée.</p>
         <p><b>Barème filles</b> : TB ≤ 5'20 · S ≤ 6'40 · F ≤ 8'20 · I au-delà.<br><b>Barème garçons</b> : TB ≤ 5'00 · S ≤ 6'20 · F ≤ 8'00 · I au-delà.</p>
         <p class="hint">Autres notes : régularité sur les 9 tours, vitesse sur 900 m par rapport à la VMA, continuité (marches).</p></div>`;
   return `
-  <div class="sesshead"><button class="btn" data-act="back">← Séances</button><h2>${e3 ? '🏁 Épreuve d\'endurance 3e' : '🎯 Biathlon 6e'} — ${fmtDate(s.date)}</h2><button class="btn danger" data-act="delSession" data-id="${s.id}">Supprimer</button></div>
+  <div class="sesshead"><button class="btn" data-act="back">← Séances</button><h2>${e3 ? '🏁 Épreuve d\'endurance 3e' : s.type === 'tours9' ? '🏃 9 tours 6e' : '🎯 Biathlon 6e'} — ${fmtDate(s.date)}</h2><button class="btn danger" data-act="delSession" data-id="${s.id}">Supprimer</button></div>
   <section class="card">
     <h3><span class="step">1</span>Paramètres</h3>
     <div class="grid2">
@@ -2477,6 +2493,7 @@ const ACT = {
       ? Object.assign(base, { type: 'vma', track: 150, groups: {}, startGroup: 'A', results: {}, runs: {}, status: {} })
       : t === 'endu3' ? Object.assign(base, lapData, { type: 'endu3', lapLen: 100, viewRun: 0 })
       : t === 'biath' ? Object.assign(base, lapData, { type: 'biath', throws: {}, final: {} })
+      : t === 'tours9' ? Object.assign(base, lapData, { type: 'tours9' })
       : Object.assign(base, lapData, { type: 'frac', work: 18, rest: 18, reps: 20, series: 2, pct: 100, lapLen: 100, valid: {} });
     // VMA modifiées : chaque élève reprend sa dernière VMA modifiée, quelle que soit la séance
     // (sauf s'il a refait un test VMA depuis)
@@ -2641,7 +2658,7 @@ const ACT = {
     const rows = [T[key][0]].concat(T[key].slice(1).filter(r => r[0] === C.name && r[di] === fmtDate(s.date)));
     // tri alphabétique
     rows.splice(1, rows.length, ...rows.slice(1).sort((a, b) => String(a[1]).localeCompare(String(b[1]), 'fr')));
-    const nm = { vma: ['TestVMA', 'Test VMA'], frac: ['Fractionne', 'Fractionné'], endu3: ['Endurance3e', 'Endurance 3e'], biath: ['Biathlon6e', 'Biathlon 6e'] }[s.type];
+    const nm = { vma: ['TestVMA', 'Test VMA'], frac: ['Fractionne', 'Fractionné'], endu3: ['Endurance3e', 'Endurance 3e'], biath: ['Biathlon6e', 'Biathlon 6e'], tours9: ['9tours6e', '9 tours 6e'] }[s.type];
     exportXLSX(`${nm[0]}_${C.name}_${s.date}`, [{ name: nm[1], rows }]);
   },
   exportClass() {
@@ -2729,6 +2746,13 @@ const ACT = {
           commit(); toast('🏁 Tous les élèves sont arrivés', 4000); return;
         }
       } else arr.push(t);
+    } else if (s.type === 'tours9') {
+      if (arr.length >= BIATH_TOURS) { toast('Les ' + BIATH_TOURS + ' tours sont déjà enregistrés'); return; }
+      arr.push(t);
+      if (live.runners.every(x => lapsOf(s, x, now.r).length >= BIATH_TOURS)) {
+        live.tl.stop(); live = null; keepAwake(false);
+        commit(); toast('🏁 Tous les élèves sont arrivés', 4000); return;
+      }
     } else arr.push(t);
     commit();
   },
