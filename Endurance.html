@@ -1345,7 +1345,69 @@ function viewSessions(C, u) {
   </section>`;
 }
 
+/* ---------- Résultats : notes obtenues à chaque séance ---------- */
+const SESS_SHORT = { vma: ['⏱️', 'Test VMA'], endu3: ['🏁', 'Endurance 3e'], biath: ['🎯', 'Biathlon'], tours9: ['🏃', '9 tours'], lancer: ['🚀', 'Lancer'] };
+const sessShort = s => s.type === 'frac' ? ['🔁', `Fract. ${s.reps} × ${fmtDur(s.work)}`] : SESS_SHORT[s.type] || ['•', s.type];
+// Notes d'un élève pour une séance : { st: statut } ou { vma } ou { notes: [[lettre, note, intitulé]] } ; null = rien
+function sessionNotes(C, s, id) {
+  const stt = (s.status || {})[id];
+  if (stt) return { st: stt };
+  if (s.type === 'vma') { const r = s.results[id]; return r ? { vma: resPerf(r).vma } : null; }
+  if (s.type === 'lancer') { const n = (s.notes || {})[id]; return n ? { notes: [['', n, 'Lancer de vortex']] } : null; }
+  const obs = ['O', obsGrade(s, id), "Travail d'observateur"];
+  if (isLap(s)) {
+    if (!s.order) syncOrder(C, s);
+    if (!groupOf(s, id)) return null;
+    const runs = lapRuns(s);
+    if (isNine(s)) {
+      const ev = lapEval(C, s, id, 0); if (!ev) return null;
+      const n = [['V', ev.vg, 'Vitesse'], ['R', ev.reg && ev.reg.g, 'Régularité'], ['C', ev.cont, 'Continuité']];
+      if (s.type === 'biath') n.push(['T', ev.tg, 'Temps final']);
+      return { notes: n.concat([obs]) };
+    }
+    const S = lapSummary(runs.map((_, r) => runSkipped(s, id, r) ? null : lapEval(C, s, id, r)));
+    if (!S) return null;
+    return { notes: [['V', finalNote(s, id, 'v', S.vg), 'Vitesse'], ['R', finalNote(s, id, 'r', S.rg), 'Régularité'], ['C', finalNote(s, id, 'c', S.cg), 'Continuité'], obs] };
+  }
+  if (s.type === 'frac') {
+    if (!s.order) syncOrder(C, s);
+    const sc = fracScore(s, id); if (!sc) return null;
+    return { notes: [['', sc.g, `Note (${sc.p} / ${sc.max} points)`], obs] };
+  }
+  return null;
+}
+const notesText = x => !x ? '' : x.st ? x.st : x.vma != null ? 'VMA ' + fmtVMA(x.vma) : x.notes.map(([k, g]) => (k ? k + ' ' : '') + (g || '—')).join(' · ');
+const recapSessions = C => C.sessions.slice().sort((a, b) => (a.date || '').localeCompare(b.date || '') || (a.createdAt || 0) - (b.createdAt || 0));
+function notesTableRows(C) {
+  const ss = recapSessions(C);
+  return [['Nom Prénom', 'Sexe', ...ss.map(s => sessShort(s)[1] + ' ' + fmtDate(s.date))]]
+    .concat(sortedStudents(C).map(st => [st.name, st.sexe, ...ss.map(s => notesText(sessionNotes(C, s, st.id)))]));
+}
+function viewNotes(C) {
+  const ss = recapSessions(C);
+  const rank = g => ['TB', 'S', 'F', 'I', '/'].indexOf(g);
+  const rows = sortedStudents(C).map(st => ({ cells: [
+    cell(st.name, `<b>${esc(st.name)}</b>`), cell(st.sexe, esc(st.sexe || ''), 'c'),
+    ...ss.map(s => {
+      const x = sessionNotes(C, s, st.id);
+      if (!x) return cell(null, '<span class="hint">—</span>', 'c');
+      if (x.st) return cell(null, `<b>${esc(x.st)}</b>`, 'c');
+      if (x.vma != null) return cell(x.vma, `<b>${fmtVMA(x.vma)}</b> <span class="hint">km/h</span>`, 'c');
+      const main = x.notes.find(n => n[0] !== 'O');
+      return cell(main && main[1] ? rank(main[1]) : null, x.notes.map(([k, g, t]) => `<span class="nt nt-${g && g !== '/' ? g : '0'}" title="${esc(t)} : ${g || '—'}">${k ? k + ' ' : ''}${g || '—'}</span>`).join(''), 'c');
+    })
+  ] }));
+  return `<section class="card">
+    <div class="row sp"><h3 style="margin:0">🏆 Notes de chaque séance</h3><button class="btn pri" data-act="exportClass">📊 Export Excel</button></div>
+    <p class="hint">Une colonne par séance, de la plus ancienne à la plus récente. V = vitesse · R = régularité · C = continuité · T = temps final (biathlon) · O = travail d'observateur. Test VMA : VMA obtenue. Touchez un titre de colonne pour trier.</p>
+    ${ss.length ? sortTable('notes-' + C.name, ['Nom Prénom', { t: 'Sexe', cls: 'c' }, ...ss.map(s => { const [ic, nm] = sessShort(s); return { t: `${ic} ${esc(nm)}<br><span style="font-weight:600">${fmtDate(s.date)}</span>`, cls: 'c' }; })], rows)
+      : '<div class="empty">Aucune séance pour cette classe.</div>'}
+  </section>`;
+}
 function viewRecap(C) {
+  return viewNotes(C) + viewRecapVMA(C);
+}
+function viewRecapVMA(C) {
   const rows = recapRows(C).map(({ st, L, F, hist }) => ({
     cells: [
       cell(st.name, `<b>${esc(st.name)}</b>`), cell(st.sexe),
@@ -1358,7 +1420,7 @@ function viewRecap(C) {
     ]
   }));
   return `<section class="card">
-    <div class="row sp"><h3 style="margin:0">🏆 Récapitulatif de la classe</h3><button class="btn pri" data-act="exportClass">📊 Export Excel</button></div>
+    <h3 style="margin:0">⏱️ Récapitulatif VMA</h3>
     <p class="hint">VMA du dernier test. Cliquez sur un titre de colonne pour trier.</p>
     ${sortTable('recap-' + C.name, ['Nom Prénom', 'Sexe', 'VMA (km/h)', 'Palier', 'Vitesse palier', 'Temps', 'Distance', 'Date du test', 'Historique VMA', 'Fractionné réussi'], rows)}
   </section>`;
@@ -2371,7 +2433,7 @@ function viewLancer(C, s) {
     <h3>Barème : lancer de vortex</h3>
     <div class="tw"><table class="lbar"><thead><tr>${['TB', 'S', 'F', 'I'].map(n => `<th class="nt-${n}">${n}</th>`).join('')}</tr></thead>
       <tbody><tr>${['TB', 'S', 'F', 'I'].map(n => `<td>${LANCER_BAREME[n]}</td>`).join('')}</tr></tbody></table></div>
-    <p class="hint">/ = pas de note (absent, dispensé…). Toucher une note enregistre l'élève et passe au suivant.</p>
+    <p class="hint">/ = pas de note (absent, dispensé…). Toucher une note enregistre l'élève et passe au suivant. Toucher de nouveau la note donnée l'annule.</p>
   </section>
   <section class="card">
     <div class="lcur">
@@ -2592,6 +2654,8 @@ const ACT = {
   lancerNote(el) {
     const C = curClass(), s = curSession(), id = el.dataset.id, studs = sortedStudents(C);
     s.notes = s.notes || {};
+    // Toucher la note déjà donnée l'annule : l'élève reste l'élève en cours, sans note
+    if (s.notes[id] === el.dataset.v) { delete s.notes[id]; s.cur = id; commit(); return; }
     s.notes[id] = el.dataset.v;
     const i = studs.findIndex(st => st.id === id);
     const next = studs[i + 1] || studs.find(st => !s.notes[st.id]);
@@ -2757,7 +2821,8 @@ const ACT = {
   },
   exportClass() {
     const C = curClass(), T = buildSheetTables();
-    exportXLSX('Endurance_' + C.name + '_' + todayISO(), Object.keys(T).map(k => ({ name: k, rows: [T[k][0]].concat(T[k].slice(1).filter(r => r[0] === C.name)) })));
+    exportXLSX('Endurance_' + C.name + '_' + todayISO(), [{ name: 'Notes par séance', rows: notesTableRows(C) }]
+      .concat(Object.keys(T).map(k => ({ name: k, rows: [T[k][0]].concat(T[k].slice(1).filter(r => r[0] === C.name)) }))));
   },
   /* --- Fractionné --- */
   fracSet(el) {
