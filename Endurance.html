@@ -273,7 +273,21 @@ table.ct.fit{table-layout:fixed}
 .lapres .rc{min-width:120px}
 .lapres .btn.sm{min-height:28px;padding:2px 7px}
 /* ---- Courses chronométrées au tour ---- */
-.sess .ic.endu3{background:#fce7f3}.sess .ic.biath{background:#ede9fe}.sess .ic.tours9{background:#dcfce7}
+.sess .ic.endu3{background:#fce7f3}.sess .ic.biath{background:#ede9fe}.sess .ic.tours9{background:#dcfce7}.sess .ic.lancer{background:#fef9c3}
+/* Évaluation lancer : barème et boutons de note */
+.lbar{border-collapse:collapse;width:100%;table-layout:fixed;font-size:14px}
+.lbar th{padding:6px;font-size:16px;font-weight:900;text-align:center}
+.lbar td{padding:8px;vertical-align:top;text-align:center;border:1px solid var(--line);line-height:1.35}
+.lbar th{color:#fff}.lbar th.nt-TB{color:#0b3d02}
+.lcur{display:flex;flex-wrap:wrap;align-items:center;gap:12px;justify-content:space-between}
+.lcur .who{font-size:22px;font-weight:900}
+.lnotes{display:flex;gap:6px;flex-wrap:wrap}
+.lnb{appearance:none;-webkit-appearance:none;border:2px solid #d0d5dd;background:#fff;color:#344054;border-radius:10px;font-weight:900;min-width:44px;min-height:40px;font-size:15px;cursor:pointer;padding:0 8px}
+.lnotes.big .lnb{min-width:72px;min-height:64px;font-size:24px;border-radius:14px}
+.lnb.on{border-color:transparent;color:#fff}
+.lnb.on.nt-TB{color:#0b3d02}.lnb.on.nt-0{color:#475467}
+tr.lrow-cur td,.tw .ct tr.lrow-cur td:first-child{background:#fef9c3}
+.lsel{appearance:none;background:none;border:0;padding:4px 0;font:inherit;font-weight:800;color:inherit;cursor:pointer;text-align:left;min-height:36px}
 .lcard{border:1px solid var(--line);border-radius:12px;padding:6px;background:#fff;display:flex;flex-direction:column;gap:4px;box-shadow:0 1px 2px rgba(16,24,40,.05)}
 .lcard.throw{border-color:#f59e0b;background:#fffbeb}
 .lcard.done{background:#eef2ff;border-color:#c7d2fe}
@@ -1078,12 +1092,15 @@ function buildSheetTables() {
   const vma = [['Classe', 'Nom Prénom', 'Sexe', 'Date', 'Groupe', 'Piste (m)', 'Palier', 'Vitesse palier (km/h)', 'Temps (s)', 'Temps', 'Distance (m)', 'VMA (km/h)', 'Retards', 'Éliminé', 'Statut']];
   const frac = [['Classe', 'Nom Prénom', 'Date', 'Rôle', 'Binôme', 'Travail (s)', 'Récup (s)', 'Répétitions', '% VMA', 'Vitesse visée (km/h)', 'VMA du test', 'Objectif (m)', 'Réussites', 'Échecs', 'Détail', 'Travail d\'observateur', 'Séries', 'Points', 'Points max', 'Note']];
   const crs = [['Classe', 'Nom Prénom', 'Sexe', 'Date', 'Épreuve', 'Course', 'VMA (km/h)', 'Vitesse visée (km/h)', 'Distance (m)', 'Vitesse (km/h)', 'Temps de passage', 'Régularité', 'Note vitesse', 'Marches', 'Continuité', 'Temps 900 m', 'Lancers ratés', 'Temps final', 'Note temps', 'Statut', 'Note observateur']];
+  const lan = [['Classe', 'Nom Prénom', 'Sexe', 'Date', 'Épreuve', 'Note']];
   const syn = [['Classe', 'Nom Prénom', 'Sexe', 'VMA (km/h)', 'Date du test', 'Palier', 'Vitesse palier (km/h)', 'Temps', 'Distance (m)', 'Historique VMA', 'Réussite fractionné (%)']];
   state.classOrder.forEach(cn => {
     const C = state.classes[cn]; if (!C) return;
     const byId = new Map(C.students.map(s => [s.id, s]));
     C.sessions.slice().sort((a, b) => (a.date || '').localeCompare(b.date || '')).forEach(s => {
-      if (s.type === 'vma') {
+      if (s.type === 'lancer') {
+        sortedStudents(C).forEach(st => lan.push([cn, st.name, st.sexe, fmtDate(s.date), 'Lancer de vortex', (s.notes || {})[st.id] || '']));
+      } else if (s.type === 'vma') {
         sortedStudents(C).forEach(st => {
           const r = s.results[st.id], stt = (s.status || {})[st.id];
           if (!r) { if (stt) vma.push([cn, st.name, st.sexe, fmtDate(s.date), '', s.track, '', '', '', '', '', '', '', '', stt]); return; }
@@ -1128,7 +1145,7 @@ function buildSheetTables() {
     recapRows(C).forEach(({ st, L, F, hist }) => syn.push([cn, st.name, st.sexe, L ? L.vma : '', L ? fmtDate(L.date) : '', L && L.p != null ? L.p : '', L && L.v != null ? L.v : '', L && L.t != null ? fmtT(L.t) : '', L && L.d != null ? L.d : '', hist.map(fmtVMA).join(' → '), F.pct == null ? '' : F.pct]));
   });
   crs.forEach(row => { while (row.length < crs[0].length) row.push(''); });
-  return { 'Résultats VMA': vma, 'Résultats Fractionné': frac, 'Résultats Courses': crs, 'Synthèse classes': syn };
+  return { 'Résultats VMA': vma, 'Résultats Fractionné': frac, 'Résultats Courses': crs, 'Résultats Lancers': lan, 'Synthèse classes': syn };
 }
 function exportXLSX(filename, sheets) {
   if (window.XLSX) {
@@ -1278,7 +1295,7 @@ function viewClass(C) {
   const u = clsUI(C.name);
   if (u.sid) {
     const s = findSession(C, u.sid);
-    if (s) return s.type === 'vma' ? viewVMA(C, s) : s.type === 'frac' ? viewFrac(C, s) : viewLapSession(C, s);
+    if (s) return s.type === 'vma' ? viewVMA(C, s) : s.type === 'frac' ? viewFrac(C, s) : s.type === 'lancer' ? viewLancer(C, s) : viewLapSession(C, s);
     u.sid = null;
   }
   const f = C.students.filter(s => s.sexe === 'F').length, g = C.students.filter(s => s.sexe === 'G').length;
@@ -1306,16 +1323,18 @@ function viewSessions(C, u) {
         <button class="bigchoice" data-act="createSession" data-v="frac"><span class="e">🔁</span><b>Séance fractionnée</b><span class="hint">18" en relais par binôme, 36" en séries, 1'30 à 3' chronométrées au tour.${hasVMA ? '' : ' <br>⚠ Aucun test VMA encore : VMA à saisir.'}</span></button>
         ${lvl === 3 ? `<button class="bigchoice" data-act="createSession" data-v="endu3"><span class="e">🏁</span><b>Épreuve d'endurance 3e</b><span class="hint">Course de 3' à VMA+1 puis 9' à VMA−1, temps au tour et notes.</span></button>` : ''}
         ${lvl === 6 ? `<button class="bigchoice" data-act="createSession" data-v="tours9"><span class="e">🏃</span><b>9 tours 6e</b><span class="hint">900 m (9 tours de 100 m) chronométrés au tour, comme le biathlon mais sans lancers.</span></button>
-        <button class="bigchoice" data-act="createSession" data-v="biath"><span class="e">🎯</span><b>Biathlon 6e</b><span class="hint">900 m (9 tours) + 2 lancers de vortex, pénalités et barème F / G.</span></button>` : ''}
+        <button class="bigchoice" data-act="createSession" data-v="biath"><span class="e">🎯</span><b>Biathlon 6e</b><span class="hint">900 m (9 tours) + 2 lancers de vortex, pénalités et barème F / G.</span></button>
+        <button class="bigchoice" data-act="createSession" data-v="lancer"><span class="e">🚀</span><b>Évaluation lancer</b><span class="hint">Lancer de vortex : une note TB, S, F, I ou / par élève, d'après le barème.</span></button>` : ''}
       </div></div>` : ''}
     <div class="sessions" style="margin-top:14px">
       ${list.length ? list.map(s => {
-        const T = { vma: ['⏱️', 'Test VMA'], frac: ['🔁', 'Séance fractionnée'], endu3: ['🏁', 'Épreuve d\'endurance 3e'], biath: ['🎯', 'Biathlon 6e'], tours9: ['🏃', '9 tours 6e'] }[s.type] || ['•', s.type];
+        const T = { vma: ['⏱️', 'Test VMA'], frac: ['🔁', 'Séance fractionnée'], endu3: ['🏁', 'Épreuve d\'endurance 3e'], biath: ['🎯', 'Biathlon 6e'], tours9: ['🏃', '9 tours 6e'], lancer: ['🚀', 'Évaluation lancer'] }[s.type] || ['•', s.type];
         const nRun = Object.keys(s.laps || {}).length;
         const sum = s.type === 'vma' ? `${Object.keys(s.results).length} résultat(s) · piste ${s.track} m`
           : s.type === 'frac' ? `${s.reps} × ${fmtDur(s.work)}${isDuo(s) ? ' en relais' : ' / ' + fmtDur(s.rest)}${nSeries(s) > 1 ? ' · ' + nSeries(s) + ' séries' : ''} · ${s.pct} % VMA`
           : s.type === 'endu3' ? `3' à VMA+1 · 9' à VMA−1 · ${nRun} élève(s) chronométré(s)`
-          : s.type === 'tours9' ? `900 m · ${Object.values(s.laps || {}).filter(m => (m[0] || []).length >= BIATH_TOURS).length} arrivée(s)`
+          : s.type === 'lancer' ? `Lancer de vortex · ${C.students.filter(st => (s.notes || {})[st.id]).length} / ${C.students.length} élève(s) évalué(s)`
+          : s.type === 'tours9' ? `900 m ·${Object.values(s.laps || {}).filter(m => (m[0] || []).length >= BIATH_TOURS).length} arrivée(s)`
           : `900 m + 2 lancers · ${Object.keys(s.final || {}).length} arrivée(s)`;
         return `<div class="sess"><div class="ic ${s.type}">${T[0]}</div>
           <div class="info"><b>${T[1]}</b> — ${fmtDate(s.date)}<div class="hint">${sum}</div></div>
@@ -2319,6 +2338,57 @@ function fracShortSections(C, s, rows, section4) {
 }
 
 /* ----- Épreuve d'endurance 3e et Biathlon 6e ----- */
+/* ---------- Évaluation lancer (vortex) : une note par élève ---------- */
+const LANCER_NOTES = ['TB', 'S', 'F', 'I', '/'];
+const LANCER_BAREME = {
+  TB: 'Trajet complet + accélération du bras<br>Trajectoire <b>planante</b> et dans l\'<b>axe</b>',
+  S: 'Continuité du trajet<br>Trajectoire <b>tendue</b> et dans l\'<b>axe</b>',
+  F: 'Rupture du trajet du coude (coude descend)<br><b>Temps d\'arrêt</b> pendant le trajet moteur<br><b>Trajectoire tendue ou cloche</b> et/ou <b>désaxée</b>',
+  I: '<b>Lancer à l\'amble</b><br><b>Trajet incomplet du bras</b> ou bras tendu<br><b>Trajectoire descendante</b>'
+};
+const lancerBtns = (s, id, big) => `<div class="lnotes${big ? ' big' : ''}">${LANCER_NOTES.map(n => {
+  const on = (s.notes || {})[id] === n;
+  return `<button class="lnb ${on ? 'on nt-' + (n === '/' ? '0' : n) : ''}" data-act="lancerNote" data-id="${id}" data-v="${esc(n)}" title="${n === '/' ? 'Pas de note (absent, dispensé…)' : 'Note ' + n}">${n}</button>`;
+}).join('')}</div>`;
+function viewLancer(C, s) {
+  s.notes = s.notes || {};
+  const studs = sortedStudents(C);
+  if (!studs.some(st => st.id === s.cur)) s.cur = (studs.find(st => !s.notes[st.id]) || {}).id || null;
+  const cur = studs.find(st => st.id === s.cur);
+  const done = studs.filter(st => s.notes[st.id]).length;
+  const idx = cur ? studs.indexOf(cur) : -1;
+  const rows = studs.map(st => {
+    const n = s.notes[st.id];
+    return { cur: st.id === s.cur, cells: [
+      cell(st.name, `<button class="lsel" data-act="lancerCur" data-id="${st.id}" title="Choisir cet élève">${esc(st.name)}</button>`),
+      cell(st.sexe, esc(st.sexe || ''), 'c'),
+      cell(n ? LANCER_NOTES.indexOf(n) : null, lancerBtns(s, st.id, false))
+    ] };
+  });
+  return `
+  <div class="sesshead"><button class="btn" data-act="back">← Séances</button><h2>🚀 Évaluation lancer — ${fmtDate(s.date)}</h2><button class="btn danger" data-act="delSession" data-id="${s.id}">Supprimer</button></div>
+  <section class="card">
+    <h3>Barème : lancer de vortex</h3>
+    <div class="tw"><table class="lbar"><thead><tr>${['TB', 'S', 'F', 'I'].map(n => `<th class="nt-${n}">${n}</th>`).join('')}</tr></thead>
+      <tbody><tr>${['TB', 'S', 'F', 'I'].map(n => `<td>${LANCER_BAREME[n]}</td>`).join('')}</tr></tbody></table></div>
+    <p class="hint">/ = pas de note (absent, dispensé…). Toucher une note enregistre l'élève et passe au suivant.</p>
+  </section>
+  <section class="card">
+    <div class="lcur">
+      ${cur ? `<div><div class="hint">Élève ${idx + 1} sur ${studs.length}</div><div class="who">${esc(cur.name)}</div></div>
+        ${lancerBtns(s, cur.id, true)}
+        <div class="row"><button class="btn" data-act="lancerStep" data-v="-1" ${idx <= 0 ? 'disabled' : ''}>◀ Précédent</button><button class="btn" data-act="lancerStep" data-v="1" ${idx >= studs.length - 1 ? 'disabled' : ''}>Suivant ▶</button></div>`
+        : `<div class="who">${studs.length ? '✅ Tous les élèves sont évalués' : 'Aucun élève dans la classe'}</div>`}
+    </div>
+    <p class="hint" style="margin-bottom:0">${done} / ${studs.length} élève(s) évalué(s)</p>
+  </section>
+  <section class="card">
+    <div class="row sp"><h3 style="margin:0">Notes de la classe</h3><button class="btn" data-act="exportSession">📊 Export Excel</button></div>
+    <div class="tw"><table class="ct"><thead><tr><th>Nom Prénom</th><th>Sexe</th><th>Note</th></tr></thead>
+      <tbody>${rows.map(r => `<tr class="${r.cur ? 'lrow-cur' : ''}">${r.cells.map(c => `<td class="${c.cls || ''}">${c.h}</td>`).join('')}</tr>`).join('') || '<tr><td colspan="3">Aucun élève</td></tr>'}</tbody></table></div>
+  </section>`;
+}
+
 function viewLapSession(C, s) {
   syncOrder(C, s);
   if (!s.runGroup) s.runGroup = 'A';
@@ -2489,6 +2559,12 @@ const ACT = {
     const base = { id: uid(), date, createdAt: Date.now() };
     const t = el.dataset.v;
     const lapData = { roles: {}, partner: {}, vmaOv: {}, status: {}, laps: {}, walk: {}, extra: {}, obsOk: {}, runGroup: 'A' };
+    if (t === 'lancer') {
+      const first = sortedStudents(C)[0];
+      const s = Object.assign(base, { type: 'lancer', notes: {}, cur: first ? first.id : null });
+      C.sessions.push(s); u.sid = s.id; u.newOpen = false; ui.sel = null;
+      commit(); window.scrollTo(0, 0); return;
+    }
     const s = t === 'vma'
       ? Object.assign(base, { type: 'vma', track: 150, groups: {}, startGroup: 'A', results: {}, runs: {}, status: {} })
       : t === 'endu3' ? Object.assign(base, lapData, { type: 'endu3', lapLen: 100, viewRun: 0 })
@@ -2511,6 +2587,24 @@ const ACT = {
     commit(); window.scrollTo(0, 0);
   },
   openSession(el) { clsUI(ui.tab).sid = el.dataset.id; ui.sel = null; render(); window.scrollTo(0, 0); },
+  /* --- Évaluation lancer --- */
+  // Toucher une note : elle est enregistrée et l'élève suivant devient l'élève en cours
+  lancerNote(el) {
+    const C = curClass(), s = curSession(), id = el.dataset.id, studs = sortedStudents(C);
+    s.notes = s.notes || {};
+    s.notes[id] = el.dataset.v;
+    const i = studs.findIndex(st => st.id === id);
+    const next = studs[i + 1] || studs.find(st => !s.notes[st.id]);
+    s.cur = next ? next.id : null;
+    if (!next) toast('✅ Tous les élèves sont évalués', 3000);
+    commit();
+  },
+  lancerCur(el) { curSession().cur = el.dataset.id; commit(); },
+  lancerStep(el) {
+    const C = curClass(), s = curSession(), studs = sortedStudents(C);
+    const i = studs.findIndex(st => st.id === s.cur), nx = studs[i + +el.dataset.v];
+    if (nx) { s.cur = nx.id; commit(); }
+  },
   /* --- Coureurs / observateurs (binômes) --- */
   clearOne(el) {
     const C = curClass(), s = curSession(), st = C.students.find(x => x.id === el.dataset.id);
@@ -2653,12 +2747,12 @@ const ACT = {
   exportSession() {
     const C = curClass(), s = curSession(), T = buildSheetTables();
     const lap = isLap(s);
-    const key = s.type === 'vma' ? 'Résultats VMA' : lap ? 'Résultats Courses' : 'Résultats Fractionné';
-    const di = s.type === 'vma' || lap ? 3 : 2;
+    const key = s.type === 'vma' ? 'Résultats VMA' : s.type === 'lancer' ? 'Résultats Lancers' : lap ? 'Résultats Courses' : 'Résultats Fractionné';
+    const di = s.type === 'vma' || s.type === 'lancer' || lap ? 3 : 2;
     const rows = [T[key][0]].concat(T[key].slice(1).filter(r => r[0] === C.name && r[di] === fmtDate(s.date)));
     // tri alphabétique
     rows.splice(1, rows.length, ...rows.slice(1).sort((a, b) => String(a[1]).localeCompare(String(b[1]), 'fr')));
-    const nm = { vma: ['TestVMA', 'Test VMA'], frac: ['Fractionne', 'Fractionné'], endu3: ['Endurance3e', 'Endurance 3e'], biath: ['Biathlon6e', 'Biathlon 6e'], tours9: ['9tours6e', '9 tours 6e'] }[s.type];
+    const nm = { vma: ['TestVMA', 'Test VMA'], frac: ['Fractionne', 'Fractionné'], endu3: ['Endurance3e', 'Endurance 3e'], biath: ['Biathlon6e', 'Biathlon 6e'], tours9: ['9tours6e', '9 tours 6e'], lancer: ['EvaluationLancer', 'Évaluation lancer'] }[s.type];
     exportXLSX(`${nm[0]}_${C.name}_${s.date}`, [{ name: nm[1], rows }]);
   },
   exportClass() {
