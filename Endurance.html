@@ -344,8 +344,8 @@ input.vin[class*="vc"]::placeholder{color:inherit;opacity:.9}
 .rskb{margin-left:6px;border:1px solid #16a34a;background:#f0fdf4;color:#15803d;border-radius:999px;font-size:12px;font-weight:900;line-height:18px;width:22px;height:20px;padding:0;cursor:pointer;vertical-align:middle}
 .rskb.off{border-color:#dc2626;background:#fef2f2;color:#b91c1c}
 .rc.rskip > :not(.rskb){opacity:.4;text-decoration:line-through}
-.ct .ntsel.rnsel{width:46px;padding:3px 2px;margin:1px 2px}.ct .ntsel.rnsel.n1{width:34px}.ct .ntsel.rnsel{height:24px;line-height:15px;padding:2px 2px 5px}.ct .ntsel.rnsel.vmod{text-underline-offset:2px}
 .vmod{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px}
+.ct .ntsel.vmod{height:25px;line-height:14px;padding:2px 1px 6px;text-underline-offset:2px}
 .vbtn{border:1px dashed transparent;background:transparent;border-radius:8px;padding:4px 8px;cursor:pointer;min-height:32px;min-width:44px;text-align:center}
 .vbtn:hover{border-color:#c7d2fe;background:#f5f7ff}
 .pvma{display:inline-flex;align-items:center;flex:0 0 auto}
@@ -1112,7 +1112,7 @@ function buildSheetTables() {
         });
       } else if (isLap(s)) {
         syncOrder(C, s);
-        const runs = lapRuns(s);
+        const runs = lapRuns(s), nine = isNine(s);
         const name = s.type === 'biath' ? 'Biathlon 6e' : s.type === 'tours9' ? '9 tours 6e' : s.type === 'endu3' ? 'Endurance 3e' : `Fractionné ${s.reps} × ${fmtDur(s.work)}`;
         sortedStudents(C).forEach(st => {
           const stt = (s.status || {})[st.id];
@@ -1121,8 +1121,8 @@ function buildSheetTables() {
           runs.forEach((run, r) => {
             const ev = lapEval(C, s, st.id, r); if (!ev) return;
             crs.push([cn, st.name, st.sexe, fmtDate(s.date), name, run.label, fracVMA(C, s, st.id) == null ? '' : fracVMA(C, s, st.id), ev.target == null ? '' : ev.target,
-              ev.dist, ev.speed ? Math.round(ev.speed * 10) / 10 : '', ev.cum.map(x => fmtT(x)).join(' '), ev.reg ? ev.reg.g : '', ev.vg || '', ev.walk, ev.cont,
-              ev.t9 ? fmtT(ev.t9) : '', ev.throws ? ev.pen : '', ev.fin != null ? fmtT(ev.fin) : '', ev.tg || '', runSkipped(s, st.id, r) ? 'non comptée' : '', isNine(s) ? obsGrade(s, st.id) : '']);
+              ev.dist, ev.speed ? Math.round(ev.speed * 10) / 10 : '', ev.cum.map(x => fmtT(x)).join(' '), (nine ? finalNote(s, st.id, 'r', ev.reg && ev.reg.g) : ev.reg && ev.reg.g) || '', (nine ? finalNote(s, st.id, 'v', ev.vg) : ev.vg) || '', ev.walk, (nine ? finalNote(s, st.id, 'c', ev.cont) : ev.cont) || '',
+              ev.t9 ? fmtT(ev.t9) : '', ev.throws ? ev.pen : '', ev.fin != null ? fmtT(ev.fin) : '', (s.type === 'biath' ? finalNote(s, st.id, 't', ev.tg) : ev.tg) || '', runSkipped(s, st.id, r) ? 'non comptée' : '', isNine(s) ? obsGrade(s, st.id) : '']);
           });
           // Ligne « Bilan » : notes finales (proposées ou modifiées à la main), courses non comptées exclues
           if (!isNine(s)) {
@@ -1141,7 +1141,7 @@ function buildSheetTables() {
           const mates = isDuo(s) ? duoOf(s, st.id).filter(x => x !== st.id) : [s.partner[st.id]].filter(Boolean);
           frac.push([cn, st.name, fmtDate(s.date), 'Groupe ' + g, mates.map(x => byId.get(x) ? byId.get(x).name : '').join(', '), s.work, rest, s.reps, s.pct,
             v == null ? '' : v, (L0 => L0 ? L0.vma : '')(latestVMA(C, st.id)), d == null ? '' : d, r ? r.y : '', r ? r.n : '', r ? r.detail : '', obsGrade(s, st.id),
-            nSeries(s), ...(sc => sc ? [sc.p, sc.max, sc.g] : ['', '', ''])(fracScore(s, st.id))]);
+            nSeries(s), ...(sc => sc ? [sc.p, sc.max, finalNote(s, st.id, 'n', sc.g)] : ['', '', ''])(fracScore(s, st.id))]);
         });
       }
     });
@@ -1387,12 +1387,7 @@ function notesTableRows(C) {
   return [['Nom Prénom', 'Sexe', ...ss.map(s => sessShort(s)[1] + ' ' + fmtDate(s.date))]]
     .concat(sortedStudents(C).map(st => [st.name, st.sexe, ...ss.map(s => notesText(sessionNotes(C, s, st.id)))]));
 }
-// Note modifiable : 1re option = note calculée (retour à la note de départ), puis TB · S · F · I · /
-function noteSel(s, id, n) {
-  const p = n.k ? n.k + ' ' : '';
-  return `<select class="nt nt-${n.g && n.g !== '/' ? n.g : '0'} ntsel rnsel ${n.k ? '' : 'n1'} ${n.ov ? 'vmod' : ''}" data-chg="noteOv" data-sid="${s.id}" data-id="${id}" data-k="${n.key}" title="${esc(n.t)}${n.ov ? ' — modifiée à la main (calculée : ' + (n.auto || '—') + ')' : ' — toucher pour modifier'}">
-    <option value="" ${n.ov ? '' : 'selected'}>${p}${n.auto || '—'}${n.ov ? ' (calculée)' : ''}</option>${SUM_NOTES.map(v => `<option value="${v}" ${n.ov === v ? 'selected' : ''}>${p}${v}</option>`).join('')}</select>`;
-}
+const noteChip = n => `<span class="nt nt-${n.g && n.g !== '/' ? n.g : '0'} ${n.ov ? 'vmod' : ''}" title="${esc(n.t)}${n.ov ? ' — modifiée à la main (calculée : ' + (n.auto || '—') + ')' : ''}">${n.k ? n.k + ' ' : ''}${n.g || '—'}</span>`;
 function viewNotes(C) {
   const ss = recapSessions(C);
   const rank = g => ['TB', 'S', 'F', 'I', '/'].indexOf(g);
@@ -1404,12 +1399,12 @@ function viewNotes(C) {
       if (x.st) return cell(null, `<b>${esc(x.st)}</b>`, 'c');
       if (x.vma != null) return cell(x.vma, `<b>${fmtVMA(x.vma)}</b> <span class="hint">km/h</span>`, 'c');
       const main = x.notes.find(n => n.k !== 'O');
-      return cell(main && main.g ? rank(main.g) : null, x.notes.map(n => noteSel(s, st.id, n)).join(''), 'c');
+      return cell(main && main.g ? rank(main.g) : null, x.notes.map(n => noteChip(n)).join(''), 'c');
     })
   ] }));
   return `<section class="card">
     <div class="row sp"><h3 style="margin:0">🏆 Notes de chaque séance</h3><button class="btn pri" data-act="exportClass">📊 Export Excel</button></div>
-    <p class="hint">Une colonne par séance, de la plus ancienne à la plus récente. Touchez une note pour la modifier : une note modifiée est soulignée ; choisissez « (calculée) » pour revenir à la note de départ. V = vitesse · R = régularité · C = continuité · T = temps final (biathlon) · O = travail d'observateur. Test VMA : VMA obtenue. Touchez un titre de colonne pour trier.</p>
+    <p class="hint">Une colonne par séance, de la plus ancienne à la plus récente. Une note modifiée à la main dans la séance est soulignée. V = vitesse · R = régularité · C = continuité · T = temps final (biathlon) · O = travail d'observateur. Test VMA : VMA obtenue. Touchez un titre de colonne pour trier.</p>
     ${ss.length ? sortTable('notes-' + C.name, ['Nom Prénom', { t: 'Sexe', cls: 'c' }, ...ss.map(s => { const [ic, nm] = sessShort(s); return { t: `${ic} ${esc(nm)}<br><span style="font-weight:600">${fmtDate(s.date)}</span>`, cls: 'c' }; })], rows)
       : '<div class="empty">Aucune séance pour cette classe.</div>'}
   </section>`;
@@ -2032,8 +2027,8 @@ const sumOv = (s, id, k) => ((s.sumOv || {})[id] || {})[k];
 const finalNote = (s, id, k, auto) => sumOv(s, id, k) || auto || null;
 function sumSel(s, id, k, auto, title) {
   const ov = sumOv(s, id, k), g = ov || auto;
-  return `<select class="nt nt-${g && g !== '/' ? g : '0'} ntsel ${ov ? 'vmod' : ''}" data-chg="sumOv" data-id="${id}" data-k="${k}" title="${esc(title)}${ov ? ' — modifiée à la main (proposée : ' + (auto || '—') + ')' : ' — toucher pour modifier'}">
-    <option value="" ${ov ? '' : 'selected'}>${auto || '—'}${ov ? ' (proposée)' : ''}</option>${SUM_NOTES.map(n => `<option value="${n}" ${ov === n ? 'selected' : ''}>${n}</option>`).join('')}</select>`;
+  return `<select class="nt nt-${g && g !== '/' ? g : '0'} ntsel ${ov ? 'vmod' : ''}" data-chg="sumOv" data-id="${id}" data-k="${k}" title="${esc(title)}${ov ? ' — modifiée à la main (calculée : ' + (auto || '—') + ')' : ' — toucher pour modifier'}">
+    <option value="" ${ov ? '' : 'selected'}>${auto || '—'}${ov ? ' (calculée)' : ''}</option>${SUM_NOTES.map(n => `<option value="${n}" ${ov === n ? 'selected' : ''}>${n}</option>`).join('')}</select>`;
 }
 function lapSummaryCells(evs, s, id) {
   const S = lapSummary(evs), sg = n => (n > 0 ? '+' : n < 0 ? '−' : '') + fmtNum(Math.abs(Math.round(n * 10) / 10), 1);
@@ -2123,18 +2118,19 @@ function lapSection(C, s, rows) {
   let table;
   if (isNine(s)) {
     const lancers = s.type === 'biath';
+    const fnk = (id, k, auto) => { const g = finalNote(s, id, k, auto); return g ? SUM_NOTES.indexOf(g) : null; };
     const rws = present.map(st => {
       const ev = lapEval(C, s, st.id, 0), v = fracVMA(C, s, st.id);
       return { cells: [
         cell(st.name, `<b>${esc(st.name)}</b>`), cell(st.sexe), cell(v, v != null ? fmtVMA(v) : '—'),
         ...(lancers ? [
           cell(ev && ev.fin, ev && ev.fin != null ? `<b>${fmtT(ev.fin)}</b>` : '—'),
-          cell(ev && ev.tg, ntk(ev && ev.tg, (ev && ev.tg) || '—', 'Barème temps'), 'c')] : []),
+          cell(fnk(st.id, 't', ev && ev.tg), ev ? sumSel(s, st.id, 't', ev.tg, 'Barème temps') : ntk(null, '—', 'Barème temps'), 'c')] : []),
         cell(ev && ev.t9, ev && ev.t9 ? (lancers ? fmtT(ev.t9) : `<b>${fmtT(ev.t9)}</b>`) : '—'),
         ...(lancers ? [cell(ev ? ev.pen : null, ev && ev.t9 ? ev.throws.map(x => x ? '✓' : '✗').join(' ') + ` <span class="hint">(${ev.pen} pén.)</span>` : '—')] : []),
-        cell(ev && ev.vg, ntk(ev && ev.vg, (ev && ev.vg) || '—', 'Vitesse / VMA'), 'c'),
-        cell(ev && ev.reg && ev.reg.e, ntk(ev && ev.reg && ev.reg.g, (ev && ev.reg && ev.reg.g) || '—', 'Régularité'), 'c'),
-        cell(ev && ev.cont, ev ? ntk(ev.cont, ev.cont, 'Continuité') + ` <span class="hint">${ev.walk} 🚶</span>` : ntk(null, '—', 'Continuité'), 'c'),
+        cell(fnk(st.id, 'v', ev && ev.vg), ev ? sumSel(s, st.id, 'v', ev.vg, 'Vitesse / VMA') : ntk(null, '—', 'Vitesse / VMA'), 'c'),
+        cell(fnk(st.id, 'r', ev && ev.reg && ev.reg.g), ev ? sumSel(s, st.id, 'r', ev.reg && ev.reg.g, 'Régularité') : ntk(null, '—', 'Régularité'), 'c'),
+        cell(fnk(st.id, 'c', ev && ev.cont), ev ? sumSel(s, st.id, 'c', ev.cont, 'Continuité') + ` <span class="hint">${ev.walk} 🚶</span>` : ntk(null, '—', 'Continuité'), 'c'),
         cell(['TB', 'S', 'F', 'I'].indexOf(obsGrade(s, st.id)), `<button class="nt nt-${obsGrade(s, st.id)} ntsel" data-act="obsToggle" data-id="${st.id}" title="Travail d'observateur — toucher pour changer : TB → S → F → I">${obsGrade(s, st.id)}</button>`, 'c'),
         cell('', `<div class="spl">${passTxt(ev ? ev.cum.slice(0, BIATH_TOURS) : [], BIATH_LAP, st.id, 0, BIATH_TOURS)}</div>`, 'splc'),
         cell('', ev ? `<button class="btn sm danger" data-act="lapClear" data-id="${st.id}" title="Effacer">🗑</button>` : '')
@@ -2388,7 +2384,7 @@ function fracShortSections(C, s, rows, section4) {
       ...(duo ? [cell(s.duoNum[st.id], 'n° ' + s.duoNum[st.id])] : []),
       cell(mates.map(m => m.name).join(', '), esc(mates.map(m => m.name).join(', ')) || '—'),
       cell(sc ? sc.p : null, sc ? `<b>${sc.p}</b> / ${sc.max}` : '—'),
-      cell(sc ? ['TB', 'S', 'F', 'I'].indexOf(sc.g) : null, nt(sc && sc.g, '', 'Note'), 'c'),
+      cell(sc ? SUM_NOTES.indexOf(finalNote(s, st.id, 'n', sc.g)) : null, sc ? sumSel(s, st.id, 'n', sc.g, 'Note') : nt(null, '', 'Note'), 'c'),
       cell(['TB', 'S', 'F', 'I'].indexOf(obsGrade(s, st.id)), `<span class="ob ob-${obsGrade(s, st.id)}">${obsGrade(s, st.id)}</span>`, 'c')
     ] };
   }).concat(studs.filter(st => s.status[st.id]).map(st => ({ cells: [cell(st.name, `<b>${esc(st.name)}</b>`), cell('Z', `<b>${s.status[st.id]}</b>`), ...(duo ? [cell(null, '')] : []), cell(null, ''), cell(null, '—'), sttCell(s, st.id), sttCell(s, st.id)] })));
@@ -3136,16 +3132,6 @@ const CHG = {
     s.extra = s.extra || {};
     const m = s.extra[id] || (s.extra[id] = {});
     if (v == null || v <= 0) delete m[r]; else m[r] = Math.round(v);
-    commit();
-  },
-  // Note modifiée depuis l'onglet Résultats (vide = revenir à la note calculée)
-  noteOv(el) {
-    const C = curClass(), s = C && findSession(C, el.dataset.sid), id = el.dataset.id, k = el.dataset.k;
-    if (!s) return;
-    s.sumOv = s.sumOv || {};
-    const m = s.sumOv[id] || (s.sumOv[id] = {});
-    if (el.value) m[k] = el.value; else delete m[k];
-    if (!Object.keys(m).length) delete s.sumOv[id];
     commit();
   },
   // Note finale du bilan modifiée à la main (vide = revenir à la note proposée)
