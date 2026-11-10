@@ -344,6 +344,7 @@ input.vin[class*="vc"]::placeholder{color:inherit;opacity:.9}
 .rskb{margin-left:6px;border:1px solid #16a34a;background:#f0fdf4;color:#15803d;border-radius:999px;font-size:12px;font-weight:900;line-height:18px;width:22px;height:20px;padding:0;cursor:pointer;vertical-align:middle}
 .rskb.off{border-color:#dc2626;background:#fef2f2;color:#b91c1c}
 .rc.rskip > :not(.rskb){opacity:.4;text-decoration:line-through}
+.ct .ntsel.rnsel{width:46px;padding:3px 2px;margin:1px 2px}.ct .ntsel.rnsel.n1{width:34px}.ct .ntsel.rnsel{height:24px;line-height:15px;padding:2px 2px 5px}.ct .ntsel.rnsel.vmod{text-underline-offset:2px}
 .vmod{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px}
 .vbtn{border:1px dashed transparent;background:transparent;border-radius:8px;padding:4px 8px;cursor:pointer;min-height:32px;min-width:44px;text-align:center}
 .vbtn:hover{border-color:#c7d2fe;background:#f5f7ff}
@@ -1355,35 +1356,42 @@ function sessionNotes(C, s, id) {
   const stt = (s.status || {})[id];
   if (stt) return { st: stt };
   if (s.type === 'vma') { const r = s.results[id]; return r ? { vma: resPerf(r).vma } : null; }
-  if (s.type === 'lancer') { const n = (s.notes || {})[id]; return n ? { notes: [['', n, 'Lancer de vortex']] } : null; }
-  const obs = ['O', obsGrade(s, id), "Travail d'observateur"];
+  const fin = x => x && { notes: x.notes.map(([k, auto, t, key]) => ({ k, auto: auto || null, t, key, ov: sumOv(s, id, key) || null, g: finalNote(s, id, key, auto) })) };
+  if (s.type === 'lancer') { const n = (s.notes || {})[id]; return n ? fin({ notes: [['', n, 'Lancer de vortex', 'n']] }) : null; }
+  const obs = ['O', obsGrade(s, id), "Travail d'observateur", 'o'];
   if (isLap(s)) {
     if (!s.order) syncOrder(C, s);
     if (!groupOf(s, id)) return null;
     const runs = lapRuns(s);
     if (isNine(s)) {
       const ev = lapEval(C, s, id, 0); if (!ev) return null;
-      const n = [['V', ev.vg, 'Vitesse'], ['R', ev.reg && ev.reg.g, 'Régularité'], ['C', ev.cont, 'Continuité']];
-      if (s.type === 'biath') n.push(['T', ev.tg, 'Temps final']);
-      return { notes: n.concat([obs]) };
+      const n = [['V', ev.vg, 'Vitesse', 'v'], ['R', ev.reg && ev.reg.g, 'Régularité', 'r'], ['C', ev.cont, 'Continuité', 'c']];
+      if (s.type === 'biath') n.push(['T', ev.tg, 'Temps final', 't']);
+      return fin({ notes: n.concat([obs]) });
     }
     const S = lapSummary(runs.map((_, r) => runSkipped(s, id, r) ? null : lapEval(C, s, id, r)));
     if (!S) return null;
-    return { notes: [['V', finalNote(s, id, 'v', S.vg), 'Vitesse'], ['R', finalNote(s, id, 'r', S.rg), 'Régularité'], ['C', finalNote(s, id, 'c', S.cg), 'Continuité'], obs] };
+    return fin({ notes: [['V', S.vg, 'Vitesse', 'v'], ['R', S.rg, 'Régularité', 'r'], ['C', S.cg, 'Continuité', 'c'], obs] });
   }
   if (s.type === 'frac') {
     if (!s.order) syncOrder(C, s);
     const sc = fracScore(s, id); if (!sc) return null;
-    return { notes: [['', sc.g, `Note (${sc.p} / ${sc.max} points)`], obs] };
+    return fin({ notes: [['', sc.g, `Note (${sc.p} / ${sc.max} points)`, 'n'], obs] });
   }
   return null;
 }
-const notesText = x => !x ? '' : x.st ? x.st : x.vma != null ? 'VMA ' + fmtVMA(x.vma) : x.notes.map(([k, g]) => (k ? k + ' ' : '') + (g || '—')).join(' · ');
+const notesText = x => !x ? '' : x.st ? x.st : x.vma != null ? 'VMA ' + fmtVMA(x.vma) : x.notes.map(n => (n.k ? n.k + ' ' : '') + (n.g || '—')).join(' · ');
 const recapSessions = C => C.sessions.slice().sort((a, b) => (a.date || '').localeCompare(b.date || '') || (a.createdAt || 0) - (b.createdAt || 0));
 function notesTableRows(C) {
   const ss = recapSessions(C);
   return [['Nom Prénom', 'Sexe', ...ss.map(s => sessShort(s)[1] + ' ' + fmtDate(s.date))]]
     .concat(sortedStudents(C).map(st => [st.name, st.sexe, ...ss.map(s => notesText(sessionNotes(C, s, st.id)))]));
+}
+// Note modifiable : 1re option = note calculée (retour à la note de départ), puis TB · S · F · I · /
+function noteSel(s, id, n) {
+  const p = n.k ? n.k + ' ' : '';
+  return `<select class="nt nt-${n.g && n.g !== '/' ? n.g : '0'} ntsel rnsel ${n.k ? '' : 'n1'} ${n.ov ? 'vmod' : ''}" data-chg="noteOv" data-sid="${s.id}" data-id="${id}" data-k="${n.key}" title="${esc(n.t)}${n.ov ? ' — modifiée à la main (calculée : ' + (n.auto || '—') + ')' : ' — toucher pour modifier'}">
+    <option value="" ${n.ov ? '' : 'selected'}>${p}${n.auto || '—'}${n.ov ? ' (calculée)' : ''}</option>${SUM_NOTES.map(v => `<option value="${v}" ${n.ov === v ? 'selected' : ''}>${p}${v}</option>`).join('')}</select>`;
 }
 function viewNotes(C) {
   const ss = recapSessions(C);
@@ -1395,13 +1403,13 @@ function viewNotes(C) {
       if (!x) return cell(null, '<span class="hint">—</span>', 'c');
       if (x.st) return cell(null, `<b>${esc(x.st)}</b>`, 'c');
       if (x.vma != null) return cell(x.vma, `<b>${fmtVMA(x.vma)}</b> <span class="hint">km/h</span>`, 'c');
-      const main = x.notes.find(n => n[0] !== 'O');
-      return cell(main && main[1] ? rank(main[1]) : null, x.notes.map(([k, g, t]) => `<span class="nt nt-${g && g !== '/' ? g : '0'}" title="${esc(t)} : ${g || '—'}">${k ? k + ' ' : ''}${g || '—'}</span>`).join(''), 'c');
+      const main = x.notes.find(n => n.k !== 'O');
+      return cell(main && main.g ? rank(main.g) : null, x.notes.map(n => noteSel(s, st.id, n)).join(''), 'c');
     })
   ] }));
   return `<section class="card">
     <div class="row sp"><h3 style="margin:0">🏆 Notes de chaque séance</h3><button class="btn pri" data-act="exportClass">📊 Export Excel</button></div>
-    <p class="hint">Une colonne par séance, de la plus ancienne à la plus récente. V = vitesse · R = régularité · C = continuité · T = temps final (biathlon) · O = travail d'observateur. Test VMA : VMA obtenue. Touchez un titre de colonne pour trier.</p>
+    <p class="hint">Une colonne par séance, de la plus ancienne à la plus récente. Touchez une note pour la modifier : une note modifiée est soulignée ; choisissez « (calculée) » pour revenir à la note de départ. V = vitesse · R = régularité · C = continuité · T = temps final (biathlon) · O = travail d'observateur. Test VMA : VMA obtenue. Touchez un titre de colonne pour trier.</p>
     ${ss.length ? sortTable('notes-' + C.name, ['Nom Prénom', { t: 'Sexe', cls: 'c' }, ...ss.map(s => { const [ic, nm] = sessShort(s); return { t: `${ic} ${esc(nm)}<br><span style="font-weight:600">${fmtDate(s.date)}</span>`, cls: 'c' }; })], rows)
       : '<div class="empty">Aucune séance pour cette classe.</div>'}
   </section>`;
@@ -1480,7 +1488,7 @@ function syncOrder(C, s) {
   s.extraObs = s.extraObs || {};
   Object.keys(s.extraObs).forEach(r => {
     const o = s.extraObs[r], gr = s.order.A.includes(r) ? 'A' : s.order.B.includes(r) ? 'B' : null;
-    const go = s.order.A.includes(o) ? 'A' : s.order.B.includes(o) ? 'B' : null;
+    const go = s.order.A.includes(o) ? 'A' : s.order.B.includes(o) ? 'B' : (s.status || {})[o] === 'DP' ? 'DP' : null;
     if (!gr || !go || gr === go || pair[r]) delete s.extraObs[r]; else pair[r] = o;
   });
   if (s.type === 'vma') {
@@ -1507,7 +1515,7 @@ function pairsHTML(C, s, lab) {
   const extra = (runner, g) => {
     if (!runner) return `<div class="pc empty">— sans binôme —</div>`;
     const o = (s.extraObs || {})[runner];
-    if (o && byId.get(o)) return `<div class="pc extra"><span class="gn">👁 ${esc(byId.get(o).name)}</span><small>observe 2 coureurs</small><button class="btn sm ghost" data-act="extraObsDel" data-id="${runner}" title="Retirer">✕</button></div>`;
+    if (o && byId.get(o)) return `<div class="pc extra"><span class="gn">👁 ${esc(byId.get(o).name)}</span><small>${extraObsLabel(s, o)}</small><button class="btn sm ghost" data-act="extraObsDel" data-id="${runner}" title="Retirer">✕</button></div>`;
     return extraSel(C, s, runner, g);
   };
   const rows = Array.from({ length: n }, (_, i) => `<div class="prow"><span class="pn">${i + 1}</span>${s.order.A[i] ? item(s.order.A[i], 'A') : `<div data-slot="A">${extra(s.order.B[i], 'A')}</div>`}${s.order.B[i] ? item(s.order.B[i], 'B') : `<div data-slot="B">${extra(s.order.A[i], 'B')}</div>`}</div>`).join('');
@@ -1779,6 +1787,8 @@ function duoRows(s) {
   const K = Math.max(0, ...[...s.order.A, ...s.order.B].map(id => s.duoNum[id] || 0));
   return Array.from({ length: K }, (_, k) => ({ A: s.order.A.filter(id => s.duoNum[id] === k + 1), B: s.order.B.filter(id => s.duoNum[id] === k + 1) }));
 }
+// Case de note d'un élève absent ou dispensé : son statut (ABS, DP, DISP) à la place de la note
+const sttCell = (s, id) => cell(null, `<span class="nt nt-0" title="${esc(STATUS[s.status[id]] || '')}">${esc(s.status[id])}</span>`, 'c');
 function fracRows(s) {
   if (isDuo(s)) return duoRows(s);
   const ex = s.extraObs || {};
@@ -1790,11 +1800,15 @@ function fracRows(s) {
     };
   });
 }
-// Menu « ajouter un observateur » pour un élève sans binôme : élèves de l'autre groupe
+// Menu « ajouter un observateur » pour un élève sans binôme : élèves de l'autre groupe,
+// puis élèves dispensés ponctuels (DP) qui n'observent pas encore
 function extraSel(C, s, runner, g) {
   const byId = new Map(C.students.map(st => [st.id, st]));
-  return `<select class="xsel" data-chg="extraObs" data-id="${runner}"><option value="">＋ Ajouter un observateur…</option>${s.order[g].map(id => `<option value="${id}">${esc(byId.get(id).name)}</option>`).join('')}</select>`;
+  const used = new Set(Object.values(s.extraObs || {}));
+  const dp = sortedStudents(C).filter(st => (s.status || {})[st.id] === 'DP' && !used.has(st.id));
+  return `<select class="xsel" data-chg="extraObs" data-id="${runner}"><option value="">＋ Ajouter un observateur…</option>${s.order[g].map(id => `<option value="${id}">${esc(byId.get(id).name)}</option>`).join('')}${dp.length ? `<optgroup label="Dispensés ponctuels (DP)">${dp.map(st => `<option value="${st.id}">${esc(st.name)} (DP)</option>`).join('')}</optgroup>` : ''}</select>`;
 }
+const extraObsLabel = (s, o) => (s.status || {})[o] === 'DP' ? 'observateur dispensé (DP)' : 'observe 2 coureurs';
 // Membres du binôme de course de l'élève (lui compris)
 function duoOf(s, id) {
   const g = groupOf(s, id);
@@ -2125,7 +2139,8 @@ function lapSection(C, s, rows) {
         cell('', `<div class="spl">${passTxt(ev ? ev.cum.slice(0, BIATH_TOURS) : [], BIATH_LAP, st.id, 0, BIATH_TOURS)}</div>`, 'splc'),
         cell('', ev ? `<button class="btn sm danger" data-act="lapClear" data-id="${st.id}" title="Effacer">🗑</button>` : '')
       ] };
-    }).concat(statused.map(st => ({ cells: [cell(st.name, `<b>${esc(st.name)}</b>`), cell(st.sexe), cell(null, '—'), cell(null, `<b>${s.status[st.id]}</b>`), ...Array(lancers ? 9 : 6).fill(cell(null, ''))] })));
+    }).concat(statused.map(st => ({ cells: [cell(st.name, `<b>${esc(st.name)}</b>`), cell(st.sexe), cell(null, '—'), cell(null, `<b>${s.status[st.id]}</b>`),
+      ...(lancers ? [sttCell(s, st.id), cell(null, ''), cell(null, '')] : []), ...Array(4).fill(sttCell(s, st.id)), cell(null, ''), cell(null, '')] })));
     table = sortTable('lap-' + s.id, ['Nom Prénom', 'S.', 'VMA', ...(lancers ? ['Final', { t: 'Note', cls: 'c' }] : []), '900 m', ...(lancers ? ['Lancers'] : []), { t: 'Vit.', cls: 'c' }, { t: 'Rég.', cls: 'c' }, { t: 'Cont.', cls: 'c' }, { t: 'Obs.', cls: 'c' }, { t: 'Temps de passage et courbe', nosort: true }, { t: '', nosort: true }], rws);
   } else {
     const rws = present.map(st => {
@@ -2138,7 +2153,7 @@ function lapSection(C, s, rows) {
         cell(['TB', 'S', 'F', 'I'].indexOf(obsGrade(s, st.id)), `<button class="nt nt-${obsGrade(s, st.id)} ntsel" data-act="obsToggle" data-id="${st.id}" title="Travail d'observateur — toucher pour changer : TB → S → F → I">${obsGrade(s, st.id)}</button>`, 'c'),
         cell('', evs.some(Boolean) ? `<button class="btn sm danger" data-act="lapClear" data-id="${st.id}" title="Effacer">🗑</button>` : '')
       ] };
-    }).concat(statused.map(st => ({ cells: [cell(st.name, `<b>${esc(st.name)}</b>`), cell(st.sexe), cell(null, `<b>${s.status[st.id]}</b>`), ...runs.map(() => cell(null, '')), cell(null, ''), cell(null, ''), cell(null, ''), cell(null, ''), cell(null, '')] })));
+    }).concat(statused.map(st => ({ cells: [cell(st.name, `<b>${esc(st.name)}</b>`), cell(st.sexe), cell(null, `<b>${s.status[st.id]}</b>`), ...runs.map(() => cell(null, '')), ...Array(4).fill(sttCell(s, st.id)), cell(null, '')] })));
     table = sortTable('lap-' + s.id, ['Nom Prénom', 'Sexe', 'VMA', ...runs.map(x => x.label), { t: 'Bilan vitesse', cls: 'c sumh' }, { t: 'Bilan régularité', cls: 'c sumh' }, { t: 'Bilan continuité', cls: 'c sumh' }, { t: 'Bilan observateur', cls: 'c sumh' }, { t: '', nosort: true }], rws);
   }
 
@@ -2217,7 +2232,7 @@ function pairTable(C, s, rows, objs, duo) {
     }
     if (r && r.extra === side) {
       const o = byId.get(ids[0]);
-      return `<td colspan="${nc}"><div class="dl"><span class="gn">👁 ${esc(o.name)}</span><small class="hint" style="margin:0 6px">observe 2 coureurs</small><button class="btn sm ghost" data-act="extraObsDel" data-id="${r.lone}" title="Retirer">✕</button></div></td>`;
+      return `<td colspan="${nc}"><div class="dl"><span class="gn">👁 ${esc(o.name)}</span><small class="hint" style="margin:0 6px">${extraObsLabel(s, o.id)}</small><button class="btn sm ghost" data-act="extraObsDel" data-id="${r.lone}" title="Retirer">✕</button></div></td>`;
     }
     const es = ids.map(entry);
     return `<td>${es.map(e => e.n).join('')}</td><td>${es.map(e => e.v).join('')}</td>` + objs.map((_, j) => `<td class="c">${es.map(e => e.o[j]).join('')}</td>`).join('');
@@ -2376,7 +2391,7 @@ function fracShortSections(C, s, rows, section4) {
       cell(sc ? ['TB', 'S', 'F', 'I'].indexOf(sc.g) : null, nt(sc && sc.g, '', 'Note'), 'c'),
       cell(['TB', 'S', 'F', 'I'].indexOf(obsGrade(s, st.id)), `<span class="ob ob-${obsGrade(s, st.id)}">${obsGrade(s, st.id)}</span>`, 'c')
     ] };
-  }).concat(studs.filter(st => s.status[st.id]).map(st => ({ cells: [cell(st.name, `<b>${esc(st.name)}</b>`), cell('Z', `<b>${s.status[st.id]}</b>`), ...(duo ? [cell(null, '')] : []), cell(null, ''), cell(null, '—'), cell(null, ''), cell(null, '')] })));
+  }).concat(studs.filter(st => s.status[st.id]).map(st => ({ cells: [cell(st.name, `<b>${esc(st.name)}</b>`), cell('Z', `<b>${s.status[st.id]}</b>`), ...(duo ? [cell(null, '')] : []), cell(null, ''), cell(null, '—'), sttCell(s, st.id), sttCell(s, st.id)] })));
   const max = duo ? s.reps * nSeries(s) : s.reps * nSeries(s), th = fracThresholds(s, max);
   const bareme = `${duo ? 'Points du binôme' : 'Points'} sur ${max} : TB ${th[0]}-${max} · S ${th[1]}-${th[0] - 1} · F ${th[2]}-${th[1] - 1} · I ${th[2] - 1} ou moins.`;
   return `
@@ -3121,6 +3136,16 @@ const CHG = {
     s.extra = s.extra || {};
     const m = s.extra[id] || (s.extra[id] = {});
     if (v == null || v <= 0) delete m[r]; else m[r] = Math.round(v);
+    commit();
+  },
+  // Note modifiée depuis l'onglet Résultats (vide = revenir à la note calculée)
+  noteOv(el) {
+    const C = curClass(), s = C && findSession(C, el.dataset.sid), id = el.dataset.id, k = el.dataset.k;
+    if (!s) return;
+    s.sumOv = s.sumOv || {};
+    const m = s.sumOv[id] || (s.sumOv[id] = {});
+    if (el.value) m[k] = el.value; else delete m[k];
+    if (!Object.keys(m).length) delete s.sumOv[id];
     commit();
   },
   // Note finale du bilan modifiée à la main (vide = revenir à la note proposée)
