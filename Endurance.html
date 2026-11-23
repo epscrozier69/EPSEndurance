@@ -1102,7 +1102,7 @@ function buildSheetTables() {
     const byId = new Map(C.students.map(s => [s.id, s]));
     C.sessions.slice().sort((a, b) => (a.date || '').localeCompare(b.date || '')).forEach(s => {
       if (s.type === 'lancer') {
-        sortedStudents(C).forEach(st => lan.push([cn, st.name, st.sexe, fmtDate(s.date), 'Lancer de vortex', (s.notes || {})[st.id] || '']));
+        sortedStudents(C).forEach(st => lan.push([cn, st.name, st.sexe, fmtDate(s.date), 'Lancer de vortex', (s.notes || {})[st.id] || (s.status || {})[st.id] || '']));
       } else if (s.type === 'vma') {
         sortedStudents(C).forEach(st => {
           const r = s.results[st.id], stt = (s.status || {})[st.id];
@@ -1283,6 +1283,15 @@ function viewGeneral() {
   </section>`}
 
   <section class="card">
+    <h2>📋 Lien avec Carnet de bord</h2>
+    <p class="hint">Les absents et dispensés de l'appel fait dans Carnet de bord sont repris dans les séances. Copiez ici l'URL du script et la clé secrète affichées dans Carnet de bord (bouton « 🔄 Synchro »). À faire une fois sur chaque appareil.</p>
+    <label class="lbl">URL du script de Carnet de bord (se termine par /exec)</label>
+    <div class="row"><input class="grow" type="url" placeholder="https://script.google.com/macros/s/…/exec" value="${esc(cdbCfg().url)}" data-chg="cdbUrl"></div>
+    <label class="lbl">Clé secrète de Carnet de bord</label>
+    <div class="row"><input class="grow" type="password" autocomplete="off" value="${esc(cdbCfg().key)}" data-chg="cdbKey"><button class="btn pri" data-act="cdbTest">Tester</button></div>
+  </section>
+
+  <section class="card">
     <h2>💾 Sauvegardes & exports</h2>
     <div class="row">
       <button class="btn pri" data-act="exportAll">📊 Exporter tous les résultats (Excel)</button>
@@ -1298,7 +1307,8 @@ function viewClass(C) {
   const u = clsUI(C.name);
   if (u.sid) {
     const s = findSession(C, u.sid);
-    if (s) return s.type === 'vma' ? viewVMA(C, s) : s.type === 'frac' ? viewFrac(C, s) : s.type === 'lancer' ? viewLancer(C, s) : viewLapSession(C, s);
+    if (s) return (s.type === 'vma' ? viewVMA(C, s) : s.type === 'frac' ? viewFrac(C, s) : s.type === 'lancer' ? viewLancer(C, s) : viewLapSession(C, s))
+      .replace('<button class="btn danger" data-act="delSession"', m => '<button class="btn" data-act="cdbSync" title="Récupérer les absents et dispensés de l\'appel fait dans Carnet de bord">📋 Carnet de bord</button>' + m);
     u.sid = null;
   }
   const f = C.students.filter(s => s.sexe === 'F').length, g = C.students.filter(s => s.sexe === 'G').length;
@@ -1336,7 +1346,7 @@ function viewSessions(C, u) {
         const sum = s.type === 'vma' ? `${Object.keys(s.results).length} résultat(s) · piste ${s.track} m`
           : s.type === 'frac' ? `${s.reps} × ${fmtDur(s.work)}${isDuo(s) ? ' en relais' : ' / ' + fmtDur(s.rest)}${nSeries(s) > 1 ? ' · ' + nSeries(s) + ' séries' : ''} · ${s.pct} % VMA`
           : s.type === 'endu3' ? `3' à VMA+1 · 9' à VMA−1 · ${nRun} élève(s) chronométré(s)`
-          : s.type === 'lancer' ? `Lancer de vortex · ${C.students.filter(st => (s.notes || {})[st.id]).length} / ${C.students.length} élève(s) évalué(s)`
+          : s.type === 'lancer' ? `Lancer de vortex · ${C.students.filter(st => (s.notes || {})[st.id]).length} / ${C.students.filter(st => !(s.status || {})[st.id]).length} élève(s) évalué(s)`
           : s.type === 'tours9' ? `900 m ·${Object.values(s.laps || {}).filter(m => (m[0] || []).length >= BIATH_TOURS).length} arrivée(s)`
           : `900 m + 2 lancers · ${Object.keys(s.final || {}).length} arrivée(s)`;
         return `<div class="sess"><div class="ic ${s.type}">${T[0]}</div>
@@ -1795,13 +1805,13 @@ function fracRows(s) {
     };
   });
 }
-// Menu « ajouter un observateur » pour un élève sans binôme : élèves de l'autre groupe,
-// puis élèves dispensés ponctuels (DP) qui n'observent pas encore
+// Menu « ajouter un observateur » pour un élève sans binôme : élèves dispensés ponctuels (DP)
+// qui n'observent pas encore, puis élèves de l'autre groupe
 function extraSel(C, s, runner, g) {
   const byId = new Map(C.students.map(st => [st.id, st]));
   const used = new Set(Object.values(s.extraObs || {}));
   const dp = sortedStudents(C).filter(st => (s.status || {})[st.id] === 'DP' && !used.has(st.id));
-  return `<select class="xsel" data-chg="extraObs" data-id="${runner}"><option value="">＋ Ajouter un observateur…</option>${s.order[g].map(id => `<option value="${id}">${esc(byId.get(id).name)}</option>`).join('')}${dp.length ? `<optgroup label="Dispensés ponctuels (DP)">${dp.map(st => `<option value="${st.id}">${esc(st.name)} (DP)</option>`).join('')}</optgroup>` : ''}</select>`;
+  return `<select class="xsel" data-chg="extraObs" data-id="${runner}"><option value="">＋ Ajouter un observateur…</option>${dp.length ? `<optgroup label="Dispensés ponctuels (DP)">${dp.map(st => `<option value="${st.id}">${esc(st.name)} (DP)</option>`).join('')}</optgroup>` : ''}<optgroup label="Élèves du groupe ${g}">${s.order[g].map(id => `<option value="${id}">${esc(byId.get(id).name)}</option>`).join('')}</optgroup></select>`;
 }
 const extraObsLabel = (s, o) => (s.status || {})[o] === 'DP' ? 'observateur dispensé (DP)' : 'observe 2 coureurs';
 // Membres du binôme de course de l'élève (lui compris)
@@ -1898,10 +1908,15 @@ const ntk = (g, k, title) => `<span class="nt nt-${g || '0'} ntk" title="${esc(t
 const nt = (g, letter, title) => `<span class="nt nt-${g || '0'}" title="${esc(title)}">${letter ? letter + ' ' : ''}${g || '—'}</span>`;
 
 /* ----- Courses chronométrées au tour ----- */
+// 9 tours / biathlon : allure choisie pour la séance, en km/h par rapport à la VMA (0 = VMA)
+const DV_LIST = [-3, -2.5, -2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2, 2.5, 3];
+const sessDv = s => isNine(s) && DV_LIST.includes(s.dv) ? s.dv : 0;
+const dvTxt = d => 'VMA' + (d ? (d > 0 ? '+' : '−') + String(Math.abs(d)).replace('.', ',') : '');
 function lapRuns(s) {
+  const dv = sessDv(s), at = dv ? ' à ' + dvTxt(dv) : '';
   if (s.type === 'endu3') return [{ dur: 180, delta: 1, label: "Course 1 : 3' à VMA+1" }, { dur: 540, delta: -1, label: "Course 2 : 9' à VMA−1" }];
-  if (s.type === 'biath') return [{ dur: null, delta: 0, label: '900 m + 2 lancers' }];
-  if (s.type === 'tours9') return [{ dur: null, delta: 0, label: '900 m (9 tours)' }];
+  if (s.type === 'biath') return [{ dur: null, delta: dv, label: '900 m' + at + ' + 2 lancers' }];
+  if (s.type === 'tours9') return [{ dur: null, delta: dv, label: '900 m (9 tours)' + at }];
   return Array.from({ length: s.reps }, (_, i) => ({ dur: s.work, delta: 0, label: 'Course ' + (i + 1) }));
 }
 const lapLen = s => isNine(s) ? BIATH_LAP : ([100, 150].includes(s.lapLen) ? s.lapLen : 100);   // piste de 100 m ou 150 m
@@ -2128,7 +2143,7 @@ function lapSection(C, s, rows) {
           cell(fnk(st.id, 't', ev && ev.tg), ev ? sumSel(s, st.id, 't', ev.tg, 'Barème temps') : ntk(null, '—', 'Barème temps'), 'c')] : []),
         cell(ev && ev.t9, ev && ev.t9 ? (lancers ? fmtT(ev.t9) : `<b>${fmtT(ev.t9)}</b>`) : '—'),
         ...(lancers ? [cell(ev ? ev.pen : null, ev && ev.t9 ? ev.throws.map(x => x ? '✓' : '✗').join(' ') + ` <span class="hint">(${ev.pen} pén.)</span>` : '—')] : []),
-        cell(fnk(st.id, 'v', ev && ev.vg), ev ? sumSel(s, st.id, 'v', ev.vg, 'Vitesse / VMA') : ntk(null, '—', 'Vitesse / VMA'), 'c'),
+        cell(fnk(st.id, 'v', ev && ev.vg), ev ? sumSel(s, st.id, 'v', ev.vg, 'Vitesse / ' + dvTxt(sessDv(s))) : ntk(null, '—', 'Vitesse / VMA'), 'c'),
         cell(fnk(st.id, 'r', ev && ev.reg && ev.reg.g), ev ? sumSel(s, st.id, 'r', ev.reg && ev.reg.g, 'Régularité') : ntk(null, '—', 'Régularité'), 'c'),
         cell(fnk(st.id, 'c', ev && ev.cont), ev ? sumSel(s, st.id, 'c', ev.cont, 'Continuité') + ` <span class="hint">${ev.walk} 🚶</span>` : ntk(null, '—', 'Continuité'), 'c'),
         cell(['TB', 'S', 'F', 'I'].indexOf(obsGrade(s, st.id)), `<button class="nt nt-${obsGrade(s, st.id)} ntsel" data-act="obsToggle" data-id="${st.id}" title="Travail d'observateur — toucher pour changer : TB → S → F → I">${obsGrade(s, st.id)}</button>`, 'c'),
@@ -2428,14 +2443,15 @@ const lancerBtns = (s, id, big) => `<div class="lnotes${big ? ' big' : ''}">${LA
 function viewLancer(C, s) {
   s.notes = s.notes || {};
   const studs = sortedStudents(C);
-  if (!studs.some(st => st.id === s.cur)) s.cur = (studs.find(st => !s.notes[st.id]) || {}).id || null;
+  const stt = s.status || {}, nEval = studs.filter(st => !stt[st.id]).length;
+  if (!studs.some(st => st.id === s.cur && !stt[st.id])) s.cur = (studs.find(st => !s.notes[st.id] && !stt[st.id]) || {}).id || null;
   const cur = studs.find(st => st.id === s.cur);
   const done = studs.filter(st => s.notes[st.id]).length;
   const idx = cur ? studs.indexOf(cur) : -1;
   const rows = studs.map(st => {
     const n = s.notes[st.id];
     return { cur: st.id === s.cur, cells: [
-      cell(st.name, `<button class="lsel" data-act="lancerCur" data-id="${st.id}" title="Choisir cet élève">${esc(st.name)}</button>`),
+      cell(st.name, `<button class="lsel" data-act="lancerCur" data-id="${st.id}" title="Choisir cet élève">${esc(st.name)}</button>${stt[st.id] ? ' ' + sttCell(s, st.id).h : ''}`),
       cell(st.sexe, esc(st.sexe || ''), 'c'),
       cell(n ? LANCER_NOTES.indexOf(n) : null, lancerBtns(s, st.id, false))
     ] };
@@ -2455,7 +2471,7 @@ function viewLancer(C, s) {
         <div class="row"><button class="btn" data-act="lancerStep" data-v="-1" ${idx <= 0 ? 'disabled' : ''}>◀ Précédent</button><button class="btn" data-act="lancerStep" data-v="1" ${idx >= studs.length - 1 ? 'disabled' : ''}>Suivant ▶</button></div>`
         : `<div class="who">${studs.length ? '✅ Tous les élèves sont évalués' : 'Aucun élève dans la classe'}</div>`}
     </div>
-    <p class="hint" style="margin-bottom:0">${done} / ${studs.length} élève(s) évalué(s)</p>
+    <p class="hint" style="margin-bottom:0">${done} / ${nEval} élève(s) évalué(s)${nEval < studs.length ? ` · ${studs.length - nEval} absent(s) ou dispensé(s). Donner une note retire le statut.` : ''}</p>
   </section>
   <section class="card">
     <div class="row sp"><h3 style="margin:0">Notes de la classe</h3><button class="btn" data-act="exportSession">📊 Export Excel</button></div>
@@ -2473,16 +2489,16 @@ function viewLapSession(C, s) {
   const e3 = s.type === 'endu3';
   const objs = e3
     ? [{ label: "3' VMA+1", val: v => v == null ? '—' : `<b>${Math.round((v + 1) / 3.6 * 180)} m</b>` }, { label: "9' VMA−1", val: v => v == null ? '—' : `<b>${Math.round((v - 1) / 3.6 * 540)} m</b>` }]
-    : [{ label: '900 m à VMA', val: v => v ? `<b>${fmtT(900 / (v / 3.6))}</b>` : '—' }];
+    : [{ label: '900 m à ' + dvTxt(sessDv(s)), val: v => v && v + sessDv(s) > 0 ? `<b>${fmtT(900 / ((v + sessDv(s)) / 3.6))}</b>` : '—' }];
   const info = s.type === 'tours9'
     ? `<div class="note"><p>🏃 <b>${BIATH_TOURS} tours de ${BIATH_LAP} m (900 m)</b>, sans lancers : l'arrivée est au ${BIATH_TOURS}e passage.</p>
-        <p class="hint">Notes : vitesse sur 900 m par rapport à la VMA, régularité sur les 9 tours, continuité (marches).</p></div>`
+        <p class="hint">Notes : vitesse sur 900 m par rapport à ${dvTxt(sessDv(s))}, régularité sur les 9 tours, continuité (marches).</p></div>`
     : e3
     ? `<div class="note"><p>🏁 <b>Course 1 : 3' à VMA+1</b>, puis <b>course 2 : 9' à VMA−1</b>. Lancez chaque course séparément.</p>
         <p>Distance visée = (VMA ± 1) ÷ 3,6 × durée. Notes : régularité au tour, vitesse par rapport à la vitesse visée, continuité (marches).</p></div>`
     : `<div class="note"><p>🎯 <b>${BIATH_TOURS} tours de ${BIATH_LAP} m (900 m)</b>, puis <b>2 lancers de vortex</b> : 1 tour de pénalité par lancer raté, puis arrivée.</p>
         <p><b>Barème filles</b> : TB ≤ 5'20 · S ≤ 6'40 · F ≤ 8'20 · I au-delà.<br><b>Barème garçons</b> : TB ≤ 5'00 · S ≤ 6'20 · F ≤ 8'00 · I au-delà.</p>
-        <p class="hint">Autres notes : régularité sur les 9 tours, vitesse sur 900 m par rapport à la VMA, continuité (marches).</p></div>`;
+        <p class="hint">Autres notes : régularité sur les 9 tours, vitesse sur 900 m par rapport à ${dvTxt(sessDv(s))}, continuité (marches).</p></div>`;
   return `
   <div class="sesshead"><button class="btn" data-act="back">← Séances</button><h2>${e3 ? '🏁 Épreuve d\'endurance 3e' : s.type === 'tours9' ? '🏃 9 tours 6e' : '🎯 Biathlon 6e'} — ${fmtDate(s.date)}</h2><button class="btn danger" data-act="delSession" data-id="${s.id}">Supprimer</button></div>
   <section class="card">
@@ -2498,6 +2514,7 @@ function viewLapSession(C, s) {
     ${pairsHTML(C, s, { A: 'Groupe A · court en 1er', B: 'Groupe B · observe en 1er' })}
     <label class="lbl" style="margin-top:16px">VMA et objectifs</label>
     <p class="hint" style="margin-top:0">Touchez la VMA d'un élève pour lui donner une vitesse visée différente (elle s'affiche alors : VMA → visée ; case vidée = retour à la VMA). La VMA du test n'est jamais modifiée.</p>
+    ${e3 ? '' : `<div class="row" style="margin:0 0 10px"><b>Courir à :</b><select data-chg="sessDv" style="width:auto">${DV_LIST.map(d => `<option value="${d}" ${sessDv(s) === d ? 'selected' : ''}>${dvTxt(d)}</option>`).join('')}</select></div>`}
     ${present.length ? pairTable(C, s, rows, objs, false) : ''}
   </section>
   ${lapSection(C, s, rows)}`;
@@ -2557,7 +2574,110 @@ function fracTick(e) {
 const curClass = () => state.classes[ui.tab];
 const curSession = () => { const C = curClass(); if (!C) return null; const u = clsUI(C.name); return u.sid ? findSession(C, u.sid) : null; };
 
+/* ---------- Lien avec l'application Carnet de bord (appel → ABS / DP / DISP), en lecture seule ---------- */
+const LS_CDB = 'eps_endurance_carnet';            // URL et clé : sur l'appareil uniquement, jamais dans la sauvegarde
+const cdbCfg = () => loadJSON(LS_CDB) || { url: '', key: '' };
+const CDB_MAP = { ABS: 'ABS', SLASH: 'ABS', EXCETA: 'ABS', DP: 'DP', DISP: 'DISP' };
+const CDB_ENDU = /endurance|biathlon|demi.?fond|combine|vma|course/;
+const nameKey = s => norm(s).split(/[^a-z0-9]+/).filter(Boolean).sort().join(' ');
+// Données de Carnet de bord : copie présente sur l'appareil (même site) et/ou script Google ; la plus récente gagne
+async function cdbData() {
+  const c = cdbCfg();
+  let local = loadJSON('cdb_state_v2'), remote = null, err = '';
+  if (!local || !local.tabs) local = null;
+  if (c.url && c.key) {
+    const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 20000);
+    try {
+      const r = await fetch(c.url + '?key=' + encodeURIComponent(c.key) + '&t=' + Date.now(), { cache: 'no-store', signal: ctl.signal });
+      const j = await r.json();
+      if (j && j.error) err = j.error === 'unauthorized' ? 'clé secrète de Carnet de bord incorrecte' : j.error;
+      else if (j && j.tabs) remote = j;
+      else err = 'données de Carnet de bord introuvables';
+    } catch (e) { err = 'connexion à Carnet de bord impossible'; }
+    finally { clearTimeout(to); }
+  } else if (!local) err = 'renseignez l\'URL et la clé de Carnet de bord dans l\'onglet Général';
+  const data = local && remote ? ((local.updatedAt || 0) > (remote.updatedAt || 0) ? local : remote) : remote || local;
+  if (!data) throw new Error(err);
+  return { data, err };
+}
+// Appel de la classe à cette date : activité d'endurance d'abord, sinon l'unique activité du jour
+function cdbAppel(data, C, date) {
+  const tab = Object.values(data.tabs || {}).find(x => x && x.kind === 'classe' && nameKey(x.name) === nameKey(C.name));
+  if (!tab) return { err: `classe ${C.name} introuvable dans Carnet de bord` };
+  const L = [];
+  Object.entries(tab.activities || {}).forEach(([act, a]) => {
+    const ap = (a.appels || []).filter(x => x.date === date).pop();
+    if (ap) L.push({ act, ap });
+  });
+  const f = L.filter(x => CDB_ENDU.test(norm(x.act)));
+  const pick = f.length ? f[f.length - 1] : L.length === 1 ? L[0] : null;
+  if (!pick) return { err: L.length ? `plusieurs appels le ${fmtDate(date)} dans Carnet de bord (${L.map(x => x.act).join(', ')}) : impossible de choisir` : `aucun appel le ${fmtDate(date)} dans Carnet de bord` };
+  const ids = {};
+  (tab.students || []).forEach(x => { if (!x.archived) ids[nameKey((x.nom || '') + ' ' + (x.prenom || ''))] = x.id; });
+  const pres = {}, miss = [];
+  C.students.forEach(st => {
+    const r = (pick.ap.records || {})[ids[nameKey(st.name)]];
+    if (r) pres[st.id] = r.presence; else miss.push(st.name);
+  });
+  return { act: pick.act, pres, miss };
+}
+const hasSessData = (s, id) => ['results', 'laps', 'valid', 'final', 'notes', 'throws'].some(k => {
+  const v = (s[k] || {})[id];
+  return v != null && (typeof v !== 'object' || Object.keys(v).length > 0);
+});
+// s.cdb[id] : dernier statut reçu. Un statut choisi à la main (différent du statut reçu) n'est jamais remplacé.
+function cdbApply(C, s, pres) {
+  s.status = s.status || {};
+  const seen = Object.assign({}, s.cdb), skip = [];
+  let n = 0;
+  C.students.forEach(st => {
+    const id = st.id; if (!(id in pres)) return;
+    const want = CDB_MAP[pres[id]] || '', cur = s.status[id] || '', old = seen[id] || '';
+    if (cur === want) { if (want !== old) seen[id] = want; return; }
+    if (cur !== old || want === old) return;
+    if (want && hasSessData(s, id)) { skip.push(st.name); return; }
+    if (want) s.status[id] = want; else delete s.status[id];
+    seen[id] = want;
+    if (s.duoNum) delete s.duoNum[id];
+    n++;
+  });
+  s.cdb = seen;
+  if (n && s.type !== 'lancer') syncOrder(C, s);
+  return { n, skip };
+}
+async function cdbSync(manual) {
+  const C0 = curClass(), s0 = curSession();
+  if (!C0 || !s0) return;
+  if (live) { if (manual) toast('Arrêtez d\'abord le chrono'); return; }
+  const cn = C0.name, sid = s0.id;
+  if (!manual && !cdbCfg().url && !loadJSON('cdb_state_v2')) return;
+  if (manual) toast('⟳ Lecture de Carnet de bord…', 20000);
+  try {
+    const d = await cdbData();
+    const C = state.classes[cn], s = C && findSession(C, sid);
+    if (!s || live) return;
+    const a = cdbAppel(d.data, C, s.date);
+    if (a.err) { if (manual) toast('⚠ ' + a.err, 5000); return; }
+    const r = cdbApply(C, s, a.pres);
+    if (r.n) { ui.sel = null; commit(); }
+    if (r.n || manual) toast(`✅ Carnet de bord (${a.act}) : ${r.n ? r.n + ' statut(s) mis à jour' : 'déjà à jour'}`
+      + (d.err ? ` · ⚠ ${d.err}, copie de l'appareil utilisée` : '')
+      + (r.skip.length ? ` · non modifié(s) car déjà des résultats : ${r.skip.join(', ')}` : '')
+      + (a.miss.length ? ` · non trouvé(s) dans l'appel : ${a.miss.join(', ')}` : ''), 6000);
+  } catch (e) { if (manual) toast('⚠ ' + e.message, 5000); }
+}
+const cdbAuto = () => { const s = curSession(); if (s && s.date === todayISO()) cdbSync(false); };
+
 const ACT = {
+  cdbSync() { cdbSync(true); },
+  async cdbTest() {
+    toast('⟳ Lecture de Carnet de bord…', 20000);
+    try {
+      const d = await cdbData();
+      const n = Object.keys(state.classes).filter(c => Object.values(d.data.tabs).some(x => x.kind === 'classe' && nameKey(x.name) === nameKey(c)));
+      toast((d.err ? '⚠ ' + d.err + ' (copie de l\'appareil utilisée)' : '✅ Carnet de bord relié') + ' · classes communes : ' + (n.join(', ') || 'aucune'), 5000);
+    } catch (e) { toast('⚠ ' + e.message, 5000); }
+  },
   tab(el) { ui.tab = el.dataset.id; render(); window.scrollTo(0, 0); },
   sub(el) { clsUI(ui.tab).sub = el.dataset.v; render(); },
   sort(el) {
@@ -2638,7 +2758,7 @@ const ACT = {
       const first = sortedStudents(C)[0];
       const s = Object.assign(base, { type: 'lancer', notes: {}, cur: first ? first.id : null });
       C.sessions.push(s); u.sid = s.id; u.newOpen = false; ui.sel = null;
-      commit(); window.scrollTo(0, 0); return;
+      commit(); window.scrollTo(0, 0); cdbSync(false); return;
     }
     const s = t === 'vma'
       ? Object.assign(base, { type: 'vma', track: 150, groups: {}, startGroup: 'A', results: {}, runs: {}, status: {} })
@@ -2659,9 +2779,9 @@ const ACT = {
     }
     syncOrder(C, s);
     C.sessions.push(s); u.sid = s.id; u.newOpen = false; ui.sel = null;
-    commit(); window.scrollTo(0, 0);
+    commit(); window.scrollTo(0, 0); cdbSync(false);
   },
-  openSession(el) { clsUI(ui.tab).sid = el.dataset.id; ui.sel = null; render(); window.scrollTo(0, 0); },
+  openSession(el) { clsUI(ui.tab).sid = el.dataset.id; ui.sel = null; render(); window.scrollTo(0, 0); cdbAuto(); },
   /* --- Évaluation lancer --- */
   // Toucher une note : elle est enregistrée et l'élève suivant devient l'élève en cours
   lancerNote(el) {
@@ -2670,8 +2790,9 @@ const ACT = {
     // Toucher la note déjà donnée l'annule : l'élève reste l'élève en cours, sans note
     if (s.notes[id] === el.dataset.v) { delete s.notes[id]; s.cur = id; commit(); return; }
     s.notes[id] = el.dataset.v;
+    const stt = s.status || {}; delete stt[id];   // un élève noté n'est plus absent / dispensé
     const i = studs.findIndex(st => st.id === id);
-    const next = studs[i + 1] || studs.find(st => !s.notes[st.id]);
+    const next = studs.slice(i + 1).find(st => !stt[st.id]) || studs.find(st => !s.notes[st.id] && !stt[st.id]);
     s.cur = next ? next.id : null;
     if (!next) toast('✅ Tous les élèves sont évalués', 3000);
     commit();
@@ -2679,7 +2800,7 @@ const ACT = {
   lancerCur(el) { curSession().cur = el.dataset.id; commit(); },
   lancerStep(el) {
     const C = curClass(), s = curSession(), studs = sortedStudents(C);
-    const i = studs.findIndex(st => st.id === s.cur), nx = studs[i + +el.dataset.v];
+    const i = studs.findIndex(st => st.id === s.cur), d = +el.dataset.v, nx = (d > 0 ? studs.slice(i + 1) : studs.slice(0, Math.max(0, i)).reverse()).find(st => !(s.status || {})[st.id]);
     if (nx) { s.cur = nx.id; commit(); }
   },
   /* --- Coureurs / observateurs (binômes) --- */
@@ -3094,6 +3215,9 @@ const CHG = {
     };
     rd.readAsText(f);
   },
+  cdbUrl(el) { saveJSON(LS_CDB, Object.assign(cdbCfg(), { url: el.value.trim() })); },
+  cdbKey(el) { saveJSON(LS_CDB, Object.assign(cdbCfg(), { key: el.value.trim() })); },
+  sessDv(el) { const s = curSession(); if (live && live.sid === s.id) { toast('Arrêtez d\'abord le chrono'); render(); return; } s.dv = +el.value; commit(); },
   sessDate(el) { curSession().date = el.value || todayISO(); commit(); },
   fracPct(el) { curSession().pct = +el.value; commit(); },
   fracVma(el) {
@@ -3292,7 +3416,7 @@ document.addEventListener('keydown', e => {
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState !== 'visible') return;
   if (live && live.tl) { keepAwake(true); if (Snd.ctx && Snd.ctx.state !== 'running') Snd.ctx.resume(); }
-  else pullRemote();
+  else { pullRemote(); cdbAuto(); }
 });
 window.addEventListener('afterprint', () => { $('#print-root').innerHTML = ''; });
 window.addEventListener('beforeunload', e => { if (live && live.tl) { e.preventDefault(); e.returnValue = ''; } });
