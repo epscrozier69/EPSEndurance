@@ -413,6 +413,7 @@ input.vin[class*="vc"]::placeholder{color:inherit;opacity:.9}
 .fiche.lapf .ct th.fbt{font-size:10.5pt;background:#fff;color:#2563eb;height:6mm}
 .fiche.lapf .ct td.fbf{font-weight:800;font-size:8.5pt;background:#fff;height:6mm}
 .fiche .ff{display:flex;gap:8mm;margin-top:2.5mm;font-size:10pt;flex-wrap:wrap}
+input.secret{-webkit-text-security:disc;text-security:disc}
 </style>
 </head>
 <body>
@@ -1283,12 +1284,15 @@ function viewGeneral() {
   </section>`}
 
   <section class="card">
-    <h2>📋 Lien avec Carnet de bord</h2>
-    <p class="hint">Les absents et dispensés de l'appel fait dans Carnet de bord sont repris dans les séances. Copiez ici l'URL du script et la clé secrète affichées dans Carnet de bord (bouton « 🔄 Synchro »). À faire une fois sur chaque appareil.</p>
-    <label class="lbl">URL du script de Carnet de bord (se termine par /exec)</label>
-    <div class="row"><input class="grow" type="url" placeholder="https://script.google.com/macros/s/…/exec" value="${esc(cdbCfg().url)}" data-chg="cdbUrl"></div>
-    <label class="lbl">Clé secrète de Carnet de bord</label>
-    <div class="row"><input class="grow" type="password" autocomplete="off" value="${esc(cdbCfg().key)}" data-chg="cdbKey"><button class="btn pri" data-act="cdbTest">Tester</button></div>
+    <div class="row sp" style="margin:0"><h2 style="margin:0">📋 Lien avec Carnet de bord</h2><span class="hint" style="margin:0">${cdbLinked() ? '✅ Relié sur cet appareil' : 'Non relié'}</span></div>
+    <details><summary>${cdbLinked() ? 'Modifier ou retirer le lien' : 'Relier cet appareil'}</summary>
+      <p class="hint">Les absents et dispensés de l'appel fait dans Carnet de bord sont repris dans les séances. Copiez ici l'URL du script et la clé secrète affichées dans Carnet de bord (bouton « 🔄 Synchro »). Une fois enregistrées, elles ne sont plus affichées.</p>
+      <label class="lbl">URL du script de Carnet de bord (se termine par /exec)</label>
+      <div class="row"><input class="grow secret" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${cdbCfg().url ? 'Déjà enregistrée' : 'À coller'}" data-chg="cdbUrl"></div>
+      <label class="lbl">Clé secrète de Carnet de bord</label>
+      <div class="row"><input class="grow secret" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${cdbCfg().key ? 'Déjà enregistrée' : 'À coller'}" data-chg="cdbKey"></div>
+      <div class="row"><button class="btn pri" data-act="cdbTest">Tester</button>${cdbCfg().url || cdbCfg().key ? '<button class="btn danger" data-act="cdbOff">Retirer le lien de cet appareil</button>' : ''}</div>
+    </details>
   </section>
 
   <section class="card">
@@ -2577,6 +2581,7 @@ const curSession = () => { const C = curClass(); if (!C) return null; const u = 
 /* ---------- Lien avec l'application Carnet de bord (appel → ABS / DP / DISP), en lecture seule ---------- */
 const LS_CDB = 'eps_endurance_carnet';            // URL et clé : sur l'appareil uniquement, jamais dans la sauvegarde
 const cdbCfg = () => loadJSON(LS_CDB) || { url: '', key: '' };
+const cdbLinked = () => !!(cdbCfg().url && cdbCfg().key);
 const CDB_MAP = { ABS: 'ABS', SLASH: 'ABS', EXCETA: 'ABS', DP: 'DP', DISP: 'DISP' };
 const CDB_ENDU = /endurance|biathlon|demi.?fond|combine|vma|course/;
 const nameKey = s => norm(s).split(/[^a-z0-9]+/).filter(Boolean).sort().join(' ');
@@ -2670,10 +2675,12 @@ const cdbAuto = () => { const s = curSession(); if (s && s.date === todayISO()) 
 
 const ACT = {
   cdbSync() { cdbSync(true); },
+  cdbOff() { if (!confirm('Retirer le lien avec Carnet de bord sur cet appareil ?')) return; try { localStorage.removeItem(LS_CDB); } catch (e) {} render(); },
   async cdbTest() {
     toast('⟳ Lecture de Carnet de bord…', 20000);
     try {
       const d = await cdbData();
+      if (ui.tab === 'general' && !d.err) render();
       const n = Object.keys(state.classes).filter(c => Object.values(d.data.tabs).some(x => x.kind === 'classe' && nameKey(x.name) === nameKey(c)));
       toast((d.err ? '⚠ ' + d.err + ' (copie de l\'appareil utilisée)' : '✅ Carnet de bord relié') + ' · classes communes : ' + (n.join(', ') || 'aucune'), 5000);
     } catch (e) { toast('⚠ ' + e.message, 5000); }
@@ -3215,8 +3222,8 @@ const CHG = {
     };
     rd.readAsText(f);
   },
-  cdbUrl(el) { saveJSON(LS_CDB, Object.assign(cdbCfg(), { url: el.value.trim() })); },
-  cdbKey(el) { saveJSON(LS_CDB, Object.assign(cdbCfg(), { key: el.value.trim() })); },
+  cdbUrl(el) { if (!el.value.trim()) return; saveJSON(LS_CDB, Object.assign(cdbCfg(), { url: el.value.trim() })); },
+  cdbKey(el) { if (!el.value.trim()) return; saveJSON(LS_CDB, Object.assign(cdbCfg(), { key: el.value.trim() })); },
   sessDv(el) { const s = curSession(); if (live && live.sid === s.id) { toast('Arrêtez d\'abord le chrono'); render(); return; } s.dv = +el.value; commit(); },
   sessDate(el) { curSession().date = el.value || todayISO(); commit(); },
   fracPct(el) { curSession().pct = +el.value; commit(); },
