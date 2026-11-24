@@ -414,6 +414,7 @@ input.vin[class*="vc"]::placeholder{color:inherit;opacity:.9}
 .fiche.lapf .ct td.fbf{font-weight:800;font-size:8.5pt;background:#fff;height:6mm}
 .fiche .ff{display:flex;gap:8mm;margin-top:2.5mm;font-size:10pt;flex-wrap:wrap}
 input.secret{-webkit-text-security:disc;text-security:disc}
+.edv{background:none;border:0;border-bottom:1px dashed #98a2b3;font:inherit;color:inherit;cursor:pointer;min-width:44px;min-height:34px;padding:2px 4px}
 </style>
 </head>
 <body>
@@ -2143,10 +2144,10 @@ function lapSection(C, s, rows) {
       return { cells: [
         cell(st.name, `<b>${esc(st.name)}</b>`), cell(st.sexe), cell(v, v != null ? fmtVMA(v) : '—'),
         ...(lancers ? [
-          cell(ev && ev.fin, ev && ev.fin != null ? `<b>${fmtT(ev.fin)}</b>` : '—'),
+          cell(ev && ev.fin, `<button class="edv" data-act="editFinal" data-id="${st.id}" title="Temps final — toucher pour modifier">${ev && ev.fin != null ? `<b>${fmtT(ev.fin)}</b>` : '—'}</button>`),
           cell(fnk(st.id, 't', ev && ev.tg), ev ? sumSel(s, st.id, 't', ev.tg, 'Barème temps') : ntk(null, '—', 'Barème temps'), 'c')] : []),
         cell(ev && ev.t9, ev && ev.t9 ? (lancers ? fmtT(ev.t9) : `<b>${fmtT(ev.t9)}</b>`) : '—'),
-        ...(lancers ? [cell(ev ? ev.pen : null, ev && ev.t9 ? ev.throws.map(x => x ? '✓' : '✗').join(' ') + ` <span class="hint">(${ev.pen} pén.)</span>` : '—')] : []),
+        ...(lancers ? [cell(ev ? ev.pen : null, ev && (ev.t9 || ev.fin != null) ? ev.throws.map((x, i) => `<button class="thr ${x ? 'y' : 'n'}" data-act="throwToggle" data-id="${st.id}" data-i="${i}" title="Lancer ${i + 1} — toucher pour changer">${x ? '✓' : '✗'}</button>`).join('') + ` <span class="hint">(${ev.pen} pén.)</span>` : '—')] : []),
         cell(fnk(st.id, 'v', ev && ev.vg), ev ? sumSel(s, st.id, 'v', ev.vg, 'Vitesse / ' + dvTxt(sessDv(s))) : ntk(null, '—', 'Vitesse / VMA'), 'c'),
         cell(fnk(st.id, 'r', ev && ev.reg && ev.reg.g), ev ? sumSel(s, st.id, 'r', ev.reg && ev.reg.g, 'Régularité') : ntk(null, '—', 'Régularité'), 'c'),
         cell(fnk(st.id, 'c', ev && ev.cont), ev ? sumSel(s, st.id, 'c', ev.cont, 'Continuité') + ` <span class="hint">${ev.walk} 🚶</span>` : ntk(null, '—', 'Continuité'), 'c'),
@@ -2196,6 +2197,7 @@ function lapSection(C, s, rows) {
       <li><b>Vitesse</b> (vitesse courue par rapport à la ${s.type === 'endu3' ? 'vitesse visée (VMA ± 1)' : 'VMA'}${isNine(s) ? '' : ' ; bilan = écart moyen'}) : ${nt('TB')} VMA ou + · ${nt('S')} −0,5 à −1 · ${nt('F')} −1,5 à −2,5 · ${nt('I')} au-delà de −2,5</li>
       <li><b>Régularité</b> (écart entre les lignes où tombent les temps de passage, 1 ligne = ${fmtNum(LINE_STEP, 1)} km/h, 1er tour non compté${isNine(s) ? '' : ' ; bilan = moyenne des courses'}) : ${nt('TB')} ≤ 1 ligne · ${nt('S')} 2 lignes · ${nt('F')} 3 lignes · ${nt('I')} 4 lignes et +</li>
       <li><b>Continuité</b> (nombre de marches${isNine(s) ? '' : ' ; bilan = total des marches de toutes les courses'}) : ${nt('TB')} aucune · ${nt('S')} 1 fois · ${nt('F')} 2 ou 3 fois · ${nt('I')} 4 fois et +</li>
+      ${s.type === 'biath' ? '<li><b>Corriger</b> : touchez le temps final pour le modifier ; touchez ✓ ou ✗ pour changer un lancer (✗ = 1 tour de pénalité). Le temps final ne change pas avec les lancers.</li>' : ''}
       <li><b>Courbe</b> : tous les temps reliés comme sur la fiche, un point sous chaque temps, plus haut = ligne plus rapide, même échelle pour tous. Le 1er tour est en gris : il n'est pas compté dans la note de régularité, qui se lit sur la partie violette</li>
     </ul>
     <div class="lapres resfix">${table}</div>
@@ -3276,6 +3278,27 @@ const CHG = {
   }
 };
 const ACT_LAP = {
+  // Biathlon : correction du temps final (vide = effacer)
+  editFinal(el) {
+    const C = curClass(), s = curSession(), id = el.dataset.id;
+    if (live && live.sid === s.id) { toast('Arrêtez d\'abord le chrono'); return; }
+    const st = C.students.find(x => x.id === id), old = (s.final || {})[id], cum = lapsOf(s, id, 0);
+    const x = prompt(`${st ? st.name + ' — ' : ''}temps final, lancers et pénalités compris (ex. 7:21)
+Laisser vide pour effacer.`, old != null ? fmtT(old) : '');
+    if (x == null || (old != null && x.trim() === fmtT(old))) return;
+    s.final = s.final || {};
+    if (!x.trim()) {
+      if (old == null || !confirm('Effacer le temps final ?')) return;
+      delete s.final[id];
+    } else {
+      const t = parseMS(x);
+      if (t == null || t <= 0) { toast('Temps non reconnu (ex. 7:21)'); return; }
+      const last = cum.length ? cum[cum.length - 1] : 0;
+      if (t <= last) { toast('Le temps final doit être supérieur au dernier passage (' + fmtT(last) + ')'); return; }
+      s.final[id] = t;
+    }
+    commit(); toast('Temps final corrigé');
+  },
   // Correction manuelle d'un temps de passage (vide = supprimer ce passage)
   editLap(el) {
     const C = curClass(), s = curSession(), id = el.dataset.id, r = +el.dataset.r, i = +el.dataset.i;
